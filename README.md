@@ -1,4 +1,5 @@
-# PosDefManifoldML.jl
-A Package for Machine Learning on the Manifold of Positive Definite Matrices
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://Marco-Congedo.github.io/FourierAnalysis.jl/dev)
 
-xxx
+![](/docs/src/assets/Fig1.jpg)
+
+
