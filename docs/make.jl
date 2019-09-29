@@ -19,6 +19,14 @@ makedocs(
    ]
 )
 
-#deploydocs(
-#    repo = "https://github.com/tosalonijain/RiemannianML.git"
-#)
+deploydocs(
+   # root
+   # target = "build", # add this folder to .gitignore!
+   repo = "github.com/Marco-Congedo/PosDefManifoldML.jl.git",
+   # branch = "gh-pages",
+   # osname = "linux",
+   # deps = Deps.pip("pygments", "mkdocs"),
+   # devbranch = "dev",
+   # devurl = "dev",
+   # versions = ["stable" => "v^", "v#.#", devurl => devurl],
+)
