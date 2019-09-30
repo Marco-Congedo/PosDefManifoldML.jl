@@ -29,19 +29,20 @@ Independent reviewers are more then welcome.
 ```
 using PosDefManifoldML
 
-# simulate symmetric positive definite matrices data
+# simulate symmetric positive definite (SDP) matrices data for a 2-class problem.
+# 𝐏 is a vector of SPD matrices, y a vector of labels. Tr=training, Te=testing:
 𝐏Tr, 𝐏Te, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80)
 
-# craete and fit a Riemannian Minimum Distance to Mean (MDM) model
+# craete and fit a Riemannian Minimum Distance to Mean (MDM) model:
 model=MDM(Fisher, 𝐏Tr, yTr)
 
-# predict labels
+# predict labels:
 predict(model, 𝐏Te, :l)
 
-# predict probabilities
+# predict probabilities:
 predict(model, 𝐏Te, :p)
 
-# average accuracy obtained by 5-fold cross-validation
+# average accuracy obtained by 5-fold cross-validation:
 CVscore(model, 𝐏Tr, yTr, 5)
 
 ```
