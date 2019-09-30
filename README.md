@@ -10,7 +10,7 @@ Machine learning in **P** can either operate directly on the manifold, which req
 
 ![](/docs/src/assets/Fig1.jpg)
 
-For the moment being, the Riemannian Minimum Distance to Mean (MDM) classifier has been implemented. Furthermore, the package allows projecting the data on the tangent space for applying traditional machine learning elsewhere.
+For the moment being, the Riemannian **Minimum Distance to Mean (MDM)** classifier has been implemented. Furthermore, the package allows projecting the data on the tangent space for applying traditional machine learning elsewhere.
 
 ## Installation
 
