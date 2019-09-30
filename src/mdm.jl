@@ -64,6 +64,8 @@ function and have the same meaning therein.
 
 **Examples**:
 ```
+using PosDefManifoldML
+
 # (1)
 # generate some data
 𝐏Tr, 𝐏Te, yTr, yTe = gen2ClassData(10, 30, 40, 60, 80)
