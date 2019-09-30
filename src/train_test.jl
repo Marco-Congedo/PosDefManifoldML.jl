@@ -50,6 +50,8 @@ a specia [`MDM`](@ref) constructor.
 
 **Examples**
 ```
+using PosDefManifoldML
+
 # generate some data
 𝐏Tr, 𝐏Te, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.25)
 
@@ -131,6 +133,8 @@ the distances of each unlabeled matrix to all class means.
 
 **Examples**
 ```
+using PosDefManifoldML
+
 # generate some data
 𝐏Tr, 𝐏Te, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80)
 
@@ -199,6 +203,8 @@ for each cross-validation set, otherwise return only `scores`.
 
 **Examples**
 ```
+using PosDefManifoldML
+
 # generate some data
 𝐏Tr, 𝐏Te, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80)
 
@@ -206,7 +212,7 @@ for each cross-validation set, otherwise return only `scores`.
 model=MDM(Fisher, 𝐏Tr, yTr)
 
 # perform cross-validation
-CVscore(model, 𝐏Tr, yTr, 5)
+CVscore(model, 𝐏Te, yTe, 5)
 ```
 """
 function CVscore(model :: MLmodel,

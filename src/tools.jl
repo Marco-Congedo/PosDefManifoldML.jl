@@ -69,6 +69,8 @@ Python *scikitlearn*, expect them to be arranged in rows.
 
 **Examples**:
 ```
+using PosDefManifoldML
+
 # generate four random symmetric positive definite 3x3 matrices
 𝐏=randP(3, 4)
 
@@ -140,6 +142,8 @@ Return the 4-tuple with:
 
 **Examples**
 ```
+using PosDefManifoldML
+
 CVsetup(10, 2)
 # return:
 # (5, 5,
@@ -152,14 +156,11 @@ CVsetup(10, 2, shuffle=true)
 # Array{Int64,1}[[5, 4, 6, 1, 9], [3, 7, 8, 2, 10]])
 # Array{Int64,1}[[3, 7, 8, 2, 10], [5, 4, 6, 1, 9]],
 
-
-
 CVsetup(10, 3)
 # return:
 # (7, 3,
 # Array{Int64,1}[[4, 5, 6, 7, 8, 9, 10], [1, 2, 3, 7, 8, 9, 10], [1, 2, 3, 4, 5, 6]])
 # Array{Int64,1}[[1, 2, 3], [4, 5, 6], [7, 8, 9, 10]],
-
 
 ```
 
@@ -219,6 +220,8 @@ Return a 4-tuple with
 **Examples**
 
 ```
+using PosDefManifoldML
+
 𝐏Tr, 𝐏Te, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.25)
 
 # 𝐏Tr=training set: 30 matrices for class 1 and 40 matrices for class 2
