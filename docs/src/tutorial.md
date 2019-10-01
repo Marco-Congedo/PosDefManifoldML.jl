@@ -1,6 +1,6 @@
 # Tutorial
 
-*PosDefManifoldML* mimicks the functioning of [ScikitLearn](https://scikit-learn.org/stable/) (good to know if you are familir with it):
+*PosDefManifoldML* mimicks the functioning of [ScikitLearn](https://scikit-learn.org/stable/):
 first a **machine learning (ML) model** is created, then data is used to
 **fit** (train) the model. The above two steps can actually be carried out at one. Once this is done the model
 allows to **predict** the labels of test data or the probability of the data to belong to each class.
@@ -19,21 +19,21 @@ An MDM model is created and fit with trainng data such as
 model=MDM(Fisher, 𝐏Tr, yTr)
 ```
 
-where `metric` is be a [Metric](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#Metric::Enumerated-type-1)
-enumerated type declared in [PosDefManifold](https://marco-congedo.github.io/PosDefManifold.jl/dev/), a metric
-in the manifold of positive definite matrices allowing the definition of both a distance function and of a mean (center of mass).
+where `metric` is of the [Metric](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#Metric::Enumerated-type-1)
+enumerated type declared in [PosDefManifold](https://marco-congedo.github.io/PosDefManifold.jl/dev/). This is a metric
+in the manifold of positive definite matrices allowing the definition of both a *distance function* and a *mean* (center of mass).
 
 Currently supported metrics are:
 
 | metric (distance) | resulting mean estimation                     |
 |:----------------- |:--------------------------------------------- |
-| Euclidean         | Arithmetic                                    |
-| invEuclidean      | Harmonic                                      |
+| Euclidean         | arithmetic                                    |
+| invEuclidean      | harmonic                                      |
 | ChoEuclidean      | Cholesky Euclidean                            |
-| logEuclidean      | Log-Euclidean                                 |
-| logCholesky       | Log-Cholesky                                  |
+| logEuclidean      | log-Euclidean                                 |
+| logCholesky       | log-Cholesky                                  |
 | Fisher            | Fisher (Cartan, Karcher, Pusz-Woronowicz,...) |
-| logdet0           | LogDet (S, α, Bhattacharyya, Jensen,...)      |
+| logdet0           | logDet (S, α, Bhattacharyya, Jensen,...)      |
 | Jeffrey           | Jeffrey (symmetrized Kullback-Leibler)        |
 | Wasserstein       | Wasserstein (Bures, Hellinger, ...)           |
 
