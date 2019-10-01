@@ -2,33 +2,30 @@
 
 *PosDefManifoldML* mimicks the functioning of [ScikitLearn](https://scikit-learn.org/stable/) (good to know if you are familir with it):
 first a **machine learning (ML) model** is created, then data is used to
-**fit** (train) the model. Once this is done the model
+**fit** (train) the model. The above two steps can actually be carried out at one. Once this is done the model
 allows to **predict** the labels of test data or the probability of the data to belong to each class.
 
-In order to compare ML models, a **cross-validation** procedure is
-implemented.
+In order to compare ML models, a **k-fold cross-validation** procedure is implemented.
 
 ## ML models
 
-For the moment being, only the **Riemannian minimum distance to mean** (MDM)
-ML model is implemented.
-The creation of other models will follow the same rationale and syntax,
-along the lines of *ScikitLearn*.
+For the moment being, only the **Riemannian minimum distance to mean** (MDM) ML model is implemented. See Barachat el *al.* (2012) and Congedo et *al.* (2017a) [🎓](@ref).
 
 ### MDM model
 
-An MDM model is created as
+An MDM model is created and fit with trainng data such as
 
 ```
-model = MDM(metric)
+model=MDM(Fisher, 𝐏Tr, yTr)
 ```
 
-where `metric` must be a metric in the manifold of positive definite matrices
-allowing the definition of both a distance function and of a mean (center of mass).
+where `metric` is be a [Metric](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#Metric::Enumerated-type-1)
+enumerated type declared in [PosDefManifold](https://marco-congedo.github.io/PosDefManifold.jl/dev/), a metric
+in the manifold of positive definite matrices allowing the definition of both a distance function and of a mean (center of mass).
 
 Currently supported metrics are:
 
-| Metric (distance) | Resulting mean estimation                     |
+| metric (distance) | resulting mean estimation                     |
 |:----------------- |:--------------------------------------------- |
 | Euclidean         | Arithmetic                                    |
 | invEuclidean      | Harmonic                                      |
@@ -43,72 +40,51 @@ Currently supported metrics are:
 Do not use the Von Neumann metric, which is also supported in *PosDefManifold*,
 since it does not allow a definition of mean.
 
-You can also create and fit an MDM model in one pass.
-See [`MDM`](@ref).
+## use data
 
-## load data
+A real data example will be added soon.
 
-After a classifier instance is created we need to fit the classifier model with  data. For convenience, let us use the **npz** format(.npz),
-which allows sharing data between *Python* and *Julia*.
-For example:
+Now let us create some simulated data for a **2-class example**.
+First, let us create symmetric positive definite matrices (real positive definite matrices):
 
 ```
-	using NPZ
+using PosDefManifoldML
 
-	path = "/home/saloni/PosDefManifoldML/src/" # where files are stored
-	filename = "subject_1.npz" # for subject number i
-	data = npzread(path*filename)
-	X = data["data"] # retrive the epochs
-	y = data["labels"] # retrive the corresponding labels
+𝐏Tr, 𝐏Te, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80)
 ```
 
-This corresponds to the training part. The training data should be in the form of :
+-`𝐏Tr` is the simulated training set, holding 30 matrices for class 1 and 40 matrices for class 2
+- `𝐏Te` is the testing set, holding 60 matrices for class 1 and 80 matrices for class 2.
+- `yTr` is a vector of 70 labels for 𝐓r
+- `yTe` is a vector of 140 labels for 𝐓e
 
-- `𝐗` :-  Vector of Hermitian Matrices. These Hermitian Matrices are the covariance matrices formed   		    out of the raw data. The raw data of signals first need to be converted into their 		   corresponding covariance matrices. This can be very easily done using the [gram](https://marco-congedo.github.io/PosDefManifold.jl/latest/signalProcessing/#PosDefManifold.gram) function of 		    **PosDefManifold**. This is what is done in the below code.
-- `y` :-  Labels corresponding to each training sample. Labels should be integers from 1 to n, where  		   n is the number of classes.
+All matrices are of size 10x10.
 
-
-	train_size = size(X,1)
-	𝐗 = ℍVector(undef, sam_size)
-	@threads for i = 1:train_size
-    	 	𝐗[i] = gram(X[i,:,:])
-	end
-
-## train a model (fit)
-
-Once you are ready with your data, you can fit your model
-calling the `fit!` function.
-
-	fit!(model, 𝐗 ,y)
-
-
-Note that you can also use the construtor
-
-```model=MDM(Fisher, 𝐗, y)```,
-
-which creates and fits the model at once.
+## craete and fit an MDM model
+```
+model=MDM(Fisher, 𝐏Tr, yTr)
+```
 
 ## classify data (predict)
 
-Let 𝐓 be a vector of Hermitian matrices forming the **testing set**.
-In order to classify them, i.e., to associate a class label to them,
-we invoke
+```
+predict(model, 𝐏Te, :l)
+```
 
-```predict(model, 𝐓, :l)```.
+If instead we wish to estimate the probabilities for the matrices in `𝐏Te` of belonging to each class, we invoke
 
-If instead we wish to estimate the probabilities for the matrices in 𝐓
-of belonging to each class, we invoke
+```
+predict(model, 𝐏Te, :p)
+```
 
-```predict(model, 𝐓, :p)```.
+## cross-validation
 
-### cross-validation
+A *k-fold cross-validation* is obtained as
 
-In order to assess the performance of a model usually a **cross-validation (CV)**
-procedure is adopted. In *PosDefManifoldML* a random CV procedure
-is implemented. We invoke it by
+```
+CVscore(model, 𝐏Te, y, 5)
+```
 
-```CVscore(model, 𝐓, y, 5)```,
-
-where `5` is the number of CVs. This implies that
+where `5` is the number of folds. This implies that
 at each CV, 1/5th of the matrices is used for training and the
 remaining for testing.
