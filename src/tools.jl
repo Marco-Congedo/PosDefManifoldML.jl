@@ -126,17 +126,15 @@ running the function, thus in this case two successive runs of this function
 will give different cross-validation sets, hence different accuracy scores.
 By default `shuffle` is false, so as to allow exactly the same result
 in successive runs.
-Notae that no random initialization for the shuffling is provided, so as to
+Note that no random initialization for the shuffling is provided, so as to
 allow the replication of the same random sequences starting again
 the random generation from scratch.
 
 This function is used in [`CV_mdm`](@ref). It constitutes the fundamental
-basis to implement customized cross-validation iprocedures.
+basis to implement customized cross-validation procedures.
 
-Return the 4-tuple with:
+Return the 2-tuple with:
 
-- The size of each training set (integer),
-- The size of each testing set (integer),
 - A vector of `nCV` vectors holding the indices for the training sets,
 - A vector of `nCV` vectors holding the indices for the corresponding test sets.
 
@@ -146,21 +144,18 @@ using PosDefManifoldML
 
 CVsetup(10, 2)
 # return:
-# (5, 5,
-# Array{Int64,1}[[6, 7, 8, 9, 10], [1, 2, 3, 4, 5]])
-# Array{Int64,1}[[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]],
+# (Array{Int64,1}[[6, 7, 8, 9, 10], [1, 2, 3, 4, 5]]
+#  Array{Int64,1}[[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]]),
 
 CVsetup(10, 2, shuffle=true)
 # return:
-# (5, 5,
-# Array{Int64,1}[[5, 4, 6, 1, 9], [3, 7, 8, 2, 10]])
-# Array{Int64,1}[[3, 7, 8, 2, 10], [5, 4, 6, 1, 9]],
+# (Array{Int64,1}[[5, 4, 6, 1, 9], [3, 7, 8, 2, 10]]
+#  Array{Int64,1}[[3, 7, 8, 2, 10], [5, 4, 6, 1, 9]]),
 
 CVsetup(10, 3)
 # return:
-# (7, 3,
-# Array{Int64,1}[[4, 5, 6, 7, 8, 9, 10], [1, 2, 3, 7, 8, 9, 10], [1, 2, 3, 4, 5, 6]])
-# Array{Int64,1}[[1, 2, 3], [4, 5, 6], [7, 8, 9, 10]],
+# (Array{Int64,1}[[4, 5, 6, 7, 8, 9, 10], [1, 2, 3, 7, 8, 9, 10], [1, 2, 3, 4, 5, 6]]
+#  Array{Int64,1}[[1, 2, 3], [4, 5, 6], [7, 8, 9, 10]]),
 
 ```
 
@@ -169,8 +164,7 @@ function CVsetup(k       :: Int,
                  nCV     :: Int;
                  shuffle :: Bool = false)
     if nCV == 1 @error 📌*", CVsetup function: The number of cross-validation must be bigger than one" end
-    nTest = k÷nCV
-    nTrain = k-nTest
+    nTest = k÷nCV # nTrain = k-nTest
     #rng = MersenneTwister(1900)
     shuffle ? a=shuffle!( Vector(1:k)) : a=Vector(1:k)
     indTrain = [Vector{Int64}(undef, 0) for i=1:nCV]
@@ -184,7 +178,7 @@ function CVsetup(k       :: Int,
         j+=nTest
     end
     indTest[nCV]=a[j:end]
-    return nTrain, nTest, indTrain, indTest
+    return indTrain, indTest
 end
 
 

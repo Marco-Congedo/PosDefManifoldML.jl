@@ -11,8 +11,6 @@
 #   This unit implements training-test procedures for Riemannian
 #   machine learning classifiers.
 
-
-
 """
 ```
 function fit!(model :: MLmodel,
@@ -130,7 +128,7 @@ The labels are '1' for class 1, '2' for class 2, etc.
 
 The 'probabilities' are obtained passing to a
 [softmax function](https://en.wikipedia.org/wiki/Softmax_function)
-the squared distances of each unlabeled matrix to all class means.
+minus the squared distances of each unlabeled matrix to all class means.
 
 The ratio of these squared distance to their geometric mean gives
 the 'functions'.
@@ -250,7 +248,7 @@ function CVscore(model :: MLmodel,
          return CV_mdm(model.metric, 𝐏Tr, yTr, nCV;
                     scoring=scoring, confusion=confusion, shuffle=shuffle)
          # elseif
-         # for other model for which a CV method exists you may use this code
-         # return (CV(model.clf, logMap(𝐏Tr), y, cv = ncv))
+         # add code for other models for which a CVscore method is supported
+         # e.g., return (CV(model.clf, logMap(𝐏Tr), y, cv = ncv))
      end
 end
