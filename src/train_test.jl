@@ -116,16 +116,24 @@ if `what` is `:probabilities` or `:p`, return the predicted **probabilities**
 for each matrix in `𝐏Te` to belong to a all classes, as a ``k``-vector
 of ``z`` vectors holding reals in ``(0, 1)`` (probabilities).
 
+if `what` is `:f` or `:functions`, return the **output function** of the model
+(see below).
+
 Only the [`MDM`](@ref) model is supported for the moment being.
 
 **MDM model**
 
-For this model, the predicted class of an unlabeled matrix is the
-class whose mean is the closest to the matrix (minimum distance to mean).
+For this model, the predicted class 'label' of an unlabeled matrix is the
+serial number of the class whose mean is the closest to the matrix
+(minimum distance to mean).
+The labels are '1' for class 1, '2' for class 2, etc.
 
-The probabilities instead are obtained passing to a
+The 'probabilities' are obtained passing to a
 [softmax function](https://en.wikipedia.org/wiki/Softmax_function)
-the distances of each unlabeled matrix to all class means.
+the squared distances of each unlabeled matrix to all class means.
+
+The ratio of these squared distance to their geometric mean gives
+the 'functions'.
 
 **See**: [notation & nomenclature](@ref), [the ℍVector type](@ref).
 
@@ -146,26 +154,41 @@ predict(model, 𝐏Te, :l)
 
 # predict probabilities
 predict(model, 𝐏Te, :p)
+
+# output functions
+predict(model, 𝐏Te, :f)
+
 ```
 """
 function predict(model  :: MLmodel,
-                 𝐏Te      :: ℍVector,
-                 what   :: Symbol=:labels;
-                 verbose:: Bool=true)
+                 𝐏Te    :: ℍVector,
+                 what   :: Symbol = :labels;
+                 verbose:: Bool   = true)
 
-    if what ∉ (:l, :labels, :p, :probabilities)
+    if what ∉ (:l, :labels, :p, :probabilities, :f, :functions)
         @error 📌*", predict function: the `what` symbol is not supported."
         return
     end
 
-    if      what ∈(:l, :labels) whats="labels"
-    elseif  what ∈(:p, :probabilities) whats="probabilities of belonging to each class"
+    # add if isa(model, xxx) for other binary models here !
+    # if isa(model, MDM) && length(model.means)>2 && what ∈(:f, :fucntions) && verbose
+    # @error 📌*", predict function: the predicted functions cannot be returned for a model with more than 2 classes. Use another `what` symbol."
+    # end
+
+    if      what ∈(:f, :fucntions)      whatStr="functions"
+    elseif  what ∈(:l, :labels)         whatStr="labels"
+    elseif  what ∈(:p, :probabilities)  whatStr="probabilities of belonging to each class"
     end
+
 
     if isa(model, MDM)
         D = getDistances(model.metric, model.means, 𝐏Te)
-        verbose && println(titleFont, "\nPredicted ",whats,":\n", defaultFont)
-        if     what == :labels || what == :l
+        verbose && println(titleFont, "\nPredicted ",whatStr,":\n", defaultFont)
+        if     what == :functions || what == :f
+               gmeans=[PosDefManifold.mean(Fisher, D[:, j]) for j = 1:dim(D, 2)]
+               func(j::Int)=[D[i, j]/gmeans[j] for i=1:dim(D, 1)]
+               return [func(j) for j = 1:dim(D, 2)]
+        elseif what == :labels || what == :l
                return [findmin(D[:,j])[2] for j = 1:dim(D, 2)]
         elseif what == :probabilities || what == :p
                return [softmax(-D[:,j]) for j = 1:dim(D, 2)]

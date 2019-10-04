@@ -95,7 +95,7 @@ MDM(metric :: Metric,
     𝐏Tr      :: ℍVector,
     yTr      :: IntVector;
   w  :: Vector = [],
-  ✓w :: Bool  = true) = fit!(MDM(metric), 𝐏Tr, y; w=w, ✓w=✓w)
+  ✓w :: Bool  = true) = fit!(MDM(metric), 𝐏Tr, yTr; w=w, ✓w=✓w)
 
 
 
@@ -176,20 +176,21 @@ Typically, you will not need this function as it is called by the
 Given an [ℍVector](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1)
 `𝐏` holding ``k`` Hermitian matrices and
 an ℍVector `means` holding ``z`` matrix means,
-return the distance of each matrix in `𝐏` to the means in `means`.
+return the *square of the distance* of each matrix in `𝐏` to the means
+in `means`.
 
-The distance is computed according to the chosen `metric`, of type
+The squared distance is computed according to the chosen `metric`, of type
 [Metric](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#Metric::Enumerated-type-1).
 See [metrics](https://marco-congedo.github.io/PosDefManifold.jl/dev/introToRiemannianGeometry/#metrics-1)
 for details on the supported distance functions.
 
-The result is a ``z``x``k`` matrix of distances.
+The result is a ``z``x``k`` matrix of squared distances.
 
 """
 getDistances(metric :: Metric,
              means  :: ℍVector,
              𝐏      :: ℍVector) =
-  [distance(metric, 𝐏[j], means[i]) for i=1:length(means), j=1:length(𝐏)]
+  [PosDefManifold.distance²(metric, 𝐏[j], means[i]) for i=1:length(means), j=1:length(𝐏)]
 # optimize in PosDefManifold, don't need to compute all distances for some metrics
 
 
@@ -275,7 +276,7 @@ function Base.show(io::IO, ::MIME{Symbol("text/plain")}, M::MDM)
         println(io, separatorFont, "⭒  ⭒    ⭒       ⭒          ⭒", defaultFont)
         nc=length(M.means)
         n=size(M.means[1], 1)
-        println(io, "features: PD matrices of size $(n)")
+        println(io, "features: PD matrices of size $(n)x$(n)")
         println(io, "classes : $(nc)")
         println(io, "fields  : (accessed by . notation)")
         println(io, "  .metric, .means.")
