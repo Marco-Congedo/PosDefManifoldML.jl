@@ -8,7 +8,7 @@ makedocs(
    pages =
    [
       "index.md",
-      "Tutorials" => "tutorial.md",
+      "Tutorial" => "tutorial.md",
       "Main Module" => "MainModule.md",
       "Training-Testing" => "train_test.md",
       "Tools" => "tools.md",
