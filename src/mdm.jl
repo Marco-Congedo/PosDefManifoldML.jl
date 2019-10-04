@@ -168,7 +168,8 @@ end
 ```
 function getDistances(metric :: Metric,
                       means  :: ℍVector,
-                      𝐏      :: ℍVector)
+                      𝐏      :: ℍVector;
+                  ⏩ :: Bool = true)
 ```
 Typically, you will not need this function as it is called by the
 [`predict`](@ref) function.
@@ -184,15 +185,33 @@ The squared distance is computed according to the chosen `metric`, of type
 See [metrics](https://marco-congedo.github.io/PosDefManifold.jl/dev/introToRiemannianGeometry/#metrics-1)
 for details on the supported distance functions.
 
+If `⏩` is true, the distances are computed using multi-threading,
+unless the number of threads Julia is instructed to use is <2 or <3k.
+
 The result is a ``z``x``k`` matrix of squared distances.
 
 """
-getDistances(metric :: Metric,
+function getDistances(metric :: Metric,
              means  :: ℍVector,
-             𝐏      :: ℍVector) =
-  [PosDefManifold.distance²(metric, 𝐏[j], means[i]) for i=1:length(means), j=1:length(𝐏)]
-# optimize in PosDefManifold, don't need to compute all distances for some metrics
+             𝐏      :: ℍVector;
+          ⏩ :: Bool = true)
 
+    z, k = length(means), length(𝐏)
+    if ⏩
+        D = Matrix{eltype(𝐏[1])}(undef, z, k)
+
+        threads, ranges = _GetThreadsAndLinRanges(length(𝐏), "getDistances")
+
+        dist(i::Int, r::Int) =
+            for j in ranges[r] D[i, j]=PosDefManifold.distance²(metric, 𝐏[j], means[i]) end
+
+        for i=1:z @threads for r=1:length(ranges) dist(i, r) end end
+        return D
+    else
+        [PosDefManifold.distance²(metric, 𝐏[j], means[i]) for i=1:z, j=1:k]
+    end
+    # optimize in PosDefManifold, don't need to compute all distances for some metrics
+end
 
 
 """
@@ -223,45 +242,50 @@ function CV_mdm(metric :: Metric,
             confusion :: Bool   = false,
             shuffle   :: Bool   = false)
 
-    nc=length(unique!(copy(yTr)))
-    𝐏 = [ℍ[] for i = 1: nc] # All data by classes
-    𝐏Tr = [ℍ[] for i = 1: nc] # training data by classes
-    𝐏Te = [ℍ[] for i = 1: nc] # test data by classes
-    score = Array{Float64, 1}(undef, nCV)
-    cnf_mat = [zeros(Float64 , (nc,  nc)) for i = 1:nCV] # confusion matrix final
-    for j = 1:dim(𝐏Tr, 1)  push!(𝐏[yTr[j]], 𝐏Tr[j]) end
-    println(titleFont, "\nPerforming random cross-validations...", defaultFont)
-    for k = 1:nCV
-        print(rand(dice), " ")
-        model=MDM(metric)
-        for i = 1:nc
-            nTrain, nTest, indTrain, indTest = CVsetup(length(𝐏[i]), nCV; shuffle=shuffle)
-            𝐏Tr[i]  = [𝐏[i][j] for j in(indTrain[k])]
-            𝐏Te[i] =  [𝐏[i][j] for j in(indTest[k])]
-        end
-        if nc<=2 # use nthreads here
-            model.means = ℍVector([getMeans(metric, 𝐏Tr[Int(l)]) for l= 1:nc])
-        else
-            model.means = ℍVector(undef, nc)
-            @threads for l in classes model.means[l]=getMeans(metric, 𝐏Tr[Int(l)], ⏩=false) end
-        end
-        result = [Int[] for i = 1:nc]
-        for i = 1: nc
-            result[i] = predict(model, 𝐏Te[i], :l, verbose=false)
-            for s = 1: length(result[i])
-                cnf_mat[k][i, result[i][s]] = cnf_mat[k][i, result[i][s]] + 1.
-            end
-        end
-        scoring == :b ? score[k] = (𝚺( [ cnf_mat[k][i,i] / 𝚺( cnf_mat[k][i,:] ) for i = 1:nc ])) / nc :
-                        score[k] = 𝚺( [ cnf_mat[k][i,i] for i = 1:nc ] )/ 𝚺( cnf_mat[k] )
+    println(titleFont, "\nPerforming $(nCV) cross-validations...", defaultFont)
 
+    z  = length(unique(yTr))            # number of classes
+    𝐐  = [ℍ[] for i=1:z]              # data arranged by class
+    for j=1:length(𝐏Tr) push!(𝐐[yTr[j]], 𝐏Tr[j]) end
+
+    # pre-allocated memory
+    𝐐Tr = [ℍ[] for i=1:z]              # for training data arranged by classes
+    𝐐Te = [ℍ[] for i=1:z]              # for testing data arranged by classes
+    CM  = [zeros(Int64, z, z) for k=1:nCV] # for CV confusion matrices
+    s   = Vector{Float64}(undef, nCV)    # for CV accuracy scores
+    pl  = [Int[] for i=1:z]             # for CV predicted labels
+    indTr = [[[]] for i=1:z]            # for CV indeces for training sets
+    indTe = [[[]] for i=1:z]            # for CV indeces for test sets
+
+    # get indeces for all CVs (separated for each class)
+    @threads for i=1:z indTr[i], indTe[i] = CVsetup(length(𝐐[i]), nCV; shuffle=shuffle) end
+
+    for k=1:nCV
+        print(rand(dice), " ") # print a random dice in the REPL
+
+        # get data for current cross-validation (CV)
+        @threads for i=1:z 𝐐Tr[i] = [𝐐[i][j] for j ∈ indTr[i][k]] end
+        @threads for i=1:z 𝐐Te[i] = [𝐐[i][j] for j ∈ indTe[i][k]] end
+
+        model=MDM(metric)  # Note: getMeans is multi-threaded
+        model.means = ℍVector([getMeans(metric, 𝐐Tr[Int(l)]) for l=1:z])
+
+        # predict labels and compute confusion matrix for current CV
+        for i=1:z
+            pl[i] = predict(model, 𝐐Te[i], :l, verbose=false)
+            for s=1:length(pl[i]) CM[k][i, pl[i][s]] += 1 end
+        end
+
+        # compute balanced accuracy or accuracy for current CV
+        scoring == :b ? s[k] = 𝚺(CM[k][i, i]/𝚺(CM[k][i, :]) for i=1:z) / z :
+                        s[k] = 𝚺(CM[k][i, i] for i=1:z)/ 𝚺(CM[k])
     end
-    println(" Done!\n", defaultFont)
-    avg=mean(score);    avgs=round(avg; digits=3)
-    sd=stdm(score, avg); sds=round(sd; digits=3)
-    scoringString = scoring == :b ? "balanced accuracy" : "accuracy"
-    println("mean(sd) ", titleFont, scoringString,": ", defaultFont, avgs,"(", sds,")", defaultFont, "\n")
-    return confusion ? (score, cnf_mat) : score
+    println(" Done.\n")
+    avg=mean(s);                        avgStr=round(avg; digits=3)
+    sd=stdm(s, avg);                    sdStr=round(sd; digits=3)
+    scoringStr = scoring == :b ? "balanced accuracy" : "accuracy"
+    println(titleFont, "mean(sd) ", scoringStr,": ", defaultFont, avgStr,"(", sdStr,")", defaultFont, "\n")
+    return confusion ? (s, CM) : s
 end
 
 

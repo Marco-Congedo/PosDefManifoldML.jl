@@ -11,8 +11,6 @@
 #   This unit implements training-test procedures for Riemannian
 #   machine learning classifiers.
 
-
-
 """
 ```
 function fit!(model :: MLmodel,
@@ -103,11 +101,19 @@ end
 ```
 function predict(model  :: MLmodel,
                  𝐏Te    :: ℍVector,
-                 what   :: Symbol=:labels)
+                 what   :: Symbol = :labels;
+               verbose :: Bool = true,
+               ⏩     :: Bool = true)
 ```
 Given a [ML model](@ref) `model` trained (fitted) on ``z`` classes
 and a testing set of ``k`` positive definite matrices `𝐏Te` of type
 [ℍVector](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1),
+
+If `verbose` is true (default) information is printed in the REPL.
+This option is included to allow repeated calls to this function
+without crowding the REPL.
+
+It f `⏩` is true (default), computations are multi-threaded whenever possible.
 
 if `what` is `:labels` or `:l` (default), return
 the predicted **class labels** for each matrix in `𝐏Te` as an [IntVector](@ref);
@@ -130,7 +136,7 @@ The labels are '1' for class 1, '2' for class 2, etc.
 
 The 'probabilities' are obtained passing to a
 [softmax function](https://en.wikipedia.org/wiki/Softmax_function)
-the squared distances of each unlabeled matrix to all class means.
+minus the squared distances of each unlabeled matrix to all class means.
 
 The ratio of these squared distance to their geometric mean gives
 the 'functions'.
@@ -163,7 +169,8 @@ predict(model, 𝐏Te, :f)
 function predict(model  :: MLmodel,
                  𝐏Te    :: ℍVector,
                  what   :: Symbol = :labels;
-                 verbose:: Bool   = true)
+            verbose :: Bool = true,
+            ⏩     :: Bool = true)
 
     if what ∉ (:l, :labels, :p, :probabilities, :f, :functions)
         @error 📌*", predict function: the `what` symbol is not supported."
@@ -182,16 +189,17 @@ function predict(model  :: MLmodel,
 
 
     if isa(model, MDM)
-        D = getDistances(model.metric, model.means, 𝐏Te)
+        D = getDistances(model.metric, model.means, 𝐏Te, ⏩=⏩)
+        (z, k)=size(D)
         verbose && println(titleFont, "\nPredicted ",whatStr,":\n", defaultFont)
         if     what == :functions || what == :f
-               gmeans=[PosDefManifold.mean(Fisher, D[:, j]) for j = 1:dim(D, 2)]
-               func(j::Int)=[D[i, j]/gmeans[j] for i=1:dim(D, 1)]
-               return [func(j) for j = 1:dim(D, 2)]
+               gmeans=[PosDefManifold.mean(Fisher, D[:, j]) for j = 1:k]
+               func(j::Int)=[D[i, j]/gmeans[j] for i=1:z]
+               return [func(j) for j = 1:k]
         elseif what == :labels || what == :l
-               return [findmin(D[:,j])[2] for j = 1:dim(D, 2)]
+               return [findmin(D[:,j])[2] for j = 1:k]
         elseif what == :probabilities || what == :p
-               return [softmax(-D[:,j]) for j = 1:dim(D, 2)]
+               return [softmax(-D[:,j]) for j = 1:k]
         end
     end
     # elseif to add more models
@@ -250,7 +258,7 @@ function CVscore(model :: MLmodel,
          return CV_mdm(model.metric, 𝐏Tr, yTr, nCV;
                     scoring=scoring, confusion=confusion, shuffle=shuffle)
          # elseif
-         # for other model for which a CV method exists you may use this code
-         # return (CV(model.clf, logMap(𝐏Tr), y, cv = ncv))
+         # add code for other models for which a CVscore method is supported
+         # e.g., return (CV(model.clf, logMap(𝐏Tr), y, cv = ncv))
      end
 end

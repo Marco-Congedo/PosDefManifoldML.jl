@@ -7,7 +7,7 @@ allows to **predict** the labels of test data or the probability of the data to 
 
 In order to compare ML models, a **k-fold cross-validation** procedure is implemented.
 
-## use data
+## get data
 
 A real data example will be added soon.
 
@@ -27,12 +27,13 @@ using PosDefManifoldML
 
 All matrices are of size 10x10.
 
-
 ## ML models
 
-For the moment being, only the **Riemannian minimum distance to mean** (MDM) ML model is implemented. See Barachat el *al.* (2012) and Congedo et *al.* (2017a) [🎓](@ref).
+For the moment being, only the **Riemannian minimum distance to mean** ([MDM](mdm.jl)) machine learning model is implemented.
 
 ### MDM model
+
+#### craete and fit an MDM model
 
 An MDM model is created and fit with trainng data such as
 
@@ -40,21 +41,27 @@ An MDM model is created and fit with trainng data such as
 model=MDM(Fisher, 𝐏Tr, yTr)
 ```
 
-where `Fisher` is the most natural choice of a [Metric](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#Metric::Enumerated-type-1)
-enumerated type declared in [PosDefManifold](https://marco-congedo.github.io/PosDefManifold.jl/dev/).
+where `Fisher` is the usual choice of a [Metric](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#Metric::Enumerated-type-1)
+as declared in [PosDefManifold](https://marco-congedo.github.io/PosDefManifold.jl/dev/).
 
-#### craete and fit an MDM model
+It can also be just created by
+
 ```
-model=MDM(Fisher, 𝐏Tr, yTr)
+model=MDM(Fisher)
 ```
+
+and fitted later using the [`fit!`](@ref) function.
+
 
 #### classify data (predict)
+
+In order to predict the labels of unlabeled data, we invoke
 
 ```
 predict(model, 𝐏Te, :l)
 ```
 
-If instead we wish to estimate the probabilities for the matrices in `𝐏Te` of belonging to each class, we invoke
+If instead we wish to estimate the probabilities for the matrices in `𝐏Te` of belonging to each class,
 
 ```
 predict(model, 𝐏Te, :p)
@@ -68,12 +75,12 @@ predict(model, 𝐏Te, :f)
 
 #### cross-validation
 
-The accuracy estimated by a *k-fold cross-validation* is obtained as
+The balanced accuracy estimated by a *k-fold cross-validation* is obtained as
 
 ```
-CVscore(model, 𝐏Te, y, 5)
+CVscore(model, 𝐏Te, yTe, 5);
 ```
 
 where `5` is the number of folds. This implies that
-at each CV, 1/5th of the matrices is used for training and the
+at each cross-validation, 1/5th of the matrices is used for training and the
 remaining for testing.
