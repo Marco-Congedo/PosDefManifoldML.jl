@@ -1,7 +1,8 @@
 # mdm.jl
 
-This unit implemets the Riemannian **MDM (Minimum Distance to Mean)**
-classifier for the manifold of positive definite (PD) matrices.
+This unit implements the Riemannian **MDM (Minimum Distance to Mean)**
+classifier for the manifold of positive definite (PD) matrices,
+both real (symmetric PD) or complex (Hermitian PD) matrices.
 The MDM is a *simple*, yet *efficient*, *deterministic* and *paramater-free* classifier acting
 directly on the manifold of positive definite matrices (Barachat el *al.*, 2012; Congedo et *al.*, 2017a [🎓](@ref)): given a number of PD matrices representing *class means*, the MDM classify an unknown datum (also a PD matrix) as belonging to the class whose mean is the closest to the datum. The process is
 illustrated in the upper part of this
@@ -28,23 +29,22 @@ Do not use the Von Neumann metric, which is also supported in *PosDefManifold*,
 since it does not allow a definition of mean. See
 [here](https://marco-congedo.github.io/PosDefManifold.jl/dev/introToRiemannianGeometry/) for details on the metrics.
 
-Besides the [`MDM`](@ref) type declaration and the declaration of some
-constructors for it, this unit also include the following functions,
-which typically you will not need to access directly as they are called
-by functions working in the same way for all models declared in
-[train_test.jl](@ref). They are provided nonetheless to facilitate
-low-level jobs with MDM classifiers:
-
+The **fit** and **predict** functions for the MDM models
+are reported in the [cv.jl](@ref) unit.
+Here it is reported the [`MDMmodel`](@ref)
+abstract type, the [`MDM`](@ref) structure and the following functions,
+which typically you will not need to access directly, but are
+nonetheless provided to facilitate low-level operations with MDM classifiers:
 
 |         function       |           description             |
 |:-----------------------|:----------------------------------|
-| [`getMeans`](@ref)     | compute means of training data for fitting the MDM model |
+| [`getMean`](@ref)     | compute the mean of positive definite matrices for fitting the MDM model |
 | [`getDistances`](@ref) | compute the distances of a matrix set to a set of means |
-| [`CV_mdm`](@ref)       | perform cross-validations for the MDM classifiers |
+
 
 ```@docs
+MDMmodel
 MDM
-getMeans
+getMean
 getDistances
-CV_mdm
 ```

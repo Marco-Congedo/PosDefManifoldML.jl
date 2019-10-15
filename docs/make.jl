@@ -10,12 +10,16 @@ makedocs(
       "index.md",
       "Tutorial" => "tutorial.md",
       "Main Module" => "MainModule.md",
-      "Training-Testing" => "train_test.md",
       "Tools" => "tools.md",
 
-      "Machine Learning Models" => Any[
-                           "Minimum Distance to Mean" => "mdm.md",
+      "ML Models: PD Manifold" => Any[
+                  "Minimum Distance to Mean" => "mdm.md",
       ],
+      "ML Models: PD Tangent Space" => Any[
+                  "Elastic-Net Logistic Regression" => "enlr.md",
+      ],
+      "fit, predict, cv" => "cv.md",
+
    ]
 )
 

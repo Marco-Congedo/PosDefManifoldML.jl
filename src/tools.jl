@@ -1,10 +1,10 @@
 #   Unit "tools.jl" of the PosDefManifoldML Package for Julia language
-#   v 0.0.1 - last update 28th of September 2019
+#   v 0.2.0 - last update 11th of October 2019
 #
 #   MIT License
 #   Copyright (c) 2019,
 #   Saloni Jain, Indian Institute of Technology, Kharagpur, India
-#   Marco Congedo, CNRS, Grenobe, France:
+#   Marco Congedo, CNRS, Grenoble, France:
 #   https://sites.google.com/site/marcocongedo/home
 
 # ? CONTENTS :
@@ -13,172 +13,107 @@
 
 """
 ```
-function projectOnTS(metric :: Metric,
-                     𝐏      :: ℍVector;
-                  w  :: Vector = [],
-                  ✓w :: Bool   = true,
-                  ⏩ :: Bool   = true)
+function tsMap(	metric :: Metric,
+		𝐏 :: ℍVector;
+		w :: Vector = [],
+		✓w :: Bool = true,
+		⏩ :: Bool = true,
+		meanISR :: Union{ℍ, Nothing} = nothing,
+		transpose :: Bool = true)
 ```
 
-Given a vector of ``k`` Hermitian matrices `𝐏`
-and corresponding optional non-negative weights `w`,
-return a matrix with the matrices `𝐏` mapped onto the tangent space
-at base-point given by their mean and vectorized as per the
-[vecP](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.vecP)
+The [tangent space mapping](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.logMap)
+of matrices ``P_i``, ``i=1...k`` with geometric mean ``G``, once
+those points have been parallel transported to the identity matrix,
+is given by:
+
+``S_i=\\textrm{log}(G^{-1/2} P_i G^{-1/2})``.
+
+Given a vector of ``k`` Hermitian matrices `𝐏`,
+return a matrix ``X`` with such tangent vectors of the matrices in `𝐏`
+vectorized as per the [vecP](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.vecP)
 operation.
 
-[Tangent space mapping](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.logMap)
-of matrices ``P_i, i=1...k`` at base point ``G``
-according to the Fisher metric is given by:
-
-``S_i=G^{½} \\textrm{log}(G^{-½} P_i G^{-½}) G^{½}``.
-
-!!! note "Nota Bene"
-    the tangent space projection is currently supported only for the
-    Fisher metric, therefore this metric is used for the projection.
-
-The mean of the meatrices in `𝐏` is computed according to the
+The mean ``G`` of the matrices in `𝐏` is found according to the
 specified `metric`, of type
 [Metric](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#Metric::Enumerated-type-1).
 A natural choice is the
 [Fisher metric](https://marco-congedo.github.io/PosDefManifold.jl/dev/introToRiemannianGeometry/#Fisher-1).
-The weighted mean is computed if weights vector `w` is non-empty.
-By default the unweighted mean is computed.
 
+A set of ``k`` optional non-negative weights `w` can be provided
+for computing instead the weighted mean ``G``.
 If `w` is non-empty and optional keyword argument `✓w` is true (default),
 the weights are normalized so as to sum up to 1,
 otherwise they are used as they are passed and should be already normalized.
 This option is provided to allow calling this function
 repeatedly without normalizing the same weights vector each time.
 
-if optional keyword argument `⏩` if true (default),
-the computation of the mean is multi-threaded if this is obtained
-with an iterative algorithm (e.g., using the Fisher metric).
-Multi-threading is automatically disabled if the number of threads
-Julia is instructed to use is ``<2`` or ``<4k``.
+If an Hermitian matrix is provided as optional keyword argument `meanISR`,
+then the mean ``G`` is not computed, intead this matrix is used
+directly in the formula as the inverse square root (ISR) ``G^{-1/2}``.
 
-Return a matrix holding the ``k`` mapped matrices in its columns.
-The dimension of the columns is ``n(n+1)/2``, where ``n`` is the size
-of the matrices in `𝐏`
+If `meanISR` is not provided, return the 2-tuple ``(X, G^{-1/2})``,
+otherwise return only matrix ``X``.
+
+If optional keyword argument `transpose` is true (default),
+``X`` holds the ``k`` vectorized tangent vectors in its rows,
+otherwise they are arranged in its columns.
+The dimension of the rows in the former case and of the columns is the latter
+case is ``n(n+1)/2``, where ``n`` is the size of the matrices in `𝐏`
 (see [vecP](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.vecP)
 ).
-The arrangement of tangent vectors in the columns of a matrix is natural
-in Julia, however if you export the tagent vectors to be
-used as feature vectors keep in mind that several ML packages, for example
-Python *scikitlearn*, expect them to be arranged in rows.
+
+if optional keyword argument `⏩` if true (default),
+the computation of the mean (if this is obtained
+with an iterative algorithm, e.g., using the Fisher metric)
+and the projection on the tangent space are multi-threaded.
+Multi-threading is automatically disabled if the number of threads
+Julia is instructed to use is ``<2`` or ``<3k``.
+
 
 **Examples**:
 ```
 using PosDefManifoldML
 
 # generate four random symmetric positive definite 3x3 matrices
-𝐏=randP(3, 4)
+Pset = randP(3, 4)
 
 # project and vectorize in the tangent space
-T=projectOnTS(Fisher, 𝐏)
+X, G⁻½ = tsMap(Fisher, Pset)
 
-# The result is a 6x4 matrix, where 6 is the size of the
+# X is a 4x6 matrix, where 6 is the size of the
 # vectorized tangent vectors (n=3, n*(n+1)/2=6)
+
+# If repeated calls have to be done, faster computations are obtained
+# providing the inverse square root of the matrices in Pset, e.g.,
+X1 = tsMap(Fisher, ℍVector(Pset[1:2]); meanISR =G⁻½)
+X2 = tsMap(Fisher, ℍVector(Pset[3:4]); meanISR =G⁻½)
+
 ```
 
-**See**: [the ℍVector type](@ref).
+**See**: [the ℍVector type](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1).
 
 """
-function projectOnTS(metric :: Metric,
-                     𝐏      :: ℍVector;
-                  w  :: Vector = [],
-                  ✓w :: Bool   = true,
-                  ⏩ :: Bool   = true)
+function tsMap(metric :: Metric,
+               𝐏      :: ℍVector;
+         w    	   :: Vector 			 = [],
+         ✓w   	   :: Bool   			 = true,
+         ⏩   	  :: Bool   		    = true,
+		 meanISR    :: Union{ℍ, Nothing} = nothing,
+		 transpose :: Bool   			 = true)
 
-    G = mean(metric, 𝐏; w=w, ✓w=✓w, ⏩=⏩)
-    k, n = dim(𝐏, 1), dim(𝐏, 2)
-    G½, G⁻½=pow(G, 0.5, -0.5)
-    Vec = Array{eltype(𝐏[1]), 2}(undef, Int(n*(n+1)/2), k)
-    ⏩==true ? (@threads for i = 1:k Vec[:, i] = vecP(ℍ(G½ * log(ℍ(G⁻½ * 𝐏[i] * G⁻½)) * G½)) end) :
-                         (for i = 1:k Vec[:, i] = vecP(ℍ(G½ * log(ℍ(G⁻½ * 𝐏[i] * G⁻½)) * G½)) end)
-    return Vec
-end
-
-
-
-
-"""
-```
-function CVsetup(k       :: Int,
-                 nCV     :: Int;
-                 shuffle :: Bool = false)
-```
-Given `k` elements and a parameter `nCV`, a nCV-fold cross-validation
-is obtained defining ``nCV`` permutations of ``k`` elements
-in ``nTest=k÷nCV`` (intger division) elements for the test and
-``k-nTest`` elements for the training,
-in such a way that each element is represented in only one permutation.
-
-Said differently, given a length `k` and the number of desired cross-validations
-`nCV`, this function generates indices from the sequence of natural numbers
-``1,..,k`` to obtain all nCV-fold cross-validation sets.
-Specifically, it generates ``nCV`` vectors of indices for generating test sets
-and ``nCV`` vectors of indices for geerating training sets.
-
-If optional keyword argument `shuffle` is true,
-the sequence of natural numbers ``1,..,k`` is shuffled before
-running the function, thus in this case two successive runs of this function
-will give different cross-validation sets, hence different accuracy scores.
-By default `shuffle` is false, so as to allow exactly the same result
-in successive runs.
-Note that no random initialization for the shuffling is provided, so as to
-allow the replication of the same random sequences starting again
-the random generation from scratch.
-
-This function is used in [`CV_mdm`](@ref). It constitutes the fundamental
-basis to implement customized cross-validation procedures.
-
-Return the 2-tuple with:
-
-- A vector of `nCV` vectors holding the indices for the training sets,
-- A vector of `nCV` vectors holding the indices for the corresponding test sets.
-
-**Examples**
-```
-using PosDefManifoldML
-
-CVsetup(10, 2)
-# return:
-# (Array{Int64,1}[[6, 7, 8, 9, 10], [1, 2, 3, 4, 5]]
-#  Array{Int64,1}[[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]]),
-
-CVsetup(10, 2, shuffle=true)
-# return:
-# (Array{Int64,1}[[5, 4, 6, 1, 9], [3, 7, 8, 2, 10]]
-#  Array{Int64,1}[[3, 7, 8, 2, 10], [5, 4, 6, 1, 9]]),
-
-CVsetup(10, 3)
-# return:
-# (Array{Int64,1}[[4, 5, 6, 7, 8, 9, 10], [1, 2, 3, 7, 8, 9, 10], [1, 2, 3, 4, 5, 6]]
-#  Array{Int64,1}[[1, 2, 3], [4, 5, 6], [7, 8, 9, 10]]),
-
-```
-
-"""
-function CVsetup(k       :: Int,
-                 nCV     :: Int;
-                 shuffle :: Bool = false)
-    if nCV == 1 @error 📌*", CVsetup function: The number of cross-validation must be bigger than one" end
-    nTest = k÷nCV # nTrain = k-nTest
-    #rng = MersenneTwister(1900)
-    shuffle ? a=shuffle!( Vector(1:k)) : a=Vector(1:k)
-    indTrain = [Vector{Int64}(undef, 0) for i=1:nCV]
-    indTest  = [Vector{Int64}(undef, 0) for i=1:nCV]
-    # vectors of indices for test and training sets
-    j=1
-    for i=1:nCV-1
-        indTest[i]=a[j:j+nTest-1]
-        for g=j+nTest:length(a) push!(indTrain[i], a[g]) end
-        for l=i+1:nCV, g=j:j+nTest-1 push!(indTrain[l], a[g]) end
-        j+=nTest
-    end
-    indTest[nCV]=a[j:end]
-    return indTrain, indTest
+	k, n, getMeanISR = dim(𝐏, 1), dim(𝐏, 2), meanISR==nothing
+    getMeanISR ? G⁻½ = pow(mean(metric, 𝐏; w=w, ✓w=✓w, ⏩=⏩), -0.5) : G⁻½ = meanISR
+	if transpose
+		V = Array{eltype(𝐏[1]), 2}(undef, k, Int(n*(n+1)/2))
+	    ⏩==true ? (@threads for i = 1:k V[i, :] = vecP(ℍ(log(ℍ(G⁻½ * 𝐏[i] * G⁻½)))) end) :
+	                         (for i = 1:k V[i, :] = vecP(ℍ(log(ℍ(G⁻½ * 𝐏[i] * G⁻½)))) end)
+	else
+		V = Array{eltype(𝐏[1]), 2}(undef, Int(n*(n+1)/2), k)
+		⏩==true ? (@threads for i = 1:k V[:, i] = vecP(ℍ(log(ℍ(G⁻½ * 𝐏[i] * G⁻½)))) end) :
+	                         (for i = 1:k V[:, i] = vecP(ℍ(log(ℍ(G⁻½ * 𝐏[i] * G⁻½)))) end)
+	end
+    return getMeanISR ? (V, G⁻½) : V
 end
 
 
@@ -197,7 +132,7 @@ and a *test set* of `k1test`+`k2test`
 symmetric positive definite matrices.
 All matrices have size ``n``x``n``.
 
-The training and test sets can be used to train and test an [ML model](@ref).
+The training and test sets can be used to train and test any [MLmodel](@ref).
 
 `separation` is a coefficient determining how well the two classs are
 separable; the higher it is, the more separable the two classes are.
@@ -216,13 +151,13 @@ Return a 4-tuple with
 ```
 using PosDefManifoldML
 
-𝐏Tr, 𝐏Te, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.25)
+PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.25)
 
-# 𝐏Tr=training set: 30 matrices for class 1 and 40 matrices for class 2
-# 𝐏Te=testing set: 60 matrices for class 1 and 80 matrices for class 2
+# PTr=training set: 30 matrices for class 1 and 40 matrices for class 2
+# PTe=testing set: 60 matrices for class 1 and 80 matrices for class 2
 # all matrices are 10x10
-# yTr=a vector of 70 labels for 𝐓r
-# yTe=a vector of 140 labels for 𝐓e
+# yTr=a vector of 70 labels for the training set
+# yTe=a vector of 140 labels for the testing set
 
 ```
 """
@@ -232,7 +167,12 @@ function gen2ClassData(n        ::  Int,
                        k1test   ::  Int,
                        k2test   ::  Int,
                        separation :: Real = 0.1)
-    G1=randP(n)
+	if separation<0 || separation >1
+		@error 📌*", function "*gen2ClassData*": argument `separation` must be in range [0, 1]."
+		return
+	end
+
+	G1=randP(n)
     G2=randP(n)
 
     # Create a set of k1+k2 random matrices and move the along
@@ -270,6 +210,42 @@ function gen2ClassData(n        ::  Int,
 end
 
 
+"""
+```
+function predictErr(yTrue::IntVector, yPred::IntVector;
+	          digits::Int=3))
+```
+
+Return the percent prediction error given a vector of true labels and a vector
+of predicted labels.
+
+The order of arguments does not matter.
+
+The error is rounded to the number of optional keyword argument
+`digits`, 3 by default.
+
+**See** [`predict`](@ref)
+
+**Examples**
+
+```
+using PosDefManifoldML
+predictErr([1, 1, 2, 2], [1, 1, 1, 2])
+# return: 25.0
+```
+"""
+function predictErr(yTrue::IntVector, yPred::IntVector;
+	          digits::Int=3)
+	n1=length(yTrue)
+	n2=length(yPred)
+	if n1≠n2
+		@error 📌*", function predictErr: the length of the two argument vectors must be equal." n1 n2
+		return
+	else
+		round(sum(y1≠y2 for (y1, y2) ∈ zip(yTrue, yPred))/n1*100; digits=digits)
+	end
+end
+
 # -------------------------------------------------------- #
 # INTERNAL FUNCTIONS #
 
@@ -280,7 +256,6 @@ end
 # of threads Julia is currently instructed to use.
 # For example, for `k`=99
 # and `threads`=4, return Array{UnitRange{Int64},1}:[1:25, 26:50, 51:75, 76:99].
-# This function is called by threaded function `fVec`
 function _partitionLinRange4threads(n::Int, threads::Int=0)
     threads==0 ? thr=nthreads() : thr=threads
     n<thr ? thr = n : nothing
@@ -291,9 +266,9 @@ end
 
 function _GetThreads(n::Int, callingFunction::String)
 	threads=Threads.nthreads()
-	threads==1 && @warn "Function "*callingFunction*": Julia is instructed to use only one thread."
+	threads==1 && @warn 📌*", function "*callingFunction*": Julia is instructed to use only one thread."
 	if n<threads*3
-		@warn "Function "*callingFunction*": the number of operations (n) is too low for taking advantage of multi-threading" threads n
+		@warn 📌*", function "*callingFunction*": the number of operations (n) is too low for taking advantage of multi-threading" threads n
 		threads=1
 	end
 	return threads
@@ -304,3 +279,67 @@ function _GetThreadsAndLinRanges(n::Int, callingFunction::String)
 	ranges=_partitionLinRange4threads(n, threads)
 	return threads, ranges
 end
+
+function _check_fit(model     :: MLmodel,
+              		 dim𝐏Tr    :: Int,
+              		 dimyTr    :: Int,
+           			 dimw  	   :: Int,
+					 modelName :: String)
+    errMsg1="the number of data do not match the number of labels."
+	errMsg2="the numberof data do not match the number of weights."
+    if dim𝐏Tr ≠ dimyTr
+		@error 📌*", fit function, model "*modelName*": "*errMsg1
+		return false
+	end
+    if dimw ≠ 0 && dimw ≠ k
+		@error 📌*", fit function, model "*modelName*": "*errMsg2
+		return false
+	end
+	return true
+end
+
+
+_whatIsValid(what::Symbol, funcName::String) =
+	if what ∉ (:l, :labels, :p, :probabilities, :f, :functions)
+		@error 📌*", "*funcName*" function: the `what` symbol is not supported."
+		return false
+	else
+		return true
+	end
+
+_what2Str(what::Symbol) =
+	if      what ∈(:f, :fucntions)      return "functions"
+	elseif  what ∈(:l, :labels)         return "labels"
+	elseif  what ∈(:p, :probabilities)  return "prob. of belonging to each class"
+	end
+
+_triNum(P::ℍ) = ( size(P, 1) * (size(P, 1)+1) ) ÷ 2
+
+_modelStr(model::MLmodel) =
+  if 		model isa MDMmodel
+	  		return "MDM"
+  elseif    model isa ENLRmodel
+    		if     model.alpha≈1. return "Lasso logit regression"
+    		elseif model.alpha≈0. return "Ridge logit regression"
+    		else                  return "Elastic Net (α=$(round(model.alpha; digits=2))) logit regression"
+			end
+  else      return "unknown"
+  end
+
+
+_whichIsValid(path::GLMNetPath, which::Union{Int, Nothing}, funcName::String) =
+	if which≠nothing && (which<0 || which>length(path.lambda))
+		@error 📌*", "*funcName*" function: the `which` integer argument must be comprised between 0 (all models) and $l."
+		return false
+	else
+		return true
+	end
+
+_whichENLRStr(model::ENLRmodel, which::Union{Int, Nothing}) =
+	if      which == 0
+		return "with all ENLR models"
+	elseif  which == model.bestModel
+		return "with best ENLR model (λ=$(round(model.path.lambda[which]; digits=5)))"
+	else
+		return "with ENLR model $(which) (λ=$(round(model.path.lambda[which]; digits=5)))"
+	end
