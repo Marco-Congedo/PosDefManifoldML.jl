@@ -10,7 +10,7 @@
 
 ![](/docs/src/assets/Fig1.jpg)
 
-For the moment being, the Riemannian **Minimum Distance to Mean (MDM)** classifier has been implemented. Furthermore, the package allows projecting the data on the tangent space for applying traditional machine learning elsewhere.
+For the moment being, **PosDefManifoldML** implements the Riemannian **Minimum Distance to Mean (MDM)** classifier, which operates directly in **P** and the **elastic net logistic regression** classifier in the tangent space, including the pure **Ridge** and pure **Lasso** logistic regresison model, using the [GLMNet.jl](https://github.com/JuliaStats/GLMNet.jl) package. 
 
 ## Installation
 
@@ -30,33 +30,67 @@ Independent reviewers are more then welcome.
 using PosDefManifoldML
 
 # simulate symmetric positive definite (SDP) matrices data for a 2-class problem.
-# 𝐏 is a vector of SPD matrices, y a vector of labels. Tr=training, Te=testing.
+# P is a vector of SPD matrices, y a vector of labels. Tr=training, Te=testing.
 # SDP matrices will be all of size 10x10.
 # The training set will have 30 matrices for class 1 and 40 for class 2.
 # The testing set will have 60 matrices for class 1 and 80 for class 2.
-𝐏Tr, 𝐏Te, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80)
+PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80)
+
+# # # ML IN THE PD MANIFOLD # # #
 
 # craete and fit (train) a Riemannian Minimum Distance to Mean (MDM) model:
-model=MDM(Fisher, 𝐏Tr, yTr)
+model=fit(MDM(), PTr, yTr)
 
 # predict labels (classify the testing set):
-predict(model, 𝐏Te, :l)
+yPred=predict(model, PTe, :l)
 
-# predict probabilities:
-predict(model, 𝐏Te, :p)
+# prediction error in percent
+predictErr(yTe, yPred)
 
-# average accuracy obtained by 5-fold cross-validation:
-CVscore(model, 𝐏Te, yTe, 5)
+# predict probabilities for the matrices in `PTe` of belonging to each class:
+predict(model, PTe, :p)
+
+# average accuracy obtained by 10-fold cross-validation:
+cv = cvAcc(MDM(), PTe, yTe, 10)
+
+# # # ML IN THE TANGENT SPACE # # #
+
+# craete and fit (train) LASSO Logistic Regression models:
+model=fit(ENLR(), PTr, yTr)
+
+# estimate the best lambda parameter for the LASSO models
+cvLambda!(model, PTr, yTr)
+
+# predict labels (classify the testing set) using the 'best' model:
+yPred=predict(model, PTe, :l)
+
+# prediction error in percent
+predictErr(yTe, yPred)
+
+# ...
+
+# create and fit a RIDGE logistic regression model
+model=fit(ENLR(), PTr, yTr; alpha=0)
+
+#...
+
+# create and fit an ELASTIC NET logistic regression model with alpha = 0.5
+model=fit(ENLR(), PTr, yTr; alpha=0.5)
+
+#...
+
+# average accuracy obtained by 10-fold cross-validation:
+cv = cvAcc(ENLR(Fisher, alpha=0.5), PTe, yTe, 10)
 
 ```
 
 ## About the Authors
 
-Saloni Jain is a student at the
-[Indian Institute of Technology, Kharagpur](http://www.iitkgp.ac.in/), India.
-
 [Marco Congedo](https://sites.google.com/site/marcocongedo), corresponding
 author, is a research scientist of [CNRS](http://www.cnrs.fr/en) (Centre National de la Recherche Scientifique), working in [UGA](https://www.univ-grenoble-alpes.fr/english/) (University of Grenoble Alpes). **contact**: marco *dot* congedo *at* gmail *dot* com
+
+Saloni Jain is a student at the
+[Indian Institute of Technology, Kharagpur](http://www.iitkgp.ac.in/), India.
 
 | **Documentation**  | 
 |:---------------------------------------:|
