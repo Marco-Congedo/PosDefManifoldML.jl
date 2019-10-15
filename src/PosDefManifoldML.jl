@@ -15,7 +15,8 @@
 
 module  PosDefManifoldML
 
-using LinearAlgebra, Base.Threads, Random, Dates, Statistics, PosDefManifold
+using LinearAlgebra, Base.Threads, Random, Statistics, PosDefManifold
+using Dates:now
 using GLMNet:GLMNet, glmnet, glmnetcv, GLMNetPath, GLMNetCrossValidation
 using Distributions:Distributions, Binomial
 
