@@ -8,13 +8,13 @@ and Euclidean machine learning classifiers.
 
 |         function       |           description             |
 |:-----------------------|:----------------------------------|
-| [`projectOnTS`](@ref)  | project data on a tangent space to apply Euclidean ML models |
-| [`CVsetup`](@ref)      | generate indexes for performing cross-validtions |
+| [`tsMap`](@ref)        | project data on a tangent space to apply Euclidean ML models therein |
 | [`gen2ClassData`](@ref)| generate 2-class positive definite matrix data for testing Riemannian ML models |
+| [`predictErr`](@ref)| prediction error given a vector of true labels and a vector of predicted labels |
 
 
 ```@docs
-projectOnTS
-CVsetup
+tsMap
 gen2ClassData
+predictErr
 ```

@@ -1,5 +1,5 @@
 #   Unit "simulations.jl" of the PosDefManifoldML Package for Julia language
-#   v 0.0.1 - last update 28th of September 2019
+#   v 0.2.0 - last update 28th of September 2019
 #
 #   MIT License
 #   Copyright (c) 2019,
@@ -15,7 +15,9 @@
 
 module  PosDefManifoldML
 
-using   LinearAlgebra, Base.Threads, Random, Statistics, PosDefManifold
+using LinearAlgebra, Base.Threads, Random, Dates, Statistics, PosDefManifold
+using GLMNet:GLMNet, glmnet, glmnetcv, GLMNetPath, GLMNetCrossValidation
+using Distributions:Distributions, Binomial
 
 # Special instructions and variables
 BLAS.set_num_threads(Sys.CPU_THREADS-Threads.nthreads())
@@ -29,37 +31,52 @@ const greyFont      = "\x1b[90m"
 const dice = ("⚀", "⚁", "⚂", "⚃", "⚄", "⚅")
 
 # types #
-abstract type MLmodel end
+abstract type MLmodel end # all machine learning models
+abstract type PDmodel<:MLmodel end # PD manifold models
+abstract type TSmodel<:MLmodel end # tangent space models
 
 IntVector=Vector{Int}
 
-import Base: show
+import Base:show
+import GLMNet.predict
+import Distributions.fit
 
 export
 
     # from this module
     MLmodel,
+    PDmodel,
+    TSmodel,
     IntVector,
 
     # from mdm.jl
+    MDMmodel,
     MDM,
-    getMeans,
-    getDistances,
-    CV_mdm,
-
-    # from train_test.jl
-    fit!,
+    fit,
     predict,
-    CVscore,
+    getMean,
+    getDistances,
+
+    # from enlr.jl
+    ENLRmodel,
+    ENLR,
+    cvLambda!,
+
+    # from cv.jl
+    CVacc,
+    cvAcc,
+    cvSetup,
 
     # from tools.jl
-    projectOnTS,
-    CVsetup,
-    gen2ClassData
+    tsMap,
+    gen2ClassData,
+    predictErr
 
-include("tools.jl")
 include("mdm.jl")
-include("train_test.jl")
+include("enlr.jl")
+include("cv.jl")
+include("tools.jl")
+
 
 println("\n⭐ "," Welcome to the",titleFont," ",📌," ",defaultFont,"package", " ⭐\n")
 @info " "

@@ -7,22 +7,32 @@ This is the main unit containing the **PosDefManifoldML** *module*.
 | standard Julia packages |     external packages    |
 |:-----------------------:|:-----------------------:|
 | [LinearAlgebra](https://bit.ly/2W5Wq8W) |  [PosDefManifold](https://github.com/Marco-Congedo/PosDefManifold.jl)|
-| [Statistics](https://bit.ly/2Oem3li) |  |
-| [Random](https://github.com/JuliaStdlibs/Random.jl) | |
+| [Statistics](https://bit.ly/2Oem3li) |  [GLMNet](https://github.com/JuliaStats/GLMNet.jl)|
+| [Random](https://github.com/JuliaStdlibs/Random.jl) | [Distributions](https://github.com/JuliaStats/Distributions.jl)|
+| [Dates](https://github.com/JuliaStdlibs/Dates.jl)| |
 
 The main module does not contains functions.
 
 ## types
 
-### ML model
+### MLmodel
 
-Similarly to what is done in *ScikitLearn*,
-a type is created (a `struct` in Julia) to specify a ML model. *Supertype*
+As typical in machine learning packages, a type is created (a `struct` in Julia) to specify a ML model. *Supertype*
 
 ```abstract type MLmodel end```
 
-is the abstract type that should be used to derive all machine learning
-models to be implemented. See the [`MDM`](@ref) model as an example.
+is the abstract type for all machine learning
+models. *Supertype*
+
+```abstract type PDmodel<:MLmodel end```
+
+is the abstract type for all machine learning
+models acting on the positive definite (PD) **manifold** (for example, see [`MDM`](@ref)). *Supertype*
+
+```abstract type TSmodel<:MLmodel end```
+
+is the abstract type for all machine learning
+models acting on the **tangent space** (for example, see [`ENLR`](@ref)).
 
 ### IntVector
 
@@ -42,7 +52,7 @@ Check this documentation on [typecasting matrices](https://marco-congedo.github.
 
 ### notation & nomenclature
 
-Throughout the code and the examples of this package the following
+Throughout the code of this package the following
 notation is followed:
 
 - **scalars** and **vectors** are denoted using lower-case letters, e.g., `y`,
@@ -61,7 +71,11 @@ The following nomenclature is used consistently:
 - `z`: **number of classes** of a ML model
 - `k`: **number of matrices** in a set
 
+In the examples, bold upper-case letters are replaced by
+upper case letters in order to allow reading in the REPL.
+
 ### acronyms
 
 - MDM: minimum distance to mean
-- CV: cross-validation
+- ENLR: Elastic-Net Logistic Regression
+- cv: cross-validation

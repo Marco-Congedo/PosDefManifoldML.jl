@@ -2,9 +2,9 @@
 
 ## Requirements & Installation
 
-**Julia** version ≥ 1.1.1
+**Julia**: version ≥ 1.1.1
 
-**Packages:** see the [dependencies](@ref) of the main module.
+**Packages**: see the [dependencies](@ref) of the main module.
 
 The package is still not registered. To install it,
 execute the following command in Julia's REPL:
@@ -14,17 +14,17 @@ execute the following command in Julia's REPL:
 ### Disclaimer
 
 This package is still in a pre-release stage.
-Any independent reviewer for both the code and the documentation is welcome.
+Independent reviewers for both the code and the documentation is welcome.
 
 ## About the Authors
-
-Saloni Jain is a student at the
-[Indian Institute of Technology, Kharagpur](http://www.iitkgp.ac.in/), India.
 
 [Marco Congedo](https://sites.google.com/site/marcocongedo), corresponding
 author, is a research scientist of [CNRS](http://www.cnrs.fr/en) (Centre National de la Recherche Scientifique), working in [UGA](https://www.univ-grenoble-alpes.fr/english/) (University of Grenoble Alpes).
 
 **Contact**: first name dot last name at gmail dot com
+
+Saloni Jain is a student at the
+[Indian Institute of Technology, Kharagpur](http://www.iitkgp.ac.in/), India.
 
 ## Overview
 
@@ -36,10 +36,10 @@ In this package we are concerned with making use of Riemannian Geometry for clas
 [covariance matrices](https://github.com/mateuszbaran/CovarianceEstimation.jl), [Fourier cross-spectral matrices](https://marco-congedo.github.io/FourierAnalysis.jl/dev/crossspectra/
 ), etc.).
 This can be done in two ways: either directly in the **manifold of positive definite matrices** using Riemannian machine learning methods or in the **tangent space**, where traditional (Euclidean) machine learning methods apply
-(i.e., linear discriminant analysis, support-vector machine,
+(*i.e.*, linear discriminant analysis, support-vector machine,
 logistic regression, random forest, etc.).
 
-![Figure 1](assets/Fig 1.png)
+![Figure 1](assets/Fig1.jpg)
 **Figure 1**
 
 *Schematic representation of Riemannian classification. Data points are either natively positive definite matrices or are converted into this form. The classification can be performed by Riemannian methods in the manifold of positive definite matrices or by Euclidean methods after projection onto the tangent space.*
@@ -51,14 +51,15 @@ For an introduction to Riemannian geometry and an overview of mathematical tools
 
 ### Code units
 
-**PosDefManifoldML** is light-weight. It includes four code units (.jl files):
+**PosDefManifoldML** is light-weight. It includes five code units (.jl files):
 
 | Unit   | Description |
 |:----------|:----------|
-| [MainModule](@ref) | Main module, declaring internal constants and types |
-| [mdm.jl](@ref) | Unit implementing the MDM( Minimum Distance to Mean) model |
-| [train_test.jl](@ref) | Unit allowing fitting models, getting a prediction from there and performing cross-validations|
-| [tools.jl](@ref) | Unit containing tools useful for classification |
+| [MainModule](@ref) | Main module, declaring constants and types |
+| [tools.jl](@ref) | Unit containing general tools useful for machine learning and internal functions|
+| [mdm.jl](@ref) | Unit implementing the MDM( Minimum Distance to Mean) machine learning model |
+| [enlr.jl](@ref) | Unit implementing the ENLR( Elastic Net Logistic Regression) model, including the LASSO and RIDGE LR |
+| [cv.jl](@ref)| Unit implementing cross-validation procedures |
 
 
 ## 🎓
@@ -83,6 +84,17 @@ Brain-Computer Interfaces, 4(3), 155-174.
 M. Congedo, A. Barachant, E. Kharati Koopaei (2017b) [Fixed Point Algorithms for Estimating Power Means of Positive Definite Matrices](https://bit.ly/2HKEcGk),
 IEEE Transactions on Signal Processing, 65(9), 2211-2220.
 
+**Resources on GLMNet**
+
+[webinar by Trevor Hastie](https://www.youtube.com/watch?v=BU2gjoLPfDc&feature=youtu.be)
+
+[Glmnet vignette](https://web.stanford.edu/~hastie/Papers/Glmnet_Vignette.pdf)
+
+[Glmnet in R, documentation](https://cran.r-project.org/web/packages/glmnet/glmnet.pdf)
+
+[Julia wrapper for GLMNet](https://github.com/JuliaStats/GLMNet.jl)
+
+[A more advanced wrapper for GLMNet](https://github.com/linxihui/GLMNet.jl)
 
 ## Contents
 
@@ -91,8 +103,9 @@ Pages = [       "index.md",
 								"tutorials.md",
                 "MainModule.md",
                 "mdm.md",
-                "train_test.md",
-                "tools.md",
+                "enlr.md",
+								"cv.md",
+								"tools.md",
 		]
 Depth = 1
 ```

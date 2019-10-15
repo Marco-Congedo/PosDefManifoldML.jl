@@ -1,10 +1,10 @@
 #   Unit "mdm.jl" of the PosDefManifoldML Package for Julia language
-#   v 0.0.1 - last update 28th of September 2019
+#   v 0.2.0 - last update 11th of October 2019
 #
 #   MIT License
 #   Copyright (c) 2019,
 #   Saloni Jain, Indian Institute of Technology, Kharagpur, India
-#   Marco Congedo, CNRS, Grenobe, France:
+#   Marco Congedo, CNRS, Grenoble, France:
 #   https://sites.google.com/site/marcocongedo/home
 
 # ? CONTENTS :
@@ -13,104 +13,265 @@
 
 
 """
-```
-(1)
-mutable struct MDM <: MLmodel
-    metric :: Metric
-    means
-    function MDM(metric :: Metric; means = nothing)
-        new(metric, means)
-    end
-end
+Abstract type for MDM (Minimum Distance to Mean)
+machine learning models
+"""
+abstract type MDMmodel<:PDmodel end
 
-(2)
-function MDM(metric :: Metric,
-             𝐏Tr    :: ℍVector,
-             yTr    :: IntVector;
-           w  :: Vector = [],
-           ✓w :: Bool  = true)
+
+"""
 ```
-(1)
+mutable struct MDM <: MDMmodel
+    metric  :: Metric = Fisher;
+    featDim :: Int
+    means   :: ℍVector
+end
+```
 
 MDM machine learning models are incapsulated in this
-mutable structure. MDM models have two fields: `.metric` and `.means`.
+mutable structure. MDM models have three fields:
+`.metric`, `.featDim` and `.means`.
 
 The field `metric`, of type
 [Metric](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#Metric::Enumerated-type-1),
 is to be specified by the user.
-It is the metric that will be adopted to compute the class means.
+It is the metric that will be adopted to compute the class means
+and the distances to the mean.
+
+The field `featDim` is the dimension of the manifold in which
+the model acts. This is given by ``n(n+1)/2``, where ``n``
+is the dimension of the PD matrices.
+This field is not to be specified by the user, instead,
+it is computed when the MDM model is fit using the [`fit`](@ref)
+function and is accessible only thereafter.
 
 The field `means` is an
 [ℍVector](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1)
 holding the class means, i.e., one mean for each class.
 This field is not to be specified by the user, instead,
-the means are computed when the MDM model is fit using the [`fit!`](@ref)
-function and are accessible only thereafter.
-
-(2)
-
-Constructor creating and fitting an MDM model with training data `𝐏Tr`, an
-[ℍVector](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1)
-type, and labels `yTr`, an [IntVector](@ref) type.
-The class means are computed according to the chosen `metric`,
-of type
-[Metric](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#Metric::Enumerated-type-1).
-See [here](https://marco-congedo.github.io/PosDefManifold.jl/dev/introToRiemannianGeometry/#metrics-1)
-for details on the metrics. Supported metrics are listed in the section
-about creating an [MDM model](@ref).
-
-Optional keyword arguments `w` and `✓w` are passed to the [`fit!`](@ref)
-function and have the same meaning therein.
+the means are computed when the MDM model is fit using the
+[`fit`](@ref) function and are accessible only thereafter.
 
 **Examples**:
 ```
 using PosDefManifoldML
 
-# (1)
-# generate some data
-𝐏Tr, 𝐏Te, yTr, yTe = gen2ClassData(10, 30, 40, 60, 80)
+# create an empty model
+m = MDM(Fisher)
 
-# create a model
-model = MDM(Fisher)
-
-# fit the model with training data
-fit!(model, 𝐏Tr, yTr)
-
-# (2) equivalently and faster:
-𝐏Tr, 𝐏Te, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80)
-model = MDM(Fisher, 𝐏Tr, yTr)
+# since the Fisher metric is the default metric,
+# this is equivalent to
+m = MDM()
 ```
 
+Note that in general you need to invoke these constructors
+only when an MDM model is needed as an argument to a function,
+otherwise you can more simply create and fit an MDM model using
+the [`fit`](@ref) function.
+
 """
-mutable struct MDM <: MLmodel
+mutable struct MDM <: MDMmodel
     metric :: Metric
+    featDim
     means
-    function MDM(metric :: Metric; means = nothing)
-        new(metric, means)
+    function MDM(metric :: Metric = Fisher;
+              featDim = nothing,
+              means   = nothing)
+        new(metric, featDim, means)
     end
 end
 
 
-MDM(metric :: Metric,
-    𝐏Tr      :: ℍVector,
-    yTr      :: IntVector;
-  w  :: Vector = [],
-  ✓w :: Bool  = true) = fit!(MDM(metric), 𝐏Tr, yTr; w=w, ✓w=✓w)
+
+"""
+```
+function fit(model :: MDMmodel,
+              𝐏Tr   :: ℍVector,
+              yTr   :: Vector;
+           w       :: Vector = [],
+           ✓w      :: Bool  = true,
+           verbose :: Bool  = true,
+           ⏩      :: Bool  = true)
+```
+
+Fit an [`MDM`](@ref) machine learning model,
+with training data `𝐏Tr`, of type
+[ℍVector](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1),
+and corresponding labels `yTr`, of type [IntVector](@ref).
+Return the fitted model.
+
+Fitting an MDM model involves only computing a mean of all the
+matrices in each class. Those class means are computed according
+to the metric specified by the [`MDM`](@ref) constructor.
+
+See method (3) of the [mean](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#Statistics.mean)
+function for the meaning of the optional keyword arguments
+`w`, `✓w` and `⏩`, to which they are passed.
+Keep in mind that here the weights should sum up to 1
+separatedly for each class, which is what is ensured if `✓w` is true.
+
+If `verbose` is true (default), information is printed in the REPL.
+This option is included to allow repeated calls to this function
+without crowding the REPL.
+
+**See**: [notation & nomenclature](@ref), [the ℍVector type](@ref).
+
+**See also**: [`predict`](@ref), [`cvAcc`](@ref).
+
+**Examples**
+```
+using PosDefManifoldML
+
+# generate some data
+PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.25)
+
+# create and fit a model:
+m=fit(MDM(Fisher), PTr, yTr)
+```
+
+"""
+function fit(model :: MDMmodel,
+              𝐏Tr   :: ℍVector,
+              yTr   :: Vector;
+           w       :: Vector = [],
+           ✓w      :: Bool   = true,
+           verbose :: Bool = true,
+           ⏩      :: Bool   = true)
+
+    ⌚=now()
+
+    k=length(𝐏Tr) # number of matrices
+    !_check_fit(model, k, length(yTr), length(w), "MDM") && return
+
+    verbose && println(greyFont, "Computing class means...")
+    z = length(unique(yTr)) # number of classes
+    𝐏 = [ℍ[] for i = 1:z]
+    W = [Float64[] for i = 1:z]
+    for j = 1:k push!(𝐏[yTr[j]], 𝐏Tr[j]) end
+    if !isempty(w) for j = 1:k push!(W[yTr[j]], w[j]) end end
+
+    model.means = ℍVector([getMean(model.metric, 𝐏[i], w = W[i], ✓w=✓w, ⏩=⏩) for i=1:z])
+    model.featDim =_triNum(𝐏Tr[1])
+
+    verbose && println("Done in ", defaultFont, now()-⌚,".")
+    return model
+end
+
 
 
 
 """
 ```
-function getMeans(metric :: Metric,
-                  𝐏      :: ℍVector;
-              tol :: Real = 0.,
+function predict(model  :: MDMmodel,
+                 𝐏Te    :: ℍVector,
+                 what   :: Symbol = :labels;
+               verbose :: Bool = true,
+               ⏩     :: Bool = true)
+```
+Given an [`MDM`](@ref) `model` trained (fitted) on ``z`` classes
+and a testing set of ``k`` positive definite matrices `𝐏Te` of type
+[ℍVector](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1),
+
+if `what` is `:labels` or `:l` (default), return
+the predicted **class labels** for each matrix in `𝐏Te` as an [IntVector](@ref);
+
+if `what` is `:probabilities` or `:p`, return the predicted **probabilities**
+for each matrix in `𝐏Te` to belong to a all classes, as a ``k``-vector
+of ``z`` vectors holding reals in ``[0, 1]`` (probabilities).
+
+if `what` is `:f` or `:functions`, return the **output function** of the model
+(see below).
+
+If `verbose` is true (default), information is printed in the REPL.
+This option is included to allow repeated calls to this function
+without crowding the REPL.
+
+It f `⏩` is true (default), the computation of distances is multi-threaded.
+
+For MDM models, the predicted class 'label' of an unlabeled matrix is the
+serial number of the class whose mean is the closest to the matrix
+(minimum distance to mean).
+The labels are '1' for class 1, '2' for class 2, etc.
+
+The 'probabilities' are obtained passing to a
+[softmax function](https://en.wikipedia.org/wiki/Softmax_function)
+minus the squared distances of each unlabeled matrix to all class means.
+
+The ratio of these squared distance to their geometric mean gives
+the 'functions'.
+
+**See**: [notation & nomenclature](@ref), [the ℍVector type](@ref).
+
+**See also**: [`fit`](@ref), [`cvAcc`](@ref), [`predictErr`](@ref).
+
+**Examples**
+```
+using PosDefManifoldML
+
+# generate some data
+PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80)
+
+# craete and fit an MDM model
+m=fit(MDM(Fisher), PTr, yTr)
+
+# predict labels
+yPred=predict(m, PTe, :l)
+
+# prediction error
+predErr=predictErr(yTe, yPred)
+
+# predict probabilities
+predict(m, PTe, :p)
+
+# output functions
+predict(m, PTe, :f)
+
+```
+"""
+function predict(model  :: MDMmodel,
+                 𝐏Te    :: ℍVector,
+                 what   :: Symbol = :labels;
+            verbose :: Bool = true,
+            ⏩     :: Bool = true)
+
+    if !_whatIsValid(what, "predict (MDM model)") return end
+    ⌚=now()
+
+    verbose && println(greyFont, "Computing distances...")
+    D = getDistances(model.metric, model.means, 𝐏Te, ⏩=⏩)
+    (z, k)=size(D)
+
+    verbose && println("Predicting...")
+    if     what == :functions || what == :f
+           gmeans=[PosDefManifold.mean(Fisher, D[:, j]) for j = 1:k]
+           func(j::Int)=[D[i, j]/gmeans[j] for i=1:z]
+           🃏 = [func(j) for j = 1:k]
+    elseif what == :labels || what == :l
+           🃏 = [findmin(D[:,j])[2] for j = 1:k]
+    elseif what == :probabilities || what == :p
+           🃏 = [softmax(-D[:,j]) for j = 1:k]
+    end
+
+    verbose && println("Done in ", defaultFont, now()-⌚,".")
+    verbose && println(titleFont, "\nPredicted ",_what2Str(what),":", defaultFont)
+    return 🃏
+end
+
+
+
+
+"""
+```
+function getMean(metric :: Metric,
+                 𝐏      :: ℍVector;
+              tol :: Real   = 0.,
               w   :: Vector = [],
-              ✓w :: Bool   = true,
-              ⏩ :: Bool   = true)
+              ✓w :: Bool    = true,
+              ⏩ :: Bool    = true)
 ```
 
 Typically, you will not need this function as it is called by the
-[`fit!`](@ref) function.
+[`fit`](@ref) function.
 
 Given a `metric` of type
 [Metric](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#Metric::Enumerated-type-1),
@@ -134,8 +295,8 @@ The returned mean is flagged by Julia as an Hermitian matrix
 (see [LinearAlgebra](https://docs.julialang.org/en/v1/stdlib/LinearAlgebra/)).
 
 """
-function getMeans(metric :: Metric,
-                  𝐏      :: ℍVector;
+function getMean(metric :: Metric,
+                 𝐏      :: ℍVector;
               tol :: Real = 0.,
               w   :: Vector = [],
               ✓w :: Bool   = true,
@@ -149,12 +310,12 @@ function getMeans(metric :: Metric,
                 G, iter, convergence = ld0Mean(𝐏; w=w, ✓w=✓w, ⏩=⏩)
     elseif  metric == Wasserstein
                 G, iter, convergence = wasMean(𝐏; w=w, ✓w=✓w, ⏩=⏩)
-    else    G = mean(metric, 𝐏, w=w, ✓w=✓w, ⏩=⏩)
+    else        G = mean(metric, 𝐏, w=w, ✓w=✓w, ⏩=⏩)
     end
 
     if metric ∈ (Fisher, logdet0, Wasserstein) && convergence > tolerance
         tolerance == 0. ? toltype="defualt" : toltype="chosen"
-        @error 📌*", getMeans function: the iterative algorithm for computing
+        @error 📌*", getMean function: the iterative algorithm for computing
         the means did not converge using the "*toltype*" tolerance.
         Check your data and try an higher tolerance (with the `tol`=... argument)."
     else
@@ -214,95 +375,25 @@ function getDistances(metric :: Metric,
 end
 
 
-"""
-```
-function CV_mdm(metric :: Metric,
-                𝐏Tr    :: ℍVector,
-                yTr    :: IntVector,
-                nCV    :: Int;
-            scoring   :: Symbol = :b,
-            confusion :: Bool   = false,
-            shuffle   :: Bool   = false)
-```
-
-Typically, you will not need this function as it is called by the
-[`CVscore`](@ref) function.
-
-This function return the same thing and has the same arguments
-as the [`CVscore`](@ref) function, with the exception of the first argument,
-that here is a `metric` of type
-[Metric](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#Metric::Enumerated-type-1).
-
-"""
-function CV_mdm(metric :: Metric,
-                𝐏Tr    :: ℍVector,
-                yTr    :: IntVector,
-                nCV    :: Int;
-            scoring   :: Symbol = :b,
-            confusion :: Bool   = false,
-            shuffle   :: Bool   = false)
-
-    println(titleFont, "\nPerforming $(nCV) cross-validations...", defaultFont)
-
-    z  = length(unique(yTr))            # number of classes
-    𝐐  = [ℍ[] for i=1:z]              # data arranged by class
-    for j=1:length(𝐏Tr) push!(𝐐[yTr[j]], 𝐏Tr[j]) end
-
-    # pre-allocated memory
-    𝐐Tr = [ℍ[] for i=1:z]              # for training data arranged by classes
-    𝐐Te = [ℍ[] for i=1:z]              # for testing data arranged by classes
-    CM  = [zeros(Int64, z, z) for k=1:nCV] # for CV confusion matrices
-    s   = Vector{Float64}(undef, nCV)    # for CV accuracy scores
-    pl  = [Int[] for i=1:z]             # for CV predicted labels
-    indTr = [[[]] for i=1:z]            # for CV indeces for training sets
-    indTe = [[[]] for i=1:z]            # for CV indeces for test sets
-
-    # get indeces for all CVs (separated for each class)
-    @threads for i=1:z indTr[i], indTe[i] = CVsetup(length(𝐐[i]), nCV; shuffle=shuffle) end
-
-    for k=1:nCV
-        print(rand(dice), " ") # print a random dice in the REPL
-
-        # get data for current cross-validation (CV)
-        @threads for i=1:z 𝐐Tr[i] = [𝐐[i][j] for j ∈ indTr[i][k]] end
-        @threads for i=1:z 𝐐Te[i] = [𝐐[i][j] for j ∈ indTe[i][k]] end
-
-        model=MDM(metric)  # Note: getMeans is multi-threaded
-        model.means = ℍVector([getMeans(metric, 𝐐Tr[Int(l)]) for l=1:z])
-
-        # predict labels and compute confusion matrix for current CV
-        for i=1:z
-            pl[i] = predict(model, 𝐐Te[i], :l, verbose=false)
-            for s=1:length(pl[i]) CM[k][i, pl[i][s]] += 1 end
-        end
-
-        # compute balanced accuracy or accuracy for current CV
-        scoring == :b ? s[k] = 𝚺(CM[k][i, i]/𝚺(CM[k][i, :]) for i=1:z) / z :
-                        s[k] = 𝚺(CM[k][i, i] for i=1:z)/ 𝚺(CM[k])
-    end
-    println(" Done.\n")
-    avg=mean(s);                        avgStr=round(avg; digits=3)
-    sd=stdm(s, avg);                    sdStr=round(sd; digits=3)
-    scoringStr = scoring == :b ? "balanced accuracy" : "accuracy"
-    println(titleFont, "mean(sd) ", scoringStr,": ", defaultFont, avgStr,"(", sdStr,")", defaultFont, "\n")
-    return confusion ? (s, CM) : s
-end
-
 
 # ++++++++++++++++++++  Show override  +++++++++++++++++++ # (REPL output)
 function Base.show(io::IO, ::MIME{Symbol("text/plain")}, M::MDM)
     if M.means==nothing
         println(io, greyFont, "\n↯ MDM machine learning model")
-        println(io, "⭒  ⭒    ⭒       ⭒          ⭒", defaultFont)
-        println(io, "The model has been created. \nNext, fit it with data.")
+        println(io, "⭒  ⭒    ⭒       ⭒          ⭒")
+        println(io, ".metric :", string(M.metric), defaultFont)
+        println(io, "Non-fitted model")
     else
         println(io, titleFont, "\n↯ MDM machine learning model")
         println(io, separatorFont, "⭒  ⭒    ⭒       ⭒          ⭒", defaultFont)
         nc=length(M.means)
         n=size(M.means[1], 1)
-        println(io, "features: PD matrices of size $(n)x$(n)")
+        println(io, "type    : PD Manifold model")
+        println(io, "features: $(n)x$(n) Hermitian matrices")
         println(io, "classes : $(nc)")
-        println(io, "fields  : (accessed by . notation)")
-        println(io, "  .metric, .means.")
+        println(io, "fields  : ")
+        println(io, separatorFont," .metric  ", defaultFont, string(M.metric))
+        println(io, separatorFont," .featDim ", defaultFont, "$(M.featDim) ($(n)*($(n)+1)/2)")
+        println(io, separatorFont," .means   ", defaultFont, "vector of $(nc) Hermitian matrices")
     end
 end
