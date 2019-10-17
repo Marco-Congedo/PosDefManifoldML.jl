@@ -1,5 +1,5 @@
 #   Unit "mdm.jl" of the PosDefManifoldML Package for Julia language
-#   v 0.2.0 - last update 11th of October 2019
+#   v 0.2.1 - last update 18th of October 2019
 #
 #   MIT License
 #   Copyright (c) 2019,
@@ -153,7 +153,7 @@ function fit(model :: MDMmodel,
     model.means = ℍVector([getMean(model.metric, 𝐏[i], w = W[i], ✓w=✓w, ⏩=⏩) for i=1:z])
     model.featDim =_triNum(𝐏Tr[1])
 
-    verbose && println("Done in ", defaultFont, now()-⌚,".")
+    verbose && println(defaultFont, "Done in ", now()-⌚,".")
     return model
 end
 
@@ -173,14 +173,23 @@ and a testing set of ``k`` positive definite matrices `𝐏Te` of type
 [ℍVector](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1),
 
 if `what` is `:labels` or `:l` (default), return
-the predicted **class labels** for each matrix in `𝐏Te` as an [IntVector](@ref);
+the predicted **class labels** for each matrix in `𝐏Te`,
+as an [IntVector](@ref).
+For MDM models, the predicted class 'label' of an unlabeled matrix is the
+serial number of the class whose mean is the closest to the matrix
+(minimum distance to mean).
+The labels are '1' for class 1, '2' for class 2, etc;
 
 if `what` is `:probabilities` or `:p`, return the predicted **probabilities**
 for each matrix in `𝐏Te` to belong to a all classes, as a ``k``-vector
 of ``z`` vectors holding reals in ``[0, 1]`` (probabilities).
+The 'probabilities' are obtained passing to a
+[softmax function](https://en.wikipedia.org/wiki/Softmax_function)
+minus the squared distances of each unlabeled matrix to all class means;
 
-if `what` is `:f` or `:functions`, return the **output function** of the model
-(see below).
+if `what` is `:f` or `:functions`, return the **output function** of the model.
+The ratio of the squared distance to all classes to
+their geometric mean gives the 'functions'.
 
 If `verbose` is true (default), information is printed in the REPL.
 This option is included to allow repeated calls to this function
@@ -188,17 +197,6 @@ without crowding the REPL.
 
 It f `⏩` is true (default), the computation of distances is multi-threaded.
 
-For MDM models, the predicted class 'label' of an unlabeled matrix is the
-serial number of the class whose mean is the closest to the matrix
-(minimum distance to mean).
-The labels are '1' for class 1, '2' for class 2, etc.
-
-The 'probabilities' are obtained passing to a
-[softmax function](https://en.wikipedia.org/wiki/Softmax_function)
-minus the squared distances of each unlabeled matrix to all class means.
-
-The ratio of these squared distance to their geometric mean gives
-the 'functions'.
 
 **See**: [notation & nomenclature](@ref), [the ℍVector type](@ref).
 
@@ -252,7 +250,7 @@ function predict(model  :: MDMmodel,
            🃏 = [softmax(-D[:,j]) for j = 1:k]
     end
 
-    verbose && println("Done in ", defaultFont, now()-⌚,".")
+    verbose && println(defaultFont, "Done in ", now()-⌚,".")
     verbose && println(titleFont, "\nPredicted ",_what2Str(what),":", defaultFont)
     return 🃏
 end

@@ -4,7 +4,7 @@
 
 **1)** a machine learning (ML) model is first **fit** (trained), then it can be used to **predict** the *labels* of testing data or the *probability* of the data to belong to each class. The raw prediction function of the models is available as well.
 
-**2)** a **k-fold cross-validation** procedure allows to estimate the **accuracy** of ML models and compare them.
+**2)** a **k-fold cross-validation** procedure allows to estimate directly the **accuracy** of ML models and compare them.
 
 What *PosDefManifoldML* does for you is to allow an homogeneous syntax to run these two pipelines for all implemented ML models,
 it does not matter if they act directly on the manifold of positive definite matrices or on the tangent space.
@@ -86,10 +86,10 @@ The balanced accuracy estimated by a *k-fold cross-validation* is obtained
 such as
 
 ```
-cv = cvAcc(MDM(Fisher), PTe, yTe, 5)
+cv = cvAcc(MDM(Fisher), PTe, yTe, 10)
 ```
 
-where `5` is the number of folds. This implies that
+where `10` is the number of folds. This implies that
 at each cross-validation, 1/5th of the matrices is used for training and the remaining for testing.
 
 Struct `cv` has been created and therein you have access to average accuracy and confusion matrix as well as accuracies
@@ -106,9 +106,8 @@ See [`CVacc`](@ref) for details on the fields of cross-validation objects.
 
 The **elastic net logistic regression (ENLR)** classifier is an example of classifier acting on the tangent space. It has two hyperparameters. The **alpha** hyperparameter is supplied by the user and allows to trade off
 between a pure **ridge** LR model (``α=0``) and a pure **lasso** LR model
-(``α=1``). Given an alpha value, the model is fitted with a number of values for the **lambda**
-hyperparameter. Thus, differently from the previous example, an additional
-step for tuning this hyperparameter is necessary. Also, keep in mind
+(``α=1``). Given an alpha value, the model is fitted with a number of values for the **lambda** (regularization)
+hyperparameter. Thus, differently from the previous example, tuning this hyperparameter is necessary. Also, keep in mind
 that the [`fit`](@ref) and [`predict`](@ref) methods for ENLR models accept optional keyword arguments that are specific to this model.
 
 **get data**
@@ -123,10 +122,29 @@ PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80)
 
 **Craete and fit ENLR models**
 
-By default, a lasso model is fitted:
+By default, a lasso model is fitted and the best value
+for the lambda hyperparameter is found:
 
 ```
 m1 = fit(ENLR(Fisher), PTr, yTr)
+```
+
+The optimal value of lambda for this training data is
+
+```
+m1.best.lambda
+```
+
+The intercept and beta terms are retrived by
+```
+m1.best.a0
+m1.best.betas
+```
+
+The number of non-zero beta coefficients can be found for example by
+
+```
+length(unique(m1.best.betas))-1
 ```
 
 In order to fit a ridge LR model:
@@ -135,42 +153,41 @@ In order to fit a ridge LR model:
 m2 = fit(ENLR(Fisher), PTr, yTr; alpha=0)
 ```
 
-Values of `alpha` in range ``(0, 1)`` fit an elastic net LR model. In the following we also request to standardize predictors:
+Values of `alpha` in range ``(0, 1)`` fit instead an elastic net LR model. In the following we also request to standardize predictors:
 
 ```
 m3 = fit(ENLR(Fisher), PTr, yTr; alpha=0.9, standardize=true)
 ```
 
+In order to find the regularization path we use the
+`fitType` keyword argument:
+
+m1 = fit(ENLR(Fisher), PTr, yTr; fitType=:path)
+
+The values of lambda along the path are given by
+
+```
+m1.path.lambda
+```
+
+In order to find the best value of the lambda hyperparameter and the regularization path at once:
+
+m1 = fit(ENLR(Fisher), PTr, yTr; fitType=:all)
+
 See the documentation of the [`fit`](@ref) ENLR method for
 details on all available optional arguments.
 
 
-#### Select the best model for ENLR
-
-```
-cvLambda!(m1, PTr, yTr)
-```
-
-Note that the [`fit`](@ref) and [`cvLambda!`](@ref) function
-have populated the `m1` struct. For example, try the following:
-
-```
-m1.path
-m1.path.lambda
-m1.bestModel
-m1.bestλ
-m1.cvλ.meanloss
-m1.cvλ.stdloss
-m1.cvλ.lambda
-```
-
 **Classify data (predict)**
 
-Since we have invoked the `cvLambda!` function to find
-the best model by cross-validation, by default this model is used for prediction:
+For prediction, we can request to use the best model (optimal lambda) to use a specific model of the regularization path or all of them.
+Note that with the last call both the `.best` and `.path` field of the `m1` structure have been created.
+
+By default, prediction is obtained from the best model
+and we request to predict the labels:
 
 ```
-yPred=predict(m1, PTe, :l)
+yPred=predict(m1, PTe)
 
 # prediction error in percent
 predictErr(yPred, yTe)
@@ -182,23 +199,17 @@ predict(m1, PTe, :p)
 predict(m1, PTe, :f)
 ```
 
-The following two lines are equivalent
+In order to request the predition of labels for all models
+in the regularization path:
 
 ```
-yPred=predict(m1, PTe, :l)
-yPred=predict(m1, PTe, :l, m1.bestModel)
+yPred=predict(m1, PTe, :l, :path, 0)
 ```
 
-We can also request the predition for all models, as
+while for a specific model in the path:
 
 ```
-yPred=predict(m1, PTe, :l, 0)
-```
-
-or of a specific model in the path, as
-
-```
-yPred=predict(m1, PTe, :l, 10)
+yPred=predict(m1, PTe, :l, :path, 10)
 ```
 
 ### ENLR Pipeline 2. (cross-validation)
@@ -206,5 +217,14 @@ yPred=predict(m1, PTe, :l, 10)
 The balanced accuracy estimated by a *k-fold cross-validation* is obtained with the exact same syntax for all models, thus, for example:
 
 ```
-cv = cvAcc(ENLR(Fisher), PTe, yTe, 5)
+cv = cvAcc(ENLR(Fisher), PTe, yTe, 10)
 ```
+
+In order to perform another 10-fold cross-validation
+arranging the training data differently in the folds:
+
+```
+cv = cvAcc(ENLR(Fisher), PTe, yTe, 10; shuffle=true)
+```
+
+This last command can be invoked repeatedly. 

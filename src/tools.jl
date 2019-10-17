@@ -1,5 +1,5 @@
 #   Unit "tools.jl" of the PosDefManifoldML Package for Julia language
-#   v 0.2.0 - last update 11th of October 2019
+#   v 0.2.1 - last update 18th of October 2019
 #
 #   MIT License
 #   Copyright (c) 2019,
@@ -327,19 +327,36 @@ _modelStr(model::MLmodel) =
   end
 
 
-_whichIsValid(path::GLMNetPath, which::Union{Int, Nothing}, funcName::String) =
-	if which≠nothing && (which<0 || which>length(path.lambda))
-		@error 📌*", "*funcName*" function: the `which` integer argument must be comprised between 0 (all models) and $l."
+_fitTypeIsValid(what::Symbol, funcName::String) =
+	if what ∉ (:best, :path)
+		@error 📌*", "*funcName*" function: the `fitType` symbol is not supported."
 		return false
 	else
 		return true
 	end
 
-_whichENLRStr(model::ENLRmodel, which::Union{Int, Nothing}) =
-	if      which == 0
-		return "with all ENLR models"
-	elseif  which == model.bestModel
-		return "with best ENLR model (λ=$(round(model.path.lambda[which]; digits=5)))"
-	else
-		return "with ENLR model $(which) (λ=$(round(model.path.lambda[which]; digits=5)))"
+function _ENLRonWhichIsValid(model::ENLRmodel, fitType::Symbol,
+                    onWhich::Int, funcName::String)
+    if fitType==:best
+		return true
+	else #fitType==:path
+		i=length(model.path.lambda)
+		if !(0<=onWhich<=i)
+			@error 📌*", "*funcName*" function: the `onWhich` integer argument must be comprised between 0 (all models) and $i."
+			return false
+		else
+			return true
+		end
+	end
+end
+
+_ENLRonWhichStr(model::ENLRmodel, fitType::Symbol, onWhich::Int) =
+	if 		fitType==:best
+		return "from the best "*_modelStr(model)*" model (λ=$(round(model.best.lambda[1]; digits=5)))"
+	else # :path
+		if onWhich == 0
+			return "from all "*_modelStr(model)*" models"
+		else
+			return "from "*_modelStr(model)*" model $(onWhich) (λ=$(round(model.path.lambda[onWhich]; digits=5)))"
+		end
 	end

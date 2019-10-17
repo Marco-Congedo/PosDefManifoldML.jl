@@ -1,5 +1,5 @@
 #   Unit "cv.jl" of the PosDefManifoldML Package for Julia language
-#   v 0.2.0 - last update 11th of October 2019
+#   v 0.2.1 - last update 18th of October 2019
 #
 #   MIT License
 #   Copyright (c) 2019,
@@ -102,6 +102,16 @@ Balanced accuracy is to be preferred for unbalanced classes.
 In any case, for balanced classes the balanced accuracy reduces to the
 regular accuracy, therefore there is no point in using regular accuracy.
 
+For the meaning of the `shuffle` argument (false by default),
+see function [`cvSetup`](@ref), to which this argument is passed.
+
+If `verbose` is true (default), information is printed in the REPL.
+This option is included to allow repeated calls to this function
+without crowding the REPL.
+
+`fitArgs` are optional keyword arguents that are passed to the
+[`fit`](@ref) function within this function.
+
 **See**: [notation & nomenclature](@ref), [the ℍVector type](@ref).
 
 **See also**: [`fit`](@ref), [`predict`](@ref).
@@ -175,8 +185,6 @@ function cvAcc(model   :: MLmodel,
         elseif  model isa ENLRmodel
                 # create and fit ENLR model
                 m[k]=fit(ENLR(model.metric), 𝐐Tr[k], zTr[k]; verbose=false, ⏩=false, fitArgs...)
-                # find out the best model by nested cross-validation
-                cvLambda!(m[k], 𝐐Tr[k], zTr[k]; verbose=false, ⏩=false)
         end
 
         # predict labels and compute confusion matrix for current CV
