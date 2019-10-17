@@ -1,5 +1,5 @@
 #   Unit "simulations.jl" of the PosDefManifoldML Package for Julia language
-#   v 0.2.0 - last update 28th of September 2019
+#   v 0.2.1 - last update 18th of October 2019
 #
 #   MIT License
 #   Copyright (c) 2019,
@@ -61,7 +61,6 @@ export
     # from enlr.jl
     ENLRmodel,
     ENLR,
-    cvLambda!,
 
     # from cv.jl
     CVacc,
