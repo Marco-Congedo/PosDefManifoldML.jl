@@ -70,7 +70,6 @@ and the projection on the tangent space are multi-threaded.
 Multi-threading is automatically disabled if the number of threads
 Julia is instructed to use is ``<2`` or ``<3k``.
 
-
 **Examples**:
 ```
 using PosDefManifoldML
