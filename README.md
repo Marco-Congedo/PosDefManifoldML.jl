@@ -38,47 +38,47 @@ PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80)
 
 # # # ML IN THE PD MANIFOLD # # #
 
+# (1)
 # craete and fit (train) a Riemannian Minimum Distance to Mean (MDM) model:
 model=fit(MDM(), PTr, yTr)
-
+#
 # predict labels (classify the testing set):
 yPred=predict(model, PTe, :l)
-
+#
 # prediction error in percent
 predictErr(yTe, yPred)
-
+#
 # predict probabilities for the matrices in `PTe` of belonging to each class:
 predict(model, PTe, :p)
 
+# (2)
 # average accuracy obtained by 10-fold cross-validation:
 cv = cvAcc(MDM(), PTr, yTr, 10)
 
 # # # ML IN THE TANGENT SPACE # # #
 
-# craete and fit (train) LASSO Logistic Regression models:
+# (1)
+# craete and fit (train) LASSO Logistic Regression models
+# finding the best model by cross-validation:
 model=fit(ENLR(), PTr, yTr)
-
-# estimate the best lambda parameter for the LASSO models
-cvLambda!(model, PTr, yTr)
-
+#
 # predict labels (classify the testing set) using the 'best' model:
 yPred=predict(model, PTe, :l)
-
+#
 # prediction error in percent
 predictErr(yTe, yPred)
-
+#
 # ...
-
+#
 # create and fit a RIDGE logistic regression model
 model=fit(ENLR(), PTr, yTr; alpha=0)
-
+#
 #...
-
+#
 # create and fit an ELASTIC NET logistic regression model with alpha = 0.5
 model=fit(ENLR(), PTr, yTr; alpha=0.5)
 
-#...
-
+# (2)
 # average accuracy obtained by 10-fold cross-validation:
 cv = cvAcc(ENLR(Fisher, alpha=0.5), PTr, yTr, 10)
 
