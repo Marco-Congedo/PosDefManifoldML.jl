@@ -37,5 +37,4 @@ begin
   cd(docsDir)
   clipboard("""include("make.jl")""")
   @info("\nhit CTRL+V+ENTER on the REPL for building the documentation.");
-
 end

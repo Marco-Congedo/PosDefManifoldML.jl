@@ -87,7 +87,6 @@ X, G⁻½ = tsMap(Fisher, Pset)
 # providing the inverse square root of the matrices in Pset, e.g.,
 X1 = tsMap(Fisher, ℍVector(Pset[1:2]); meanISR =G⁻½)
 X2 = tsMap(Fisher, ℍVector(Pset[3:4]); meanISR =G⁻½)
-
 ```
 
 **See**: [the ℍVector type](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1).
