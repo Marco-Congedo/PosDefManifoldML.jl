@@ -536,7 +536,7 @@ which is the raw output of the ENLR model.
 If `fitType` = `:best` (default), the best model that has been found by
 cross-validation is used for prediction.
 
-If `fitType` = `:path` (default),
+If `fitType` = `:path`,
 
 - if `onWhich` is a valid serial number for a model in the `model.path`, this model is used for prediction,
 
