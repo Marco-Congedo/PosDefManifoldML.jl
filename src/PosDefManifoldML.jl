@@ -13,6 +13,8 @@
 #   This pachwge works in conjunction with the PosDefManifold package
 #   https://github.com/Marco-Congedo/PosDefManifold.jl
 
+ __precompile__()
+
 module  PosDefManifoldML
 
 using LinearAlgebra, Base.Threads, Random, Statistics, PosDefManifold

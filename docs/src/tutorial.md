@@ -86,7 +86,7 @@ The balanced accuracy estimated by a *k-fold cross-validation* is obtained
 such as
 
 ```
-cv = cvAcc(MDM(Fisher), PTe, yTe, 10)
+cv = cvAcc(MDM(Fisher), PTr, yTr, 10)
 ```
 
 where `10` is the number of folds. This implies that
@@ -217,14 +217,14 @@ yPred=predict(m1, PTe, :l, :path, 10)
 The balanced accuracy estimated by a *k-fold cross-validation* is obtained with the exact same syntax for all models, thus, for example:
 
 ```
-cv = cvAcc(ENLR(Fisher), PTe, yTe, 10)
+cv = cvAcc(ENLR(Fisher), PTr, yTr, 10)
 ```
 
 In order to perform another 10-fold cross-validation
 arranging the training data differently in the folds:
 
 ```
-cv = cvAcc(ENLR(Fisher), PTe, yTe, 10; shuffle=true)
+cv = cvAcc(ENLR(Fisher), PTr, yTr, 10; shuffle=true)
 ```
 
-This last command can be invoked repeatedly. 
+This last command can be invoked repeatedly.
