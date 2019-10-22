@@ -51,7 +51,7 @@ predictErr(yTe, yPred)
 predict(model, PTe, :p)
 
 # average accuracy obtained by 10-fold cross-validation:
-cv = cvAcc(MDM(), PTe, yTe, 10)
+cv = cvAcc(MDM(), PTr, yTr, 10)
 
 # # # ML IN THE TANGENT SPACE # # #
 
@@ -80,7 +80,7 @@ model=fit(ENLR(), PTr, yTr; alpha=0.5)
 #...
 
 # average accuracy obtained by 10-fold cross-validation:
-cv = cvAcc(ENLR(Fisher, alpha=0.5), PTe, yTe, 10)
+cv = cvAcc(ENLR(Fisher, alpha=0.5), PTr, yTr, 10)
 
 ```
 
