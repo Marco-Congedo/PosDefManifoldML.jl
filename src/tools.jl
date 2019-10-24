@@ -274,7 +274,7 @@ non-negative numbers. The returned weight vector will
 nonetheless sum up to 1.
 
 **Examples**
-
+```
 # generate some data; the classes are unbalanced
 PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.1)
 
@@ -319,7 +319,7 @@ julia> tsWeights(y, classWeights=[1, 4])
  0.05
  0.4
  0.4
-
+```
 """
 function tsWeights(y::Vector{Int}; classWeights=[])
 
