@@ -3,7 +3,6 @@
 #
 #   MIT License
 #   Copyright (c) 2019,
-#   Saloni Jain, Indian Institute of Technology, Kharagpur, India
 #   Marco Congedo, CNRS, Grenoble, France:
 #   https://sites.google.com/site/marcocongedo/home
 
@@ -59,7 +58,8 @@ If optional keyword argument `transpose` is true (default),
 ``X`` holds the ``k`` vectorized tangent vectors in its rows,
 otherwise they are arranged in its columns.
 The dimension of the rows in the former case and of the columns is the latter
-case is ``n(n+1)/2``, where ``n`` is the size of the matrices in `𝐏`
+case is ``n(n+1)÷2`` (integer division), where ``n`` is the size of the
+matrices in `𝐏`
 (see [vecP](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.vecP)
 ).
 
@@ -85,8 +85,8 @@ X, G⁻½ = tsMap(Fisher, Pset)
 
 # If repeated calls have to be done, faster computations are obtained
 # providing the inverse square root of the matrices in Pset, e.g.,
-X1 = tsMap(Fisher, ℍVector(Pset[1:2]); meanISR =G⁻½)
-X2 = tsMap(Fisher, ℍVector(Pset[3:4]); meanISR =G⁻½)
+X1 = tsMap(Fisher, ℍVector(Pset[1:2]); meanISR = G⁻½)
+X2 = tsMap(Fisher, ℍVector(Pset[3:4]); meanISR = G⁻½)
 ```
 
 **See**: [the ℍVector type](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1).
@@ -244,6 +244,106 @@ function predictErr(yTrue::IntVector, yPred::IntVector;
 	end
 end
 
+
+
+
+"""
+```
+function tsWeights(y::Vector{Int}; classWeights=[])
+```
+
+Given an [IntVector](@ref) of labels `y`, return a vector
+of weights summing up to 1 such that the overall
+weight is the same for all classes (balancing).
+This is useful for unbalanced classes, whereas giving
+equal weights to all observations would actually overweight
+the larger classes and downweight the smaller classes.
+
+Class labels for ``n`` classes must be the first ``n`` natural numbers,
+that is, `1` for class 1, `2` for class 2, etc.
+The labels in `y` can be provided in any order.
+
+if a vector of ``n`` weights is specified as optional
+keyword argument `classWeights`, the overall weights
+for each class will be first balanced (see here above),
+then weighted by the `classWeights`.
+This allow user-defined control of weighting independently
+from the number of observations in each class.
+The weights in `classWeights` can be any integer or real
+non-negative numbers. The returned weight vector will
+nonetheless sum up to 1.
+
+**Examples**
+
+# generate some data; the classes are unbalanced
+PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.1)
+
+# Fit an ENLR lasso model and find the best model by cross-validation
+# balancing the weights for tangent space mapping
+m=fit(ENLR(), PTr, yTr; w=tsWeights(yTr))
+
+# This is how it works:
+
+julia> y=[1, 1, 1, 1, 2, 2]
+6-element Array{Int64,1}:
+ 1
+ 1
+ 1
+ 1
+ 2
+ 2
+
+We want the four observations of class 1 to count as much
+as the two observations of class 2.
+
+julia> tsWeights(y)
+6-element Array{Float64,1}:
+ 0.125
+ 0.125
+ 0.125
+ 0.125
+ 0.25
+ 0.25
+
+i.e., 0.125*4 = 1.25*2
+and all weights sum up to 1
+
+Now, suppose we want to give to class 2 a weight
+four times bigger as compared to class 1:
+
+julia> tsWeights(y, classWeights=[1, 4])
+6-element Array{Float64,1}:
+ 0.05
+ 0.05
+ 0.05
+ 0.05
+ 0.4
+ 0.4
+
+"""
+function tsWeights(y::Vector{Int}; classWeights=[])
+
+    Nobs = length(y)
+    Nclass=length(unique(y))
+    Nobsxclass=[count(i->(i==j), y) for j=1:Nclass]
+    NobsxclassProp=[n/Nobs for n in Nobsxclass]
+    minProportion=minimum(Nobsxclass)/Nobs
+    minProportion<(1/(Nclass*10)) && @warn "the smallest class contains les then 10% of the observation as compared to a balances design" minProportion
+
+    w=[1/(Nclass*Nobsxclass[l]) for l ∈ y]
+
+    if !isempty(classWeights)
+       if length(classWeights)≠Nclass
+          @warn "the number of elements in argument ClassWeights is different from the number of unique classes in label vector y. Class weights have not been applied" length(classWeights)
+       else
+         for i=1:length(w) w[i]*= classWeights[y[i]] end
+         w./=sum(w)
+       end
+    end
+
+    return w
+end
+
 # -------------------------------------------------------- #
 # INTERNAL FUNCTIONS #
 
@@ -278,21 +378,28 @@ function _GetThreadsAndLinRanges(n::Int, callingFunction::String)
 	return threads, ranges
 end
 
-function _check_fit(model     :: MLmodel,
-              		 dim𝐏Tr    :: Int,
-              		 dimyTr    :: Int,
-           			 dimw  	   :: Int,
-					 modelName :: String)
+function _check_fit(model       :: MLmodel,
+              		 dim𝐏Tr     :: Int,
+              		 dimyTr     :: Int,
+           			 dimw  	    :: Int,
+					 dimWeights :: Int,
+					 modelName  :: String)
     errMsg1="the number of data do not match the number of labels."
-	errMsg2="the numberof data do not match the number of weights."
+	errMsg2="the number of data do not match the number of elements in `w`."
+	errMsg3="the number of data do not match the number of elements in `weights`."
     if dim𝐏Tr ≠ dimyTr
 		@error 📌*", fit function, model "*modelName*": "*errMsg1
 		return false
 	end
-    if dimw ≠ 0 && dimw ≠ k
+    if dimw ≠ 0 && dimw ≠ dimyTr
 		@error 📌*", fit function, model "*modelName*": "*errMsg2
 		return false
 	end
+	if dimWeights ≠ 0 && dimWeights ≠ dimyTr
+		@error 📌*", fit function, model "*modelName*": "*errMsg3
+		return false
+	end
+
 	return true
 end
 
@@ -312,6 +419,9 @@ _what2Str(what::Symbol) =
 	end
 
 _triNum(P::ℍ) = ( size(P, 1) * (size(P, 1)+1) ) ÷ 2
+
+_getDim(𝐏Tr :: Union{ℍVector, Matrix{Float64}}) =
+	𝐏Tr isa ℍVector ? _triNum(𝐏Tr[1]) : size(𝐏Tr, 2)
 
 _modelStr(model::MLmodel) =
   if 		model isa MDMmodel

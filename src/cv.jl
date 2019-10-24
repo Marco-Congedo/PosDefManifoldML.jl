@@ -155,15 +155,15 @@ function cvAcc(model   :: MLmodel,
     for j=1:length(𝐏Tr) push!(𝐐[yTr[j]], 𝐏Tr[j]) end
 
     # pre-allocated memory
-    𝐐Tr = [ℍ[] for k=1:nCV]               # training data in 1 vector per CV
-    zTr = [Int64[] for k=1:nCV]            # training labels in 1 vector per CV
-    𝐐Te = [[ℍ[] for i=1:z] for k=1:nCV]   # testing data arranged by classes per CV
-    CM  = [zeros(Int64, z, z) for k=1:nCV] # CV confusion matrices
-    s   = Vector{Float64}(undef, nCV)      # CV accuracy scores
-    pl  = [[Int[] for i=1:z] for k=1:nCV]  # CV predicted labels
-    indTr = [[[]] for i=1:z]               # CV indeces for training sets
-    indTe = [[[]] for i=1:z]               # CV indeces for test sets
-    m=Vector{MLmodel}(undef, nCV)          # ML models
+    𝐐Tr = [ℍ[] for k=1:nCV]                 # training data in 1 vector per CV
+    zTr = [Int64[] for k=1:nCV]              # training labels in 1 vector per CV
+    𝐐Te = [[ℍ[] for i=1:z] for k=1:nCV]     # testing data arranged by classes per CV
+    CM  = [zeros(Float64, z, z) for k=1:nCV] # CV confusion matrices
+    s   = Vector{Float64}(undef, nCV)        # CV accuracy scores
+    pl  = [[Int[] for i=1:z] for k=1:nCV]    # CV predicted labels
+    indTr = [[[]] for i=1:z]                 # CV indeces for training sets
+    indTe = [[[]] for i=1:z]                 # CV indeces for test sets
+    m=Vector{MLmodel}(undef, nCV)            # ML models
 
     # get indeces for all CVs (separated for each class)
     @threads for i=1:z indTr[i], indTe[i] = cvSetup(length(𝐐[i]), nCV; shuffle=shuffle) end
@@ -191,12 +191,15 @@ function cvAcc(model   :: MLmodel,
         # NB: make sure the default predict method is adequate for all models
         for i=1:z
             @inbounds pl[k][i]=predict(m[k], 𝐐Te[k][i], :l; verbose=false, ⏩=false)
-            for s=1:length(pl[k][i]) @inbounds CM[k][i, pl[k][i][s]] += 1 end
+            for s=1:length(pl[k][i]) @inbounds CM[k][i, pl[k][i][s]] += 1. end
         end
 
         # compute balanced accuracy or accuracy for current CV
+        sumCM=sum(CM[k])
         scoring == :b ? s[k] = 𝚺(CM[k][i, i]/𝚺(CM[k][i, :]) for i=1:z) / z :
-                        s[k] = 𝚺(CM[k][i, i] for i=1:z)/ 𝚺(CM[k])
+                        s[k] = 𝚺(CM[k][i, i] for i=1:z)/ sumCM
+
+        CM[k]/=sumCM # confusion matrices in percent
 
         # activate this when @spawn is used (Julia v0.3)
         # print(rand(dice), " ") # print a random dice in the REPL

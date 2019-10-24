@@ -71,6 +71,7 @@ export
 
     # from tools.jl
     tsMap,
+    tsWeights,
     gen2ClassData,
     predictErr
 

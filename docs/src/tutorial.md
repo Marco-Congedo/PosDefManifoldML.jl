@@ -45,14 +45,6 @@ m = fit(MDM(Fisher), PTr, yTr)
 where `Fisher` is the usual choice of a [Metric](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#Metric::Enumerated-type-1)
 as declared in the parent package [PosDefManifold](https://marco-congedo.github.io/PosDefManifold.jl/dev/).
 
-The model can also be just created by
-
-```
-empty_model = MDM(Fisher)
-```
-
-and fitted later using the [`fit`](@ref) function.
-
 
 **Predict (classify data)**
 
