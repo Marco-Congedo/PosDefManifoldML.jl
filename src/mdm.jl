@@ -104,11 +104,15 @@ Fitting an MDM model involves only computing a mean of all the
 matrices in each class. Those class means are computed according
 to the metric specified by the [`MDM`](@ref) constructor.
 
+Optional keyword argument `w` is a vector of non-negative weights
+associated with the matrices in `𝐏Tr`.
+This weights are used to compute the mean for each class.
 See method (3) of the [mean](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#Statistics.mean)
-function for the meaning of the optional keyword arguments
+function for the meaning of the arguments
 `w`, `✓w` and `⏩`, to which they are passed.
 Keep in mind that here the weights should sum up to 1
-separatedly for each class, which is what is ensured if `✓w` is true.
+separatedly for each class, which is what is ensured by this
+function if `✓w` is true.
 
 If `verbose` is true (default), information is printed in the REPL.
 This option is included to allow repeated calls to this function
@@ -141,7 +145,7 @@ function fit(model :: MDMmodel,
     ⌚=now()
 
     k=length(𝐏Tr) # number of matrices
-    !_check_fit(model, k, length(yTr), length(w), "MDM") && return
+    !_check_fit(model, k, length(yTr), length(w), 0, "MDM") && return
 
     verbose && println(greyFont, "Computing class means...")
     z = length(unique(yTr)) # number of classes
