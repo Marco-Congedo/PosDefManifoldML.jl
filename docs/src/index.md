@@ -44,9 +44,8 @@ logistic regression, random forest, etc.).
 
 *Schematic representation of Riemannian classification. Data points are either natively positive definite matrices or are converted into this form. The classification can be performed by Riemannian methods in the manifold of positive definite matrices or by Euclidean methods after projection onto the tangent space.*
 
-Currently implemented are the Riemannian **minimum-distance to mean** (MDM) classifier (acting on the manifold) and the
-**elastic-net logistic regression** (ENLR) classifier (acting
-on the tangent space), including the **lasso** and **ridge** logistic regression.
+Currently implemented are the Riemannian **minimum-distance to mean** (MDM) classifier, acting on the manifold, and the
+**elastic-net logistic regression** (ENLR) classifier, including the pure **lasso** and pure **ridge** logistic regression, acting on the tangent space.
 
 For a formal introduction to the manifold of positive definite matrices
 the reader is referred to the monography written by Bhatia(2007)[🎓](@ref).
