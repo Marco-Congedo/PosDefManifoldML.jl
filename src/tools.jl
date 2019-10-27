@@ -255,9 +255,12 @@ function tsWeights(y::Vector{Int}; classWeights=[])
 Given an [IntVector](@ref) of labels `y`, return a vector
 of weights summing up to 1 such that the overall
 weight is the same for all classes (balancing).
-This is useful for unbalanced classes, whereas giving
-equal weights to all observations would actually overweight
-the larger classes and downweight the smaller classes.
+This is useful for machine learning models in the tangent
+space with unbalanced classes for computing the mean,
+that is, the base point to map PD matrices onto the tangent space.
+For this mapping, giving equal weights to all observations
+actually overweights the larger classes
+and downweight the smaller classes.
 
 Class labels for ``n`` classes must be the first ``n`` natural numbers,
 that is, `1` for class 1, `2` for class 2, etc.
@@ -273,6 +276,11 @@ The weights in `classWeights` can be any integer or real
 non-negative numbers. The returned weight vector will
 nonetheless sum up to 1.
 
+When you invoke the [`fit`](@ref) function for tangent space models
+you don't actually need this function, as you can invoke it
+implicitly passing symbol `:balanced` (or just `:b`) or a tuple
+with the class weights as optional keyword argument `w`.
+
 **Examples**
 ```
 # generate some data; the classes are unbalanced
@@ -281,6 +289,17 @@ PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.1)
 # Fit an ENLR lasso model and find the best model by cross-validation
 # balancing the weights for tangent space mapping
 m=fit(ENLR(), PTr, yTr; w=tsWeights(yTr))
+
+# A simpler syntax is
+m=fit(ENLR(), PTr, yTr; w=:balanced)
+
+# to balance the weights and then give overall weight 0.5 to class 1
+# and 1.5 to class 2:
+m=fit(ENLR(), PTr, yTr; w=(0.5, 1.5))
+
+# which is equivalent to
+m=fit(ENLR(), PTr, yTr; w=tsWeights(yTr; classWeights=(0.5, 1.5)))
+
 
 # This is how it works:
 
@@ -319,6 +338,9 @@ julia> tsWeights(y, classWeights=[1, 4])
  0.05
  0.4
  0.4
+
+and, again, all weights sum up to 1
+
 ```
 """
 function tsWeights(y::Vector{Int}; classWeights=[])
@@ -378,6 +400,7 @@ function _GetThreadsAndLinRanges(n::Int, callingFunction::String)
 	return threads, ranges
 end
 
+# checks for `fit function`
 function _check_fit(model       :: MLmodel,
               		 dim𝐏Tr     :: Int,
               		 dimyTr     :: Int,
@@ -403,7 +426,7 @@ function _check_fit(model       :: MLmodel,
 	return true
 end
 
-
+# check for argument `what` in `predict` function
 _whatIsValid(what::Symbol, funcName::String) =
 	if what ∉ (:l, :labels, :p, :probabilities, :f, :functions)
 		@error 📌*", "*funcName*" function: the `what` symbol is not supported."
@@ -412,20 +435,22 @@ _whatIsValid(what::Symbol, funcName::String) =
 		return true
 	end
 
+# translate the `what` argument to a string to give feedback
 _what2Str(what::Symbol) =
 	if      what ∈(:f, :fucntions)      return "functions"
 	elseif  what ∈(:l, :labels)         return "labels"
 	elseif  what ∈(:p, :probabilities)  return "prob. of belonging to each class"
 	end
 
-# (n*n+1)/2
+# return the dimension of the manifold of PD matrices: (n*n+1)/2
 _triNum(P::ℍ) = ( size(P, 1) * (size(P, 1)+1) ) ÷ 2
 
-# dimenasion of the manifold if 𝐏Tr is an ℍVector,
+# dimension of the manifold if 𝐏Tr is an ℍVector,
 # dimension of the tagent(feature) vectors if 𝐏Tr is a Matrix
 _getDim(𝐏Tr :: Union{ℍVector, Matrix{Float64}}) =
 	𝐏Tr isa ℍVector ? _triNum(𝐏Tr[1]) : size(𝐏Tr, 2)
 
+# convert a ML model in a atring to release information
 _modelStr(model::MLmodel) =
   if 		model isa MDMmodel
 	  		return "MDM"
@@ -437,7 +462,7 @@ _modelStr(model::MLmodel) =
   else      return "unknown"
   end
 
-
+# check on `what` argument of `fit` function
 _fitTypeIsValid(what::Symbol, funcName::String) =
 	if what ∉ (:best, :path)
 		@error 📌*", "*funcName*" function: the `fitType` symbol must be `:best` or `:path`."
@@ -446,7 +471,7 @@ _fitTypeIsValid(what::Symbol, funcName::String) =
 		return true
 	end
 
-
+# check on `onWhich` argument of `predict` function
 function _ENLRonWhichIsValid(model::ENLRmodel, fitType::Symbol,
                     onWhich::Int, funcName::String)
     if fitType==:best
@@ -462,6 +487,8 @@ function _ENLRonWhichIsValid(model::ENLRmodel, fitType::Symbol,
 	end
 end
 
+# return a string to give information on what model is used to predict
+# based on arguments `fitType` and `onWhich`
 _ENLRonWhichStr(model::ENLRmodel, fitType::Symbol, onWhich::Int) =
 	if 		fitType==:best
 		return "from the best "*_modelStr(model)*" model (λ=$(round(model.best.lambda[1]; digits=5)))"
@@ -474,7 +501,7 @@ _ENLRonWhichStr(model::ENLRmodel, fitType::Symbol, onWhich::Int) =
 	end
 
 
-# create a copy of otional keyword arguments `args`
+# create a copy of optional keyword arguments `args`
 # removing all arguments with names listed in tuple `remove`.
 # Examples:
 # fitArgs✔=_rmArgs((:meanISR, :fitType); fitArgs...)
@@ -489,7 +516,7 @@ end
 
 # given optional keyword arguments `args`,
 # return the value of the argument with key `key`.
-# If the argument does not exist return `nothing`
+# If the argument does not exist, return `nothing`
 function _getArgValue(key::Symbol; args...)
    D = Dict(args)
    return haskey(D, key) ? D[key] : nothing
