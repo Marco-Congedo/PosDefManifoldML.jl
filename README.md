@@ -10,7 +10,7 @@
 
 ![](/docs/src/assets/Fig1.jpg)
 
-For the moment being, **PosDefManifoldML** implements the Riemannian **Minimum Distance to Mean (MDM)** classifier, which operates directly in **P** and the **elastic net logistic regression** classifier in the tangent space, including the pure **Ridge** and pure **Lasso** logistic regresison model. 
+For the moment being, **PosDefManifoldML** implements the Riemannian **Minimum Distance to Mean (MDM)** classifier, which operates directly in **P** and the **elastic net logistic regression** classifier in the tangent space, including the pure **Ridge** and pure **Lasso** logistic regresison model. The latter model can be used also for traditional (Euclidean) feature vectors, making of this package also a nice interface to the binomial family of generalized linear models implemented in *GLMNet.jl*.  
 
 ## Installation
 
@@ -36,7 +36,7 @@ using PosDefManifoldML
 # The testing set will have 60 matrices for class 1 and 80 for class 2.
 PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80)
 
-# # # ML IN THE PD MANIFOLD # # #
+# # # MACHINE LEARNING IN THE PD MANIFOLD # # #
 
 # (1)
 # craete and fit (train) a Riemannian Minimum Distance to Mean (MDM) model:
@@ -53,9 +53,9 @@ predict(model, PTe, :p)
 
 # (2)
 # average accuracy obtained by 10-fold cross-validation:
-cv = cvAcc(MDM(), PTr, yTr, 10)
+cv = cvAcc(MDM(), PTr, yTr)
 
-# # # ML IN THE TANGENT SPACE # # #
+# # # MACHINE LEARNING IN THE TANGENT SPACE # # #
 
 # (1)
 # craete and fit (train) LASSO Logistic Regression models
@@ -80,7 +80,7 @@ model=fit(ENLR(), PTr, yTr; alpha=0.5)
 
 # (2)
 # average accuracy obtained by 10-fold cross-validation:
-cv = cvAcc(ENLR(Fisher, alpha=0.5), PTr, yTr, 10)
+cv = cvAcc(ENLR(), PTr, yTr; alpha=0.5)
 
 ```
 
