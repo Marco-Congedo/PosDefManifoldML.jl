@@ -44,10 +44,13 @@ logistic regression, random forest, etc.).
 
 *Schematic representation of Riemannian classification. Data points are either natively positive definite matrices or are converted into this form. The classification can be performed by Riemannian methods in the manifold of positive definite matrices or by Euclidean methods after projection onto the tangent space.*
 
+Currently implemented are the Riemannian **minimum-distance to mean** (MDM) classifier, acting on the manifold, and the
+**elastic-net logistic regression** (ENLR) classifier, including the pure **lasso** and pure **ridge** logistic regression, acting on the tangent space.
+
 For a formal introduction to the manifold of positive definite matrices
 the reader is referred to the monography written by Bhatia(2007)[🎓](@ref).
 
-For an introduction to Riemannian geometry and an overview of mathematical tools implemented in the [PostDefManifold](https://marco-congedo.github.io/PosDefManifold.jl/latest/) package, which is heavily used here, see [Intro to Riemannian Geometry](https://marco-congedo.github.io/PosDefManifold.jl/latest/introToRiemannianGeometry/).
+For an introduction to Riemannian geometry and an overview of mathematical tools implemented in the [PostDefManifold](https://marco-congedo.github.io/PosDefManifold.jl/latest/) package, which is used here, see [Intro to Riemannian Geometry](https://marco-congedo.github.io/PosDefManifold.jl/latest/introToRiemannianGeometry/).
 
 ### Code units
 
@@ -56,11 +59,10 @@ For an introduction to Riemannian geometry and an overview of mathematical tools
 | Unit   | Description |
 |:----------|:----------|
 | [MainModule](@ref) | Main module, declaring constants and types |
-| [tools.jl](@ref) | Unit containing general tools useful for machine learning and internal functions|
 | [mdm.jl](@ref) | Unit implementing the MDM( Minimum Distance to Mean) machine learning model |
 | [enlr.jl](@ref) | Unit implementing the ENLR( Elastic Net Logistic Regression) model, including the LASSO and RIDGE LR |
 | [cv.jl](@ref)| Unit implementing cross-validation procedures |
-
+| [tools.jl](@ref) | Unit containing general tools useful for machine learning and internal functions|
 
 ## 🎓
 
