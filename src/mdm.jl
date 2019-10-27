@@ -144,8 +144,10 @@ function fit(model :: MDMmodel,
 
     ⌚=now()
 
+    ℳ=deepcopy(model) # output model
+
     k=length(𝐏Tr) # number of matrices
-    !_check_fit(model, k, length(yTr), length(w), 0, "MDM") && return
+    !_check_fit(ℳ, k, length(yTr), length(w), 0, "MDM") && return
 
     verbose && println(greyFont, "Computing class means...")
     z = length(unique(yTr)) # number of classes
@@ -154,11 +156,11 @@ function fit(model :: MDMmodel,
     for j = 1:k push!(𝐏[yTr[j]], 𝐏Tr[j]) end
     if !isempty(w) for j = 1:k push!(W[yTr[j]], w[j]) end end
 
-    model.means = ℍVector([getMean(model.metric, 𝐏[i], w = W[i], ✓w=✓w, ⏩=⏩) for i=1:z])
-    model.featDim =_triNum(𝐏Tr[1])
+    ℳ.means = ℍVector([getMean(ℳ.metric, 𝐏[i], w = W[i], ✓w=✓w, ⏩=⏩) for i=1:z])
+    ℳ.featDim =_triNum(𝐏Tr[1])
 
     verbose && println(defaultFont, "Done in ", now()-⌚,".")
-    return model
+    return ℳ
 end
 
 

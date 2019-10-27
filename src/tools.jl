@@ -418,8 +418,11 @@ _what2Str(what::Symbol) =
 	elseif  what ∈(:p, :probabilities)  return "prob. of belonging to each class"
 	end
 
+# (n*n+1)/2
 _triNum(P::ℍ) = ( size(P, 1) * (size(P, 1)+1) ) ÷ 2
 
+# dimenasion of the manifold if 𝐏Tr is an ℍVector,
+# dimension of the tagent(feature) vectors if 𝐏Tr is a Matrix
 _getDim(𝐏Tr :: Union{ℍVector, Matrix{Float64}}) =
 	𝐏Tr isa ℍVector ? _triNum(𝐏Tr[1]) : size(𝐏Tr, 2)
 
@@ -429,7 +432,7 @@ _modelStr(model::MLmodel) =
   elseif    model isa ENLRmodel
     		if     model.alpha≈1. return "Lasso logit regression"
     		elseif model.alpha≈0. return "Ridge logit regression"
-    		else                  return "Elastic Net (α=$(round(model.alpha; digits=2))) logit regression"
+    		else                  return "El. Net (α=$(round(model.alpha; digits=2))) log. reg."
 			end
   else      return "unknown"
   end
@@ -437,11 +440,12 @@ _modelStr(model::MLmodel) =
 
 _fitTypeIsValid(what::Symbol, funcName::String) =
 	if what ∉ (:best, :path)
-		@error 📌*", "*funcName*" function: the `fitType` symbol is not supported."
+		@error 📌*", "*funcName*" function: the `fitType` symbol must be `:best` or `:path`."
 		return false
 	else
 		return true
 	end
+
 
 function _ENLRonWhichIsValid(model::ENLRmodel, fitType::Symbol,
                     onWhich::Int, funcName::String)
@@ -468,3 +472,46 @@ _ENLRonWhichStr(model::ENLRmodel, fitType::Symbol, onWhich::Int) =
 			return "from "*_modelStr(model)*" model $(onWhich) (λ=$(round(model.path.lambda[onWhich]; digits=5)))"
 		end
 	end
+
+
+# create a copy of otional keyword arguments `args`
+# removing all arguments with names listed in tuple `remove`.
+# Examples:
+# fitArgs✔=_rmArgs((:meanISR, :fitType); fitArgs...)
+# fitArgs✔=_rmArgs((:meanISR,); fitArgs...) # notice the comma after `meanISR`
+# note: named tuples are immutable, that's why a copy must be created
+function _rmArgs(remove::Tuple; args...)
+	D = Dict(args)
+	for key ∈ remove delete!(D, key) end
+    return Tuple(D)
+end
+
+
+# given optional keyword arguments `args`,
+# return the value of the argument with key `key`.
+# If the argument does not exist return `nothing`
+function _getArgValue(key::Symbol; args...)
+   D = Dict(args)
+   return haskey(D, key) ? D[key] : nothing
+end
+
+# get a valid weigts `w` object and perform check given
+# the user-defined `w` argument. Used in `fit` and `cvAcc` functions.
+function _getWeights(w :: Union{Symbol, Tuple, Vector}, y::IntVector, funcName::String)
+	if 		(w isa Vector && isempty(w)) || w==:uniform || w==:u return []
+	elseif	w isa Vector && !isempty(w)
+		    nObs, length_w = length(y), length(w)
+		    if length_w==nObs return w
+			else @error 📌*", "*funcName*"invalid vector `w`. `w` must contain as many elements as there are observations" length_w nObs
+			end
+	elseif  w==:balanced || w==:b return tsWeights(y)
+	elseif  w isa Tuple
+		    nClasses, length_w = length(unique(y)), length(w)
+			if length_w==nClasses return tsWeights(y; classWeights=collect(w))
+			else @error 📌*", "*funcName*"invalid tuple `w`. `w` must contain as many elements as there are classes" length_w nClasses
+			end
+	else
+			@error 📌*", "*funcName*"invalid argument `w`. `w` must be a vector, an empty vector, a tuple of as many real numbers as classes, or symbol `:balanced`, or symbol `:uniform`"
+			return nothing
+	end
+end
