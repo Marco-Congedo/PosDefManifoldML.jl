@@ -78,11 +78,8 @@ The balanced accuracy estimated by a *k-fold cross-validation* is obtained
 such as
 
 ```
-cv = cvAcc(MDM(Fisher), PTr, yTr, 10)
+cv = cvAcc(MDM(Fisher), PTr, yTr)
 ```
-
-where `10` is the number of folds. This implies that
-at each cross-validation, 1/5th of the matrices is used for training and the remaining for testing.
 
 Struct `cv` has been created and therein you have access to average accuracy and confusion matrix as well as accuracies
 and confusion matrices for all folds. For example,
@@ -118,8 +115,11 @@ By default, a lasso model is fitted and the best value
 for the lambda hyperparameter is found:
 
 ```
-m1 = fit(ENLR(Fisher), PTr, yTr)
+m1 = fit(ENLR(Fisher), PTr, yTr; w=:balanced)
 ```
+
+Notice that since the class are unbaanced, with the `w=:balanced`
+argument (we may as well just use `w=:b`) we have requested to compute a balanced mean for passing into the tangent space.
 
 The optimal value of lambda for this training data is
 
@@ -127,7 +127,7 @@ The optimal value of lambda for this training data is
 m1.best.lambda
 ```
 
-The intercept and beta terms are retrived by
+As in *GLMNet.jl*, the intercept and beta terms are retrived by
 ```
 m1.best.a0
 m1.best.betas
@@ -142,19 +142,19 @@ length(unique(m1.best.betas))-1
 In order to fit a ridge LR model:
 
 ```
-m2 = fit(ENLR(Fisher), PTr, yTr; alpha=0)
+m2 = fit(ENLR(Fisher), PTr, yTr; w=:b, alpha=0)
 ```
 
 Values of `alpha` in range ``(0, 1)`` fit instead an elastic net LR model. In the following we also request to standardize predictors:
 
 ```
-m3 = fit(ENLR(Fisher), PTr, yTr; alpha=0.9, standardize=true)
+m3 = fit(ENLR(Fisher), PTr, yTr; w=:b, alpha=0.9, standardize=true)
 ```
 
 In order to find the regularization path we use the
 `fitType` keyword argument:
 
-m1 = fit(ENLR(Fisher), PTr, yTr; fitType=:path)
+m1 = fit(ENLR(Fisher), PTr, yTr; w=:b, fitType=:path)
 
 The values of lambda along the path are given by
 
@@ -164,7 +164,7 @@ m1.path.lambda
 
 In order to find the best value of the lambda hyperparameter and the regularization path at once:
 
-m1 = fit(ENLR(Fisher), PTr, yTr; fitType=:all)
+m1 = fit(ENLR(Fisher), PTr, yTr; w=:b, fitType=:all)
 
 See the documentation of the [`fit`](@ref) ENLR method for
 details on all available optional arguments.
@@ -206,17 +206,18 @@ yPred=predict(m1, PTe, :l, :path, 10)
 
 ### ENLR Pipeline 2. (cross-validation)
 
-The balanced accuracy estimated by a *k-fold cross-validation* is obtained with the exact same syntax for all models, thus, for example:
+The balanced accuracy estimated by a *k-fold cross-validation* is obtained with the exact same basic syntax for all models, with
+specific optional keyword arguments for different models, for example:
 
 ```
-cv = cvAcc(ENLR(Fisher), PTr, yTr, 10)
+cv = cvAcc(ENLR(Fisher), PTr, yTr; w=:b)
 ```
 
-In order to perform another 10-fold cross-validation
+In order to perform another cross-validation
 arranging the training data differently in the folds:
 
 ```
-cv = cvAcc(ENLR(Fisher), PTr, yTr, 10; shuffle=true)
+cv = cvAcc(ENLR(Fisher), PTr, yTr; w=:b, shuffle=true)
 ```
 
 This last command can be invoked repeatedly.

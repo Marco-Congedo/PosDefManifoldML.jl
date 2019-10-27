@@ -14,14 +14,14 @@
 """
 ```
 struct CVacc
-    cvType  :: String
-    scoring :: Union{String, Nothing}
-    model   :: Union{MLmodel, Nothing}
-    cnfs    :: Union{Vector{Matrix{T}}, Nothing} where T<:Real
-    avgCnf  :: Union{Matrix{T}, Nothing} where T<:Real
-    accs    :: Union{Vector{T}, Nothing} where T<:Real
-    avgAcc  :: Union{Real, Nothing}
-    stdAcc  :: Union{Real, Nothing}
+    cvType    :: String
+    scoring   :: Union{String, Nothing}
+    modelType :: Union{String, Nothing}
+    cnfs      :: Union{Vector{Matrix{T}}, Nothing} where T<:Real
+    avgCnf    :: Union{Matrix{T}, Nothing} where T<:Real
+    accs      :: Union{Vector{T}, Nothing} where T<:Real
+    avgAcc    :: Union{Real, Nothing}
+    stdAcc    :: Union{Real, Nothing}
 end
 ```
 
@@ -35,8 +35,8 @@ Fields:
 This has been passed as argument to [`cvAcc`](@ref).
 Currently *accuracy* and *balanced accuracy* are supported.
 
-`.model` is the machine learning model that has been passed as argument
-to [`cvAcc`](@ref), e.g., an [`MDMmodel`](@ref) or an [`ENLRmodel`](@ref).
+`.modelType` is type of the machine learning used for performing the
+cross-validation, given as a string.
 
 `.cnfs` is a vector of matrices holding the *confusion matrices*
 obtained at each fold of the cross-validation.
@@ -55,14 +55,14 @@ cross-validation.
 
 """
 struct CVacc
-    cvType  :: String
-    scoring :: Union{String, Nothing}
-    model   :: Union{MLmodel, Nothing}
-    cnfs    :: Union{Vector{Matrix{T}}, Nothing} where T<:Real
-    avgCnf  :: Union{Matrix{T}, Nothing} where T<:Real
-    accs    :: Union{Vector{T}, Nothing} where T<:Real
-    avgAcc  :: Union{Real, Nothing}
-    stdAcc  :: Union{Real, Nothing}
+    cvType    :: String
+    scoring   :: Union{String, Nothing}
+    modelType :: Union{String, Nothing}
+    cnfs      :: Union{Vector{Matrix{T}}, Nothing} where T<:Real
+    avgCnf    :: Union{Matrix{T}, Nothing} where T<:Real
+    accs      :: Union{Vector{T}, Nothing} where T<:Real
+    avgAcc    :: Union{Real, Nothing}
+    stdAcc    :: Union{Real, Nothing}
 end
 
 """
@@ -83,24 +83,31 @@ CVacc(s::String)=CVacc(s, nothing, nothing, nothing, nothing, nothing, nothing, 
 ```
 function cvAcc(model   :: MLmodel,
                𝐏Tr     :: ℍVector,
-               yTr     :: IntVector,
-               nCV     :: Int;
+               yTr     :: IntVector;
+           nFolds    :: Int    = min(10, length(yTr)÷3),
            scoring   :: Symbol = :b,
            shuffle   :: Bool   = false,
            verbose   :: Bool   = true,
+           outModels :: Bool   = false,
            fitArgs...)
 ```
 Cross-validation accuracy for a machine learning `model`:
 given an ℍVector `𝐏Tr` holding ``k`` Hermitian matrices,
 an [IntVector](@ref) `yTr` holding the ``k`` labels for these matrices and
-the number of cross-validations `nCV`,
+the number of folds `nFolds`,
 return a [`CVacc`](@ref) structure.
+
+**optional keyword arguments**
+
+`nFolds` by default is set to the minimum between 10 and the number
+of observation ÷ 3 (integer division).
 
 If `scoring`=:b (default) the **balanced accuracy** is computed.
 Any other value will make the function returning the regular **accuracy**.
 Balanced accuracy is to be preferred for unbalanced classes.
-In any case, for balanced classes the balanced accuracy reduces to the
-regular accuracy, therefore there is no point in using regular accuracy.
+For balanced classes the balanced accuracy reduces to the
+regular accuracy, therefore there is no point in using regular accuracy
+if not to avoid a few unnecessary computations when the class are balanced.
 
 For the meaning of the `shuffle` argument (false by default),
 see function [`cvSetup`](@ref), to which this argument is passed.
@@ -109,8 +116,27 @@ If `verbose` is true (default), information is printed in the REPL.
 This option is included to allow repeated calls to this function
 without crowding the REPL.
 
-`fitArgs` are optional keyword arguents that are passed to the
-[`fit`](@ref) function within this function.
+if `outModels``is true return a 2-tuple holding a [`CVacc`](@ref) structure
+and a `nFolds`-vector of the model fitted for each fold,
+otherwise (default), return only a [`CVacc`](@ref) structure.
+
+`fitArgs` are optional keyword arguments that are passed to the
+[`fit`](@ref) function called for each fold of the cross-validation.
+For each machine learning model, all optional keyword arguments of
+their fit method are elegible to be passed here, however,
+the arguments listed in the following table for each model should not be passed.
+Note that if they are passed, they will be disabled:
+
+| MDM/MDMF |   ENLR    |
+|:--------:|:---------:|
+| `verbose`| `verbose` |
+|  `⏩`   | `⏩`      |
+|          | `meanISR` |
+|          | `fitType` |
+|          | `offsets` |
+|          | `lambda`  |
+|          | `folds`   |
+
 
 **See**: [notation & nomenclature](@ref), [the ℍVector type](@ref).
 
@@ -123,96 +149,116 @@ using PosDefManifoldML
 # generate some data
 PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80)
 
-# perform cross-validation using the minimum distance to mean classifier
-cv=cvAcc(MDM(Fisher), PTr, yTr, 10)
+# perform 10-fold cross-validation using the minimum distance to mean classifier
+cv=cvAcc(MDM(Fisher), PTr, yTr)
 
 # ...using the lasso logistic regression classifier
-cv=cvAcc(ENLR(Fisher), PTr, yTr, 10)
+cv=cvAcc(ENLR(Fisher), PTr, yTr)
+
+# perform 8-fold cross-validation instead
+cv=cvAcc(ENLR(Fisher), PTr, yTr; nFolds=8)
 
 # ...using the elastic-net logistic regression (α=0.9) classifier
-cv=cvAcc(ENLR(Fisher), PTr, yTr, 10; alpha=0.9)
+cv=cvAcc(ENLR(Fisher), PTr, yTr; nFolds=8, alpha=0.9)
 
-# perform another cross-validation
-cv=cvAcc(MDM(Fisher), PTr, yTr, 10; shuffle=true)
+# ...and standardizing the predictors
+cv=cvAcc(ENLR(Fisher), PTr, yTr; nFolds=8, alpha=0.9, standardize=true)
 
+# perform another cross-validation shuffling the folds
+cv=cvAcc(MDM(Fisher), PTr, yTr; nFolds=8, shuffle=true)
 
 ```
 """
 function cvAcc(model   :: MLmodel,
                𝐏Tr     :: ℍVector,
-               yTr     :: IntVector,
-               nCV     :: Int;
+               yTr     :: IntVector;
+           nFolds    :: Int    = min(10, length(yTr)÷3),
            scoring   :: Symbol = :b,
            shuffle   :: Bool   = false,
            verbose   :: Bool   = true,
+           outModels :: Bool   = false,
            fitArgs...)
 
     ⌚=now()
-    verbose && println(greyFont, "\nPerforming $(nCV) cross-validations...")
+    verbose && println(greyFont, "\nPerforming $(nFolds)-fold cross-validation...")
 
     z  = length(unique(yTr))            # number of classes
     𝐐  = [ℍ[] for i=1:z]               # data arranged by class
-    for j=1:length(𝐏Tr) push!(𝐐[yTr[j]], 𝐏Tr[j]) end
+    for j=1:length(𝐏Tr) @inbounds push!(𝐐[yTr[j]], 𝐏Tr[j]) end
 
     # pre-allocated memory
-    𝐐Tr = [ℍ[] for k=1:nCV]                 # training data in 1 vector per CV
-    zTr = [Int64[] for k=1:nCV]              # training labels in 1 vector per CV
-    𝐐Te = [[ℍ[] for i=1:z] for k=1:nCV]     # testing data arranged by classes per CV
-    CM  = [zeros(Float64, z, z) for k=1:nCV] # CV confusion matrices
-    s   = Vector{Float64}(undef, nCV)        # CV accuracy scores
-    pl  = [[Int[] for i=1:z] for k=1:nCV]    # CV predicted labels
-    indTr = [[[]] for i=1:z]                 # CV indeces for training sets
-    indTe = [[[]] for i=1:z]                 # CV indeces for test sets
-    m=Vector{MLmodel}(undef, nCV)            # ML models
+    𝐐Tr = [ℍ[] for f=1:nFolds]                 # training data in 1 vector per folds
+    zTr = [Int64[] for f=1:nFolds]              # training labels in 1 vector per fold
+    𝐐Te = [[ℍ[] for i=1:z] for f=1:nFolds]     # testing data arranged by classes per fold
+    CM  = [zeros(Float64, z, z) for f=1:nFolds] # confusion matrices per fold
+    s   = Vector{Float64}(undef, nFolds)        # accuracy scores per fold
+    pl  = [[Int[] for i=1:z] for f=1:nFolds]    # predicted labels per fold
+    indTr = [[[]] for i=1:z]                    # indeces for training sets per fold
+    indTe = [[[]] for i=1:z]                    # indeces for test sets per fold
+    ℳ=Vector{MLmodel}(undef, nFolds)            # ML models
 
     # get indeces for all CVs (separated for each class)
-    @threads for i=1:z indTr[i], indTe[i] = cvSetup(length(𝐐[i]), nCV; shuffle=shuffle) end
+    @threads for i=1:z indTr[i], indTe[i] = cvSetup(length(𝐐[i]), nFolds; shuffle=shuffle) end
 
-    @threads for k=1:nCV
+    if model isa ENLRmodel
+        # make sure the user doesn't fit arguments that skrew up the cv
+        fitArgs✔=_rmArgs((:meanISR, :fitType, :verbose, :⏩,
+                         :offsets, :lambda, :folds); fitArgs...)
+
+        # overwrite the `alpha` value in `model` if the user has passed keyword `alpha`
+        if (α=_getArgValue(:alpha; fitArgs...)) ≠ nothing model.alpha=α end
+    end
+
+    # perform cv @threads
+    for f=1:nFolds
         # get testing data for current cross-validation (CV)
-        for i=1:z @inbounds 𝐐Te[k][i] = [𝐐[i][j] for j ∈ indTe[i][k]] end
+        for i=1:z @inbounds 𝐐Te[f][i] = [𝐐[i][j] for j ∈ indTe[i][f]] end
 
         # get training labels for current cross-validation (CV)
-        for i=1:z, j ∈ indTr[i][k] push!(zTr[k], Int64(i)) end
+        for i=1:z, j ∈ indTr[i][f] push!(zTr[f], Int64(i)) end
 
         # get training data for current cross-validation (CV)
-        for i=1:z, j ∈ indTr[i][k] push!(𝐐Tr[k], 𝐐[i][j]) end
+        for i=1:z, j ∈ indTr[i][f] push!(𝐐Tr[f], 𝐐[i][j]) end
 
+        # fit machine learning model
         if      model isa MDMmodel
-                # create and fit MDM model
-                m[k]=fit(MDM(model.metric), 𝐐Tr[k], zTr[k]; verbose=false, ⏩=false)
+                ℳ[f]=fit(MDM(model.metric), 𝐐Tr[f], zTr[f];
+                         verbose=false, ⏩=false)
 
         elseif  model isa ENLRmodel
-                # create and fit ENLR model
-                m[k]=fit(ENLR(model.metric), 𝐐Tr[k], zTr[k]; verbose=false, ⏩=false, fitArgs...)
+                ℳ[f]=fit(ENLR(model.metric), 𝐐Tr[f], zTr[f];
+                         verbose=false, ⏩=false, fitArgs✔...)
+
+        # elseif...
         end
 
         # predict labels and compute confusion matrix for current CV
-        # NB: make sure the default predict method is adequate for all models
+        # NB: when adding support for another model make sure the default predict method is adequate for all models
         for i=1:z
-            @inbounds pl[k][i]=predict(m[k], 𝐐Te[k][i], :l; verbose=false, ⏩=false)
-            for s=1:length(pl[k][i]) @inbounds CM[k][i, pl[k][i][s]] += 1. end
+            @inbounds pl[f][i]=predict(ℳ[f], 𝐐Te[f][i], :l;
+                                       verbose=false, ⏩=false)
+            for s=1:length(pl[f][i]) @inbounds CM[f][i, pl[f][i][s]] += 1. end
         end
 
         # compute balanced accuracy or accuracy for current CV
-        sumCM=sum(CM[k])
-        scoring == :b ? s[k] = 𝚺(CM[k][i, i]/𝚺(CM[k][i, :]) for i=1:z) / z :
-                        s[k] = 𝚺(CM[k][i, i] for i=1:z)/ sumCM
+        sumCM=sum(CM[f])
+        scoring == :b ? s[f] = 𝚺(CM[f][i, i]/𝚺(CM[f][i, :]) for i=1:z) / z :
+                        s[f] = 𝚺(CM[f][i, i] for i=1:z)/ sumCM
 
-        CM[k]/=sumCM # confusion matrices in percent
+        CM[f]/=sumCM # confusion matrices in percent
 
         # activate this when @spawn is used (Julia v0.3)
         # print(rand(dice), " ") # print a random dice in the REPL
     end
     verbose && println("Done in ", defaultFont, now()-⌚)
 
-    # compute meand and sd (balanced) accuracy
+    # compute mean and sd (balanced) accuracy
     avg=mean(s);
     std=stdm(s, avg);
     scoStr = scoring == :b ? "balanced accuracy" : "accuracy"
 
-    return CVacc("$nCV-fold", scoStr, model, CM, mean(CM), s, avg, std)
-
+    cv=CVacc("$nFolds-fold", scoStr, _modelStr(model), CM, mean(CM), s, avg, std)
+    return outModels ? (cv, ℳ) : cv
 end
 
 
@@ -300,14 +346,14 @@ end
 
 # ++++++++++++++++++++  Show override  +++++++++++++++++++ # (REPL output)
 function Base.show(io::IO, ::MIME{Symbol("text/plain")}, cv::CVacc)
-    println(io, titleFont, "\n◕ Cross-Validation Accuracy")
-    println(io, separatorFont, "⭒  ⭒    ⭒       ⭒         ⭒", defaultFont)
-    println(io, separatorFont, ".cvType  :", defaultFont," $(cv.cvType)")
-    println(io, separatorFont, ".scoring :", defaultFont," $(cv.scoring)")
-    println(io, separatorFont, ".model    ", defaultFont,"(",_modelStr(cv.model),")")
-    println(io, separatorFont, ".cnfs     ", defaultFont,"(confusion mat. per fold)")
-    println(io, separatorFont, ".avgCnf   ", defaultFont,"(average confusion mat. )")
-    println(io, separatorFont, ".accs     ", defaultFont,"(accuracies per fold    )")
-    println(io, separatorFont, ".avgAcc  :", defaultFont," $(round(cv.avgAcc; digits=3)) (average accuracy)")
-    println(io, separatorFont, ".stdAcc  :", defaultFont," $(round(cv.stdAcc; digits=3)) (st. dev accuracy)")
+                            println(io, titleFont, "\n◕ Cross-Validation Accuracy")
+                            println(io, separatorFont, "⭒  ⭒    ⭒       ⭒         ⭒", defaultFont)
+                            println(io, separatorFont, ".cvType   :", defaultFont," $(cv.cvType)")
+    cv.scoring   ≠ nothing && println(io, separatorFont, ".scoring  :", defaultFont," $(cv.scoring)")
+    cv.modelType ≠ nothing && println(io, separatorFont, ".modelType:", defaultFont," $(cv.modelType)")
+    cv.cnfs      ≠ nothing && println(io, separatorFont, ".cnfs      ", defaultFont,"(confusion mat. per fold)")
+    cv.avgCnf    ≠ nothing && println(io, separatorFont, ".avgCnf    ", defaultFont,"(average confusion mat. )")
+    cv.accs      ≠ nothing && println(io, separatorFont, ".accs      ", defaultFont,"(accuracies per fold    )")
+    cv.avgAcc    ≠ nothing && println(io, separatorFont, ".avgAcc   :", defaultFont," $(round(cv.avgAcc; digits=3)) (average accuracy)")
+    cv.stdAcc    ≠ nothing && println(io, separatorFont, ".stdAcc   :", defaultFont," $(round(cv.stdAcc; digits=3)) (st. dev accuracy)")
 end

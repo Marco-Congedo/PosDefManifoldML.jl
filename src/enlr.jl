@@ -191,11 +191,12 @@ end
 function fit(model :: ENLRmodel,
                𝐏Tr :: Union{ℍVector, Matrix{Float64}},
                yTr :: IntVector;
-           w       :: Vector            = [],
+           w       :: Union{Symbol, Tuple, Vector} = [],
            meanISR :: Union{ℍ, Nothing} = nothing,
-           fitType :: Symbol            = :best,
-           verbose :: Bool              = true,
-           ⏩     :: Bool               = true,
+           fitType :: Symbol = :best,
+           verbose :: Bool = true,
+           ⏩     :: Bool = true,
+
            # arguments for `GLMNet.glmnet` function
            alpha            :: Real = model.alpha==nothing ? 1.0 : model.alpha,
            weights          :: Vector{Float64} = ones(Float64, length(yTr)),
@@ -212,8 +213,10 @@ function fit(model :: ENLRmodel,
            tol              :: Real = 1e-7,
            maxit            :: Int = 1000000,
            algorithm        :: Symbol = :newtonraphson,
+
            # selection method
            λSelMeth :: Symbol = :sd1,
+
            # arguments for `GLMNet.glmnetcv` function
            nfolds   :: Int = min(10, div(size(yTr, 1), 3)),
            folds    :: Vector{Int} =
@@ -240,14 +243,30 @@ operation. Once this is done, the elastic net logistic regression is fitted.
 
 The mean is computed according to the `.metric` field
 of the `model`, with optional weights `w`.
-If weights are used, they should be inversely proportional to
-the number of examples for each class, in such a way that each class
-contributes equally to the computation of the mean.
-This can be obtained using the [`tsWeights`](@ref) function.
 The `.metric` field of the `model` is passed to the [`tsMap`](@ref) function.
 By default the metric is the Fisher metric. See the examples
-here below to see how to change metric and obtain balanced weights.
+here below to see how to change metric.
 See [mdm.jl](@ref) for the available metrics.
+
+**Optional keyword arguments**
+
+By default, uniform weights will be given to all observations
+for computing the mean to pass in the tangent space.
+This is equivalent to passing as argument `w=:uniform` (or `w=:u`).
+You can also pass as argument:
+
+- `w=:balanced` (or simply `w=:b`). If the two classes are unbalanced, the weights
+  should be inversely proportional to the number of examples for each class,
+  in such a way that each class contributes equally to the computation of the mean.
+  This is equivalent of passing `w=tsWeights(yTr)`, see the [`tsWeights`](@ref)
+  function for details.
+- `w=v`, where `v` is a user defined vector of non-negative weights for the
+  observations, thus, `v` must contain the same number of elements as `yTr`.
+  For example, `w=[1.0, 1.0, 2.0, 2.0, ...., 1.0]`
+- `w=t`, where `t` is a 2-tuple of real weights, one weight for each class,
+  for example `w=(0.5, 1.5)`.
+  This is equivalent to passing `w=tsWeights(yTr; classWeights=collect(t))`,
+  see the [`tsWeights`](@ref) function for details.
 
 If `meanISR` is passed as argument, the mean is not computed,
 instead this matrix is the inverse square root (ISR) of the mean
@@ -257,7 +276,7 @@ will be written in the `.meanISR` field of the created [`ENLR`](@ref) struct.
 
 This function also allows to fit a model passing as
 training data `𝐏Tr` directly a matrix of feature vectors,
-where each feature vector is a tow of the matrix).
+where each feature vector is a row of the matrix.
 In this case the `metric` of the ENLR model and argument `meanISR` are not used.
 Therefore, the `.meanISR` field of the created [`ENLR`](@ref) struct
 will be set to `nothing`.
@@ -294,12 +313,15 @@ The remaining optional keyword arguments, are
   function for finding the best lambda hyperparamater by cross-validation.
   Those are used only if `fitType` = `:path` or = `:all`.
 
-**Optional Keyword arguments for fitting the model(s)**
+**Optional keyword arguments for fitting the model(s) using GLMNet**
 
 `alpha`: the hyperparameter in ``[0, 1]`` to trade-off
 an elestic-net model. ``α=0`` requests a pure *ridge* model and
 ``α=1`` a pure *lasso* model. This defaults to 1.0,
-which specifies a lasso model.
+which specifies a lasso model, unless the input [`ENLR`](@ref) `model`
+has another value in the `alpha` field, in which case this value
+is used. If argument `alpha` is passed here, it will overwrite
+the `alpha` field of the input `model`.
 
 `weights`: a vector of weights for each matrix (or feature vectors)
 of the same size as `yTr`.
@@ -319,7 +341,7 @@ This defaults to all ones, which weights each predictor equally.
 To specify that a predictor should be unpenalized,
 set the corresponding entry to zero.
 
-`constraints`: an ``n(n+1)/2`` x ``2`` matrix specifying lower bounds
+`constraints`: an ``[n(n+1)/2]`` x ``2`` matrix specifying lower bounds
 (first column) and upper bounds (second column) on each predictor.
 By default, this is [-Inf Inf] for each predictor (each element
 of tangent vectors).
@@ -336,7 +358,8 @@ as a ratio of the value of ``λ`` that gives the null model
 If the number of observations exceeds the number of variables,
 this defaults to 0.0001, otherwise 0.01.
 
-`lambda`: The ``λ`` values to consider. By default, this is determined
+`lambda`: The ``λ`` values to consider for fitting.
+By default, this is determined
 from `nlambda` and `lambda_min_ratio`.
 
 `tol`: Convergence criterion. Defaults to 1e-7.
@@ -403,11 +426,11 @@ m=fit(ENLR(), PTr, yTr; fitType=:all)
 function fit(model :: ENLRmodel,
                𝐏Tr :: Union{ℍVector, Matrix{Float64}},
                yTr :: IntVector;
-           w       :: Vector            = [],
+           w       :: Union{Symbol, Tuple, Vector} = [],
            meanISR :: Union{ℍ, Nothing} = nothing,
-           fitType :: Symbol            = :best,
-           verbose :: Bool              = true,
-           ⏩     :: Bool               = true,
+           fitType :: Symbol = :best,
+           verbose :: Bool = true,
+           ⏩     :: Bool = true,
            # arguments for `GLMNet.glmnet` function
            alpha            :: Real = model.alpha==nothing ? 1.0 : model.alpha,
            weights          :: Vector{Float64} = ones(Float64, length(yTr)),
@@ -435,11 +458,18 @@ function fit(model :: ENLRmodel,
            end,
            parallel ::Bool=false)
 
-    ⌚=now()
+    ⌚=now() # get the time in ms
 
-    ℳ=deepcopy(model) # output model
+    # output model
+    ℳ=deepcopy(model)
 
-    # checks
+    # overwrite the `alpha` value in `ℳ` if the user has passed keyword `alpha`
+    if alpha ≠ ℳ.alpha ℳ.alpha = alpha end
+
+    # check w argument and get weights
+    (w=_getWeights(w, yTr, "fit ("*_modelStr(ℳ)*" model)")) == nothing && return
+
+    # other checks
     𝐏Tr isa ℍVector ? nObs=length(𝐏Tr) : nObs=size(𝐏Tr, 1)
     !_check_fit(ℳ, nObs, length(yTr), length(w), length(weights), "ENLR") && return
 
@@ -456,35 +486,37 @@ function fit(model :: ENLRmodel,
     else X=𝐏Tr
     end
 
-    # convert labels
+    # convert labels in GLMNet format
     y = convert(Matrix{Float64}, [(yTr.==1) (yTr.==2)])
 
     # write some fields in output model struct
-    ℳ.alpha       = alpha
     ℳ.standardize = standardize
     ℳ.intercept   = intercept
     ℳ.featDim     = size(X, 2)
+
+    # collect the argumenst for `glmnet` function excluding the `lambda` argument
+    fitArgs_λ = (alpha            = alpha,
+                 weights          = weights,
+                 standardize      = standardize,
+                 intercept        = intercept,
+                 penalty_factor   = penalty_factor,
+                 constraints      = constraints,
+                 offsets          = offsets,
+                 dfmax            = dfmax,
+                 pmax             = pmax,
+                 nlambda          = nlambda,
+                 lambda_min_ratio = lambda_min_ratio,
+                 tol              = tol,
+                 maxit            = maxit,
+                 algorithm        = algorithm)
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     if fitType ∈(:path, :all)
         # fit the regularization path
         verbose && println("Fitting "*_modelStr(ℳ)*" reg. path...")
         ℳ.path = glmnet(X, y, Binomial();
-                         weights           = weights,
-                         alpha             = alpha,
-                         standardize       = standardize,
-                         intercept         = intercept,
-                         penalty_factor    = penalty_factor,
-                         constraints       = constraints,
-                         offsets           = offsets,
-                         dfmax             = dfmax,
-                         pmax              = pmax,
-                         nlambda           = nlambda,
-                         lambda_min_ratio  = lambda_min_ratio,
-                         lambda            = lambda,
-                         tol               = tol,
-                         maxit             = maxit,
-                         algorithm         = algorithm)
+                         lambda = lambda,
+                         fitArgs_λ...) # glmnet Args but lambda
     end
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -492,25 +524,11 @@ function fit(model :: ENLRmodel,
     if fitType ∈(:best, :all)
         verbose && println("Fitting best "*_modelStr(ℳ)*" model...")
         ℳ.cvλ=glmnetcv(X, y, Binomial();
-                        weights  = weights,
                         nfolds   = nfolds,
                         folds    = folds,
                         parallel = parallel,
-                        # glmnetArgs
-                        alpha             = alpha,
-                        standardize       = standardize,
-                        intercept         = intercept,
-                        penalty_factor    = penalty_factor,
-                        constraints       = constraints,
-                        offsets           = offsets,
-                        dfmax             = dfmax,
-                        pmax              = pmax,
-                        nlambda           = nlambda,
-                        lambda_min_ratio  = lambda_min_ratio,
-                        lambda            = lambda,
-                        tol               = tol,
-                        maxit             = maxit,
-                        algorithm         = algorithm)
+                        lambda   = lambda,
+                        fitArgs_λ...) # glmnet Args but lambda
 
         # Never consider the model with only the intercept (0 degrees of freedom)
         l, i=length(ℳ.cvλ.lambda), max(argmin(ℳ.cvλ.meanloss), 1+intercept)
@@ -522,21 +540,8 @@ function fit(model :: ENLRmodel,
 
         # fit the best model (only for the optimal lambda)
         ℳ.best = glmnet(X, y, Binomial();
-                          weights           = weights,
-                          alpha             = alpha,
-                          standardize       = standardize,
-                          intercept         = intercept,
-                          penalty_factor    = penalty_factor,
-                          constraints       = constraints,
-                          offsets           = offsets,
-                          dfmax             = dfmax,
-                          pmax              = pmax,
-                          nlambda           = nlambda,
-                          lambda_min_ratio  = lambda_min_ratio,
-                          lambda            = [ℳ.cvλ.path.lambda[i]],
-                          tol               = tol,
-                          maxit             = maxit,
-                          algorithm         = algorithm)
+                         lambda  = [ℳ.cvλ.path.lambda[i]],
+                         fitArgs_λ...) # glmnet Args but lambda
     end
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
