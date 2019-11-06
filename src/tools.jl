@@ -109,12 +109,20 @@ function tsMap(metric :: Metric,
 
 	k, n, getMeanISR = dim(𝐏, 1), dim(𝐏, 2), meanISR==nothing
     getMeanISR ? G⁻½ = pow(mean(metric, 𝐏; w=w, ✓w=✓w, ⏩=⏩), -0.5) : G⁻½ = meanISR
+
+	# length of the tangent vectors for the given vecRange
+	if length(vecRange)==n
+		m=Int(n*(n+1)/2)
+	else
+		m=0; for j=vecRange, i=j:n m+=1 end
+	end
+
 	if transpose
-		V = Array{eltype(𝐏[1]), 2}(undef, k, Int(n*(n+1)/2))
+		V = Array{eltype(𝐏[1]), 2}(undef, k, m)
 	    ⏩==true ? (@threads for i = 1:k V[i, :] = vecP(ℍ(log(ℍ(G⁻½ * 𝐏[i] * G⁻½))); range=vecRange) end) :
 	                         (for i = 1:k V[i, :] = vecP(ℍ(log(ℍ(G⁻½ * 𝐏[i] * G⁻½))); range=vecRange) end)
 	else
-		V = Array{eltype(𝐏[1]), 2}(undef, Int(n*(n+1)/2), k)
+		V = Array{eltype(𝐏[1]), 2}(undef, m, k)
 		⏩==true ? (@threads for i = 1:k V[:, i] = vecP(ℍ(log(ℍ(G⁻½ * 𝐏[i] * G⁻½))); range=vecRange) end) :
 	                         (for i = 1:k V[:, i] = vecP(ℍ(log(ℍ(G⁻½ * 𝐏[i] * G⁻½))); range=vecRange) end)
 	end
