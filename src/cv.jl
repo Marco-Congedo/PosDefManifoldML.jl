@@ -87,6 +87,7 @@ function cvAcc(model   :: MLmodel,
            nFolds    :: Int    = min(10, length(yTr)÷3),
            scoring   :: Symbol = :b,
            shuffle   :: Bool   = false,
+           vecRange  :: UnitRange = 𝐏Tr isa ℍVector ? 1:size(𝐏Tr[1], 2) : 1:size(𝐏Tr, 2),
            verbose   :: Bool   = true,
            outModels :: Bool   = false,
            fitArgs...)
@@ -111,6 +112,10 @@ if not to avoid a few unnecessary computations when the class are balanced.
 
 For the meaning of the `shuffle` argument (false by default),
 see function [`cvSetup`](@ref), to which this argument is passed.
+
+Argument `vecRange` has an effect only for machine learning models in the
+tangent space. For its meaning see function [`fit`](@ref) and [`predict`](@ref),
+to which it is passed for each fold.
 
 If `verbose` is true (default), information is printed in the REPL.
 This option is included to allow repeated calls to this function
@@ -175,6 +180,7 @@ function cvAcc(model   :: MLmodel,
            nFolds    :: Int    = min(10, length(yTr)÷3),
            scoring   :: Symbol = :b,
            shuffle   :: Bool   = false,
+           vecRange  :: UnitRange = 𝐏Tr isa ℍVector ? 1:size(𝐏Tr[1], 2) : 1:size(𝐏Tr, 2),
            verbose   :: Bool   = true,
            outModels :: Bool   = false,
            fitArgs...)
@@ -227,18 +233,29 @@ function cvAcc(model   :: MLmodel,
 
         elseif  model isa ENLRmodel
                 ℳ[f]=fit(ENLR(model.metric), 𝐐Tr[f], zTr[f];
-                         verbose=false, ⏩=false, fitArgs✔...)
+                         vecRange=vecRange, verbose=false, ⏩=false, fitArgs✔...)
 
         # elseif...
         end
 
         # predict labels and compute confusion matrix for current CV
-        # NB: when adding support for another model make sure the default predict method is adequate for all models
-        for i=1:z
-            @inbounds pl[f][i]=predict(ℳ[f], 𝐐Te[f][i], :l;
-                                       verbose=false, ⏩=false)
-            for s=1:length(pl[f][i]) @inbounds CM[f][i, pl[f][i][s]] += 1. end
+        # NB: when adding support for another model,one of the two following form should work
+        if      model isa MDMmodel
+                for i=1:z
+                    @inbounds pl[f][i]=predict(ℳ[f], 𝐐Te[f][i], :l;
+                                         verbose=false, ⏩=false)
+                end
+        elseif  model isa ENLRmodel
+                for i=1:z
+                    @inbounds pl[f][i]=predict(ℳ[f], 𝐐Te[f][i], :l;
+                                        vecRange=vecRange, verbose=false, ⏩=false)
+                end
+        # elseif...
         end
+        for i=1:z, s=1:length(pl[f][i])
+            @inbounds CM[f][i, pl[f][i][s]] += 1.
+        end
+
 
         # compute balanced accuracy or accuracy for current CV
         sumCM=sum(CM[f])

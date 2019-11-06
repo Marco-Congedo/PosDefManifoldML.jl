@@ -18,7 +18,8 @@ function tsMap(	metric :: Metric,
 		✓w :: Bool = true,
 		⏩ :: Bool = true,
 		meanISR :: Union{ℍ, Nothing} = nothing,
-		transpose :: Bool = true)
+		transpose :: Bool = true,
+		vecRange  :: UnitRange = 1:size(𝐏[1], 1))
 ```
 
 The [tangent space mapping](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.logMap)
@@ -54,13 +55,18 @@ directly in the formula as the inverse square root (ISR) ``G^{-1/2}``.
 If `meanISR` is not provided, return the 2-tuple ``(X, G^{-1/2})``,
 otherwise return only matrix ``X``.
 
+If an `UnitRange` is provided with the optional keyword argument `vecRange`,
+the vectorization concerns only the columns (or rows) of the matrices `𝐏`
+specified by the range.
+
 If optional keyword argument `transpose` is true (default),
 ``X`` holds the ``k`` vectorized tangent vectors in its rows,
 otherwise they are arranged in its columns.
 The dimension of the rows in the former case and of the columns is the latter
 case is ``n(n+1)÷2`` (integer division), where ``n`` is the size of the
-matrices in `𝐏`
-(see [vecP](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.vecP)
+matrices in `𝐏`, unless a `vecRange` spanning a subset of the columns or rows
+of the matrices in `𝐏` has been provided, in which case the dimension will
+be smaller. (see [vecP](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.vecP)
 ).
 
 if optional keyword argument `⏩` if true (default),
@@ -98,18 +104,19 @@ function tsMap(metric :: Metric,
          ✓w   	   :: Bool   			 = true,
          ⏩   	  :: Bool   		    = true,
 		 meanISR    :: Union{ℍ, Nothing} = nothing,
-		 transpose :: Bool   			 = true)
+		 transpose :: Bool   			 = true,
+		 vecRange  :: UnitRange          = 1:size(𝐏[1], 1))
 
 	k, n, getMeanISR = dim(𝐏, 1), dim(𝐏, 2), meanISR==nothing
     getMeanISR ? G⁻½ = pow(mean(metric, 𝐏; w=w, ✓w=✓w, ⏩=⏩), -0.5) : G⁻½ = meanISR
 	if transpose
 		V = Array{eltype(𝐏[1]), 2}(undef, k, Int(n*(n+1)/2))
-	    ⏩==true ? (@threads for i = 1:k V[i, :] = vecP(ℍ(log(ℍ(G⁻½ * 𝐏[i] * G⁻½)))) end) :
-	                         (for i = 1:k V[i, :] = vecP(ℍ(log(ℍ(G⁻½ * 𝐏[i] * G⁻½)))) end)
+	    ⏩==true ? (@threads for i = 1:k V[i, :] = vecP(ℍ(log(ℍ(G⁻½ * 𝐏[i] * G⁻½))); range=vecRange) end) :
+	                         (for i = 1:k V[i, :] = vecP(ℍ(log(ℍ(G⁻½ * 𝐏[i] * G⁻½))); range=vecRange) end)
 	else
 		V = Array{eltype(𝐏[1]), 2}(undef, Int(n*(n+1)/2), k)
-		⏩==true ? (@threads for i = 1:k V[:, i] = vecP(ℍ(log(ℍ(G⁻½ * 𝐏[i] * G⁻½)))) end) :
-	                         (for i = 1:k V[:, i] = vecP(ℍ(log(ℍ(G⁻½ * 𝐏[i] * G⁻½)))) end)
+		⏩==true ? (@threads for i = 1:k V[:, i] = vecP(ℍ(log(ℍ(G⁻½ * 𝐏[i] * G⁻½))); range=vecRange) end) :
+	                         (for i = 1:k V[:, i] = vecP(ℍ(log(ℍ(G⁻½ * 𝐏[i] * G⁻½))); range=vecRange) end)
 	end
     return getMeanISR ? (V, G⁻½) : V
 end

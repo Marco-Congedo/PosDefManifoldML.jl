@@ -79,7 +79,8 @@ This is given by ``n(n+1)÷2`` (integer division), where ``n``
 is the dimension of the original PD matrices on which the model is applied
 once they are mapped onto the tangent space.
 If feature vectors are used to train the model, `.featDim` is the length
-of these vectors.
+of these vectors. If for fitting the model you have provided an optional
+keyword argument `vecRange`, `.featDim` will be reduced accordingly.
 
 `.path` is an instance of the following `GLMNetPath`
 structure of the
@@ -188,14 +189,15 @@ end
 
 """
 ```
-function fit(model :: ENLRmodel,
-               𝐏Tr :: Union{ℍVector, Matrix{Float64}},
-               yTr :: IntVector;
-           w       :: Union{Symbol, Tuple, Vector} = [],
-           meanISR :: Union{ℍ, Nothing} = nothing,
-           fitType :: Symbol = :best,
-           verbose :: Bool = true,
-           ⏩     :: Bool = true,
+function fit(model  :: ENLRmodel,
+               𝐏Tr  :: Union{ℍVector, Matrix{Float64}},
+               yTr  :: IntVector;
+           w        :: Union{Symbol, Tuple, Vector} = [],
+           meanISR  :: Union{ℍ, Nothing} = nothing,
+           fitType  :: Symbol = :best,
+           vecRange :: UnitRange = 𝐏Tr isa ℍVector ? 1:size(𝐏Tr[1], 2) : 1:size(𝐏Tr, 2),
+           verbose  :: Bool = true,
+           ⏩      :: Bool = true,
 
            # arguments for `GLMNet.glmnet` function
            alpha            :: Real = model.alpha==nothing ? 1.0 : model.alpha,
@@ -295,6 +297,13 @@ is optimal, in the cross-validation sense, for the training data.
 
 If `fitType` = `:all`, both the above fits are performed and all fields
 of the model that will be created will be filled in.
+
+If a `UnitRange` is passed with optional keyword argument `vecRange`,
+then if `𝐏Tr` is a vector of `Hermitian`matrices, the vectorization
+of those matrices once they are projected onto the tangent space
+concerns only the rows (or columns) given in the specified range,
+else if `𝐏Tr` is a matrix of feature vectors in the rows, then
+only the columns of `𝐏Tr` given in the specified range will be used.
 
 If `verbose` is true (default), information is printed in the REPL.
 This option is included to allow repeated calls to this function
@@ -423,14 +432,15 @@ m=fit(ENLR(), PTr, yTr; fitType=:all)
 ```
 
 """
-function fit(model :: ENLRmodel,
-               𝐏Tr :: Union{ℍVector, Matrix{Float64}},
-               yTr :: IntVector;
-           w       :: Union{Symbol, Tuple, Vector} = [],
-           meanISR :: Union{ℍ, Nothing} = nothing,
-           fitType :: Symbol = :best,
-           verbose :: Bool = true,
-           ⏩     :: Bool = true,
+function fit(model  :: ENLRmodel,
+               𝐏Tr  :: Union{ℍVector, Matrix{Float64}},
+               yTr  :: IntVector;
+           w        :: Union{Symbol, Tuple, Vector} = [],
+           meanISR  :: Union{ℍ, Nothing} = nothing,
+           fitType  :: Symbol = :best,
+           vecRange :: UnitRange = 𝐏Tr isa ℍVector ? 1:size(𝐏Tr[1], 2) : 1:size(𝐏Tr, 2),
+           verbose  :: Bool = true,
+           ⏩      :: Bool = true,
            # arguments for `GLMNet.glmnet` function
            alpha            :: Real = model.alpha==nothing ? 1.0 : model.alpha,
            weights          :: Vector{Float64} = ones(Float64, length(yTr)),
@@ -477,13 +487,13 @@ function fit(model :: ENLRmodel,
     if 𝐏Tr isa ℍVector
         verbose && println(greyFont, "Projecting data onto the tangent space...")
         if meanISR==nothing
-            (X, G⁻½)=tsMap(ℳ.metric, 𝐏Tr; w=w, ⏩=⏩)
+            (X, G⁻½)=tsMap(ℳ.metric, 𝐏Tr; w=w, ⏩=⏩, vecRange=vecRange)
             ℳ.meanISR = G⁻½
         else
-            X=tsMap(ℳ.metric, 𝐏Tr; w=w, ⏩=⏩, meanISR=meanISR)
+            X=tsMap(ℳ.metric, 𝐏Tr; w=w, ⏩=⏩, vecRange=vecRange, meanISR=meanISR)
             ℳ.meanISR = meanISR
         end
-    else X=𝐏Tr
+    else X=𝐏Tr[:, vecRange]
     end
 
     # convert labels in GLMNet format
@@ -558,6 +568,7 @@ function predict(model   :: ENLRmodel,
                  what    :: Symbol = :labels,
                  fitType :: Symbol = :best,
                  onWhich :: Int    = Int(fitType==:best);
+            vecRange :: UnitRange  = 𝐏Te isa ℍVector ? 1:size(𝐏Te[1], 2) : 1:size(𝐏Te, 2),
             checks  :: Bool = true,
             verbose :: Bool = true,
             ⏩     :: Bool = true)
@@ -598,6 +609,10 @@ Argumet `onWhich` has no effect if `fitType` = `:best`.
     If you want to use the `fitType` = `:path` option you need to invoke
     the fit function with optional keyword argument `fitType`=`:path` or
     `fitType`=`:all`. See the [`fit`](@ref) function for details.
+
+Optional keyword argument `vecRange` has the same meaning as in the
+[`fit`](@ref) function. In general, if you have used it to fit the model
+youwill use the same here.
 
 If `checks` is true (default), checks on the validity of the arguments
 are performed. This can be set to false to spped up computations.
@@ -665,6 +680,7 @@ function predict(model   :: ENLRmodel,
                  what    :: Symbol = :labels,
                  fitType :: Symbol = :best,
                  onWhich :: Int    = Int(fitType==:best);
+            vecRange :: UnitRange = 𝐏Te isa ℍVector ? 1:size(𝐏Te[1], 2) : 1:size(𝐏Te, 2),
             checks  :: Bool = true,
             verbose :: Bool = true,
             ⏩     :: Bool = true)
@@ -683,8 +699,8 @@ function predict(model   :: ENLRmodel,
     # projection onto the tangent space
     if 𝐏Te isa ℍVector
         verbose && println(greyFont, "Projecting data onto the tangent space...")
-        X=tsMap(model.metric, 𝐏Te; meanISR=model.meanISR, ⏩=⏩)
-    else X=𝐏Te end
+        X=tsMap(model.metric, 𝐏Te; meanISR=model.meanISR, ⏩=⏩, vecRange=vecRange)
+    else X=𝐏Te[:, vecRange] end
 
     # prediction
     verbose && println("Predicting "*_ENLRonWhichStr(model, fitType, onWhich)*"...")
