@@ -111,11 +111,7 @@ function tsMap(metric :: Metric,
     getMeanISR ? G⁻½ = pow(mean(metric, 𝐏; w=w, ✓w=✓w, ⏩=⏩), -0.5) : G⁻½ = meanISR
 
 	# length of the tangent vectors for the given vecRange
-	if length(vecRange)==n
-		m=Int(n*(n+1)/2)
-	else
-		m=0; for j=vecRange, i=j:n m+=1 end
-	end
+	m=_triNum(𝐏[1], vecRange)
 
 	if transpose
 		V = Array{eltype(𝐏[1]), 2}(undef, k, m)
@@ -458,12 +454,24 @@ _what2Str(what::Symbol) =
 	end
 
 # return the dimension of the manifold of PD matrices: (n*n+1)/2
+_triNum(P::ℍ, vecRange::UnitRange) =
+	if length(vecRange)==size(P, 1)
+		result=_triNum(P)
+	else
+		m=0; for j=vecRange, i=j:size(P, 1) m+=1 end
+		result=m
+	end
+
 _triNum(P::ℍ) = ( size(P, 1) * (size(P, 1)+1) ) ÷ 2
 
 # dimension of the manifold if 𝐏Tr is an ℍVector,
 # dimension of the tagent(feature) vectors if 𝐏Tr is a Matrix
+_getDim(𝐏Tr :: Union{ℍVector, Matrix{Float64}}, vecRange::UnitRange) =
+	𝐏Tr isa ℍVector ? _triNum(𝐏Tr[1], vecRange) : length(vecRange)
+
 _getDim(𝐏Tr :: Union{ℍVector, Matrix{Float64}}) =
 	𝐏Tr isa ℍVector ? _triNum(𝐏Tr[1]) : size(𝐏Tr, 2)
+
 
 # convert a ML model in a atring to release information
 _modelStr(model::MLmodel) =
