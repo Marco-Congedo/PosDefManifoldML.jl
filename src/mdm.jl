@@ -90,6 +90,7 @@ function fit(model :: MDMmodel,
               yTr   :: Vector;
            w       :: Vector = [],
            ✓w      :: Bool  = true,
+           tol     :: Real   = 0.,
            verbose :: Bool  = true,
            ⏩      :: Bool  = true)
 ```
@@ -113,6 +114,14 @@ function for the meaning of the arguments
 Keep in mind that here the weights should sum up to 1
 separatedly for each class, which is what is ensured by this
 function if `✓w` is true.
+
+Optional keyword argument `tol` is the tolerance required for those algorithms
+that compute the mean iteratively (they are those adoptenf the Fisher, logde0
+or Wasserstein metric). For details on this argument see
+the functions that are called for computing the means:
+- Fisher metric: [gmean](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.geometricMean)
+- logdet0 metric: [ld0mean](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.logdet0Mean)
+- Wasserstein metric: [Wasmean](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.wasMean).
 
 If `verbose` is true (default), information is printed in the REPL.
 This option is included to allow repeated calls to this function
@@ -139,7 +148,8 @@ function fit(model :: MDMmodel,
               yTr   :: Vector;
            w       :: Vector = [],
            ✓w      :: Bool   = true,
-           verbose :: Bool = true,
+           tol     :: Real   = 0.,
+           verbose :: Bool   = true,
            ⏩      :: Bool   = true)
 
     ⌚=now()
@@ -156,7 +166,7 @@ function fit(model :: MDMmodel,
     for j = 1:k push!(𝐏[yTr[j]], 𝐏Tr[j]) end
     if !isempty(w) for j = 1:k push!(W[yTr[j]], w[j]) end end
 
-    ℳ.means = ℍVector([getMean(ℳ.metric, 𝐏[i], w = W[i], ✓w=✓w, ⏩=⏩) for i=1:z])
+    ℳ.means = ℍVector([getMean(ℳ.metric, 𝐏[i], w = W[i], ✓w=✓w, tol=tol, ⏩=⏩) for i=1:z])
     ℳ.featDim =_triNum(𝐏Tr[1])
 
     verbose && println(defaultFont, "Done in ", now()-⌚,".")
@@ -251,9 +261,9 @@ function predict(model  :: MDMmodel,
            func(j::Int)=[D[i, j]/gmeans[j] for i=1:z]
            🃏 = [func(j) for j = 1:k]
     elseif what == :labels || what == :l
-           🃏 = [findmin(D[:,j])[2] for j = 1:k]
+           🃏 = [findmin(D[:, j])[2] for j = 1:k]
     elseif what == :probabilities || what == :p
-           🃏 = [softmax(-D[:,j]) for j = 1:k]
+           🃏 = [softmax(-D[:, j]) for j = 1:k]
     end
 
     verbose && println(defaultFont, "Done in ", now()-⌚,".")
@@ -309,16 +319,16 @@ function getMean(metric :: Metric,
     tol==0. ? tolerance = √eps(real(eltype(𝐏[1]))) : tolerance = tol
 
     if      metric == Fisher
-                G, iter, convergence = gMean(𝐏; w=w, ✓w=✓w, ⏩=⏩)
+                G, iter, convergence = gMean(𝐏; w=w, ✓w=✓w, tol=tolerance, ⏩=⏩)
     elseif  metric == logdet0
-                G, iter, convergence = ld0Mean(𝐏; w=w, ✓w=✓w, ⏩=⏩)
+                G, iter, convergence = ld0Mean(𝐏; w=w, ✓w=✓w, tol=tolerance, ⏩=⏩)
     elseif  metric == Wasserstein
-                G, iter, convergence = wasMean(𝐏; w=w, ✓w=✓w, ⏩=⏩)
+                G, iter, convergence = wasMean(𝐏; w=w, ✓w=✓w, tol=tolerance, ⏩=⏩)
     else        G = mean(metric, 𝐏, w=w, ✓w=✓w, ⏩=⏩)
     end
 
     if metric ∈ (Fisher, logdet0, Wasserstein) && convergence > tolerance
-        tolerance == 0. ? toltype="defualt" : toltype="chosen"
+        tolerance == 0. ? toltype="default" : toltype="chosen"
         @error 📌*", getMean function: the iterative algorithm for computing
         the means did not converge using the "*toltype*" tolerance.
         Check your data and try an higher tolerance (with the `tol`=... argument)."
@@ -334,6 +344,7 @@ end
 function getDistances(metric :: Metric,
                       means  :: ℍVector,
                       𝐏      :: ℍVector;
+                scale :: Bool = false,
                   ⏩ :: Bool = true)
 ```
 Typically, you will not need this function as it is called by the
@@ -350,6 +361,11 @@ The squared distance is computed according to the chosen `metric`, of type
 See [metrics](https://marco-congedo.github.io/PosDefManifold.jl/dev/introToRiemannianGeometry/#metrics-1)
 for details on the supported distance functions.
 
+If `scale` is true,
+the distances are divided by the size of the matrices in `𝐏`.
+This is used to compare disctances computed on manifolds with
+different dimensions.
+
 If `⏩` is true, the distances are computed using multi-threading,
 unless the number of threads Julia is instructed to use is <2 or <3k.
 
@@ -359,7 +375,8 @@ The result is a ``z``x``k`` matrix of squared distances.
 function getDistances(metric :: Metric,
              means  :: ℍVector,
              𝐏      :: ℍVector;
-          ⏩ :: Bool = true)
+          scale :: Bool = false,
+          ⏩   :: Bool = true)
 
     z, k = length(means), length(𝐏)
     if ⏩
@@ -371,11 +388,11 @@ function getDistances(metric :: Metric,
             for j in ranges[r] D[i, j]=PosDefManifold.distance²(metric, 𝐏[j], means[i]) end
 
         for i=1:z @threads for r=1:length(ranges) dist(i, r) end end
-        return D
     else
-        [PosDefManifold.distance²(metric, 𝐏[j], means[i]) for i=1:z, j=1:k]
+        D=[PosDefManifold.distance²(metric, 𝐏[j], means[i]) for i=1:z, j=1:k]
     end
     # optimize in PosDefManifold, don't need to compute all distances for some metrics
+    return scale ? D./size(𝐏[1], 1) : D
 end
 
 
