@@ -17,19 +17,20 @@ function tsMap(	metric :: Metric,
 		w :: Vector = [],
 		✓w :: Bool = true,
 		⏩ :: Bool = true,
-		meanISR :: Union{ℍ, Nothing} = nothing,
-		transpose :: Bool = true,
-		vecRange  :: UnitRange = 1:size(𝐏[1], 1))
+		meanISR   :: Union{ℍ, Nothing} = nothing,
+		tol       :: Real              = 0.,
+		transpose :: Bool              = true,
+		vecRange  :: UnitRange         = 1:size(𝐏[1], 1))
 ```
 
 The [tangent space mapping](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.logMap)
-of matrices ``P_i``, ``i=1...k`` with geometric mean ``G``, once
+of positive definite matrices ``P_i``, ``i=1...k`` with mean ``G``, once
 those points have been parallel transported to the identity matrix,
 is given by:
 
 ``S_i=\\textrm{log}(G^{-1/2} P_i G^{-1/2})``.
 
-Given a vector of ``k`` Hermitian matrices `𝐏`,
+Given a vector of ``k`` matrices `𝐏` flagged by julia as `Hermitian`,
 return a matrix ``X`` with such tangent vectors of the matrices in `𝐏`
 vectorized as per the [vecP](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.vecP)
 operation.
@@ -39,6 +40,10 @@ specified `metric`, of type
 [Metric](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#Metric::Enumerated-type-1).
 A natural choice is the
 [Fisher metric](https://marco-congedo.github.io/PosDefManifold.jl/dev/introToRiemannianGeometry/#Fisher-1).
+If the metric is Fisher, logdet0 or Wasserstein the mean is found with an iterative
+algorithm with tolerance given by optional keyword argument `tol`.
+By default `tol` is set by the function
+[mean](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#Statistics.mean).
 
 A set of ``k`` optional non-negative weights `w` can be provided
 for computing instead the weighted mean ``G``.
@@ -103,12 +108,13 @@ function tsMap(metric :: Metric,
          w    	   :: Vector 			 = [],
          ✓w   	   :: Bool   			 = true,
          ⏩   	  :: Bool   		    = true,
-		 meanISR    :: Union{ℍ, Nothing} = nothing,
+		 meanISR   :: Union{ℍ, Nothing}  = nothing,
+	  	 tol       :: Real               = 0.,
 		 transpose :: Bool   			 = true,
 		 vecRange  :: UnitRange          = 1:size(𝐏[1], 1))
 
 	k, n, getMeanISR = dim(𝐏, 1), dim(𝐏, 2), meanISR==nothing
-    getMeanISR ? G⁻½ = pow(mean(metric, 𝐏; w=w, ✓w=✓w, ⏩=⏩), -0.5) : G⁻½ = meanISR
+    getMeanISR ? G⁻½ = pow(mean(metric, 𝐏; w=w, ✓w=✓w, tol=tol, ⏩=⏩), -0.5) : G⁻½ = meanISR
 
 	# length of the tangent vectors for the given vecRange
 	m=_triNum(𝐏[1], vecRange)
