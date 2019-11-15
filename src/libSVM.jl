@@ -2,8 +2,10 @@ using LIBSVM
 
 mutable struct wrapperSVM <: TSmodel
     internalModel :: LIBSVM.SVM
-    function wrapperSVM()
+	metric        :: Metric
+    function wrapperSVM(metric :: Metric=Fisher;)
 	   println(defaultFont, "constructor wrapperSVM")
+	   new(nothing,metric)
     end
 end
 
@@ -12,8 +14,10 @@ function fit(model :: wrapperSVM,
                yTr :: IntVector,
            meanISR :: Union{ℍ, Nothing} = nothing,
            verbose :: Bool = true,
+		         ⏩ :: Bool = true,
           parallel :: Bool=false)
 
+    println(defaultFont, "Start")
     ⌚=now() # get the time in ms
 
     # output model
@@ -26,10 +30,11 @@ function fit(model :: wrapperSVM,
     if 𝐏Tr isa ℍVector
         verbose && println(greyFont, "Projecting data onto the tangent space...")
         if meanISR==nothing
-            (X, G⁻½)=tsMap(ℳ.metric, 𝐏Tr; w=w, ⏩=⏩)
+            (X, G⁻½)=tsMap(ℳ.metric, 𝐏Tr; ⏩=⏩)
+			typeof(X)
             ℳ.meanISR = G⁻½
         else
-            X=tsMap(ℳ.metric, 𝐏Tr; w=w, ⏩=⏩, meanISR=meanISR)
+            X=tsMap(ℳ.metric, 𝐏Tr; ⏩=⏩, meanISR=meanISR)
             ℳ.meanISR = meanISR
         end
     else
@@ -37,13 +42,14 @@ function fit(model :: wrapperSVM,
     end
 
     #convert data to LIBSVM format
+	instances = X
 
     # convert labels to LIBSVM format
-    #y = convert(Matrix{Float64}, [(yTr.==1) (yTr.==2)])
+    labels = yTr
 
-    #model = svmtrain(instances[:, 1:2:end], labels[1:2:end]);
+    model = LIBSVM.svmtrain(instances, labels);
 
-    #ℳ.internalModel = model
+    ℳ.internalModel = model
 
     verbose && println(defaultFont, "Done in ", now()-⌚,".")
     return ℳ
