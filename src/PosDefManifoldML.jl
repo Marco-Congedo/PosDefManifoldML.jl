@@ -63,6 +63,9 @@ export
     # from enlr.jl
     ENLRmodel,
     ENLR,
+	
+	# from libSVM.jl
+	wrapperSVM,
 
     # from cv.jl
     CVacc,
@@ -79,6 +82,7 @@ include("mdm.jl")
 include("enlr.jl")
 include("cv.jl")
 include("tools.jl")
+include("libSVM.jl")
 
 
 println("\n⭐ "," Welcome to the",titleFont," ",📌," ",defaultFont,"package", " ⭐\n")

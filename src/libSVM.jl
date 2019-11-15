@@ -1,18 +1,13 @@
 using LIBSVM
-using PosDefManifoldML
 
-mutable struct libSVM <: TSmodel
-    meanISR
-    # TODO: SVM parameters
-
+mutable struct wrapperSVM <: TSmodel
     internalModel :: LIBSVM.SVM
-    function ENLR(
-               meanISR     = nothing
-        new(meanISR)
+    function wrapperSVM()
+	   println(defaultFont, "constructor wrapperSVM")
     end
 end
 
-function fit(model :: libSVM,
+function fit(model :: wrapperSVM,
                𝐏Tr :: Union{ℍVector, Matrix{Float64}},
                yTr :: IntVector,
            meanISR :: Union{ℍ, Nothing} = nothing,
@@ -37,7 +32,8 @@ function fit(model :: libSVM,
             X=tsMap(ℳ.metric, 𝐏Tr; w=w, ⏩=⏩, meanISR=meanISR)
             ℳ.meanISR = meanISR
         end
-    else X=𝐏Tr
+    else
+        X=𝐏Tr
     end
 
     #convert data to LIBSVM format
@@ -52,3 +48,5 @@ function fit(model :: libSVM,
     verbose && println(defaultFont, "Done in ", now()-⌚,".")
     return ℳ
 end
+
+#end #end of module
