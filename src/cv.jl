@@ -84,12 +84,13 @@ CVacc(s::String)=CVacc(s, nothing, nothing, nothing, nothing, nothing, nothing, 
 function cvAcc(model   :: MLmodel,
                𝐏Tr     :: ℍVector,
                yTr     :: IntVector;
-           nFolds    :: Int    = min(10, length(yTr)÷3),
-           scoring   :: Symbol = :b,
-           shuffle   :: Bool   = false,
-           vecRange  :: UnitRange = 𝐏Tr isa ℍVector ? (1:size(𝐏Tr[1]), 2) : (1:size(𝐏Tr, 2)),
-           verbose   :: Bool   = true,
-           outModels :: Bool   = false,
+           nFolds    :: Int       = min(10, length(yTr)÷3),
+           scoring   :: Symbol    = :b,
+           shuffle   :: Bool      = false,
+           vecRange  :: UnitRange = 𝐏Tr isa ℍVector ? (1:size(𝐏Tr[1], 2)) : (1:size(𝐏Tr, 2)),
+           tol       :: Real      = 0.,
+           verbose   :: Bool      = true,
+           outModels :: Bool      = false,
            fitArgs...)
 ```
 Cross-validation accuracy for a machine learning `model`:
@@ -116,6 +117,13 @@ see function [`cvSetup`](@ref), to which this argument is passed.
 Argument `vecRange` has an effect only for machine learning models in the
 tangent space. For its meaning see function [`fit`](@ref) and [`predict`](@ref),
 to which it is passed for each fold.
+
+Argument `tol` is the tolerance for convergence of the algorithms
+used for computing means on the manifold of positive definite matrices.
+Only for the Fisher, logdet0 and Wasserstein metric the algorithm is
+iterative. In order to speed up computations, set `tol` to something
+between 10e-6 (still a fairly good convergence) and 10e-3 (coarse convergence
+but much less iterations required).
 
 If `verbose` is true (default), information is printed in the REPL.
 This option is included to allow repeated calls to this function
@@ -177,12 +185,13 @@ cv=cvAcc(MDM(Fisher), PTr, yTr; nFolds=8, shuffle=true)
 function cvAcc(model   :: MLmodel,
                𝐏Tr     :: ℍVector,
                yTr     :: IntVector;
-           nFolds    :: Int    = min(10, length(yTr)÷3),
-           scoring   :: Symbol = :b,
-           shuffle   :: Bool   = false,
+           nFolds    :: Int       = min(10, length(yTr)÷3),
+           scoring   :: Symbol    = :b,
+           shuffle   :: Bool      = false,
            vecRange  :: UnitRange = 𝐏Tr isa ℍVector ? (1:size(𝐏Tr[1], 2)) : (1:size(𝐏Tr, 2)),
-           verbose   :: Bool   = true,
-           outModels :: Bool   = false,
+           tol       :: Real      = 0.,
+           verbose   :: Bool      = true,
+           outModels :: Bool      = false,
            fitArgs...)
 
     ⌚=now()
@@ -229,7 +238,7 @@ function cvAcc(model   :: MLmodel,
         # fit machine learning model
         if      model isa MDMmodel
                 ℳ[f]=fit(MDM(model.metric), 𝐐Tr[f], zTr[f];
-                         verbose=false, ⏩=true)
+                         tol=tol, verbose=false, ⏩=true)
 
         elseif  model isa ENLRmodel
                 ℳ[f]=fit(ENLR(model.metric), 𝐐Tr[f], zTr[f];
