@@ -15,7 +15,7 @@
 
  __precompile__()
 
-module  PosDefManifoldML
+module PosDefManifoldML
 
 using LinearAlgebra, Base.Threads, Random, Statistics, PosDefManifold
 using Dates:now

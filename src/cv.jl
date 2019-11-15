@@ -215,8 +215,8 @@ function cvAcc(model   :: MLmodel,
         if (α=_getArgValue(:alpha; fitArgs...)) ≠ nothing model.alpha=α end
     end
 
-    # perform cv @threads
-    for f=1:nFolds
+    # perform cv
+    @threads for f=1:nFolds
         # get testing data for current cross-validation (CV)
         for i=1:z @inbounds 𝐐Te[f][i] = [𝐐[i][j] for j ∈ indTe[i][f]] end
 
@@ -229,11 +229,11 @@ function cvAcc(model   :: MLmodel,
         # fit machine learning model
         if      model isa MDMmodel
                 ℳ[f]=fit(MDM(model.metric), 𝐐Tr[f], zTr[f];
-                         verbose=false, ⏩=false)
+                         verbose=false, ⏩=true)
 
         elseif  model isa ENLRmodel
                 ℳ[f]=fit(ENLR(model.metric), 𝐐Tr[f], zTr[f];
-                         vecRange=vecRange, verbose=false, ⏩=false, fitArgs✔...)
+                         vecRange=vecRange, verbose=false, ⏩=true, fitArgs✔...)
 
         # elseif...
         end
@@ -243,12 +243,12 @@ function cvAcc(model   :: MLmodel,
         if      model isa MDMmodel
                 for i=1:z
                     @inbounds pl[f][i]=predict(ℳ[f], 𝐐Te[f][i], :l;
-                                         verbose=false, ⏩=false)
+                                         verbose=false, ⏩=true)
                 end
         elseif  model isa ENLRmodel
                 for i=1:z
                     @inbounds pl[f][i]=predict(ℳ[f], 𝐐Te[f][i], :l;
-                                        vecRange=vecRange, verbose=false, ⏩=false)
+                                        vecRange=vecRange, verbose=false, ⏩=true)
                 end
         # elseif...
         end
