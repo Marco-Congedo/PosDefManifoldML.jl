@@ -272,6 +272,9 @@ instead this matrix is the inverse square root (ISR) of the mean
 used for projecting the matrices in the tangent space (see [`tsMap`](@ref)).
 Passed or computed, the inverse square root (ISR) of the mean
 will be written in the `.meanISR` field of the created [`ENLR`](@ref) struct.
+If `meanISRis` is not provided and the `.metric` field of the `model`
+is Fisher, logdet0 or Wasserstein, the tolerance of the iterative algorithm
+used to compute the mean is set to the argument passed as `tol` (default 1e-7).
 
 This function also allows to fit a model passing as
 training data `𝐏Tr` directly a matrix of feature vectors,
@@ -484,7 +487,7 @@ function fit(model  :: ENLRmodel,
     if 𝐏Tr isa ℍVector
         verbose && println(greyFont, "Projecting data onto the tangent space...")
         if meanISR==nothing
-            (X, G⁻½)=tsMap(ℳ.metric, 𝐏Tr; w=w, ⏩=⏩, vecRange=vecRange)
+            (X, G⁻½)=tsMap(ℳ.metric, 𝐏Tr; w=w, ⏩=⏩, vecRange=vecRange, tol=tol)
             ℳ.meanISR = G⁻½
         else
             X=tsMap(ℳ.metric, 𝐏Tr; w=w, ⏩=⏩, vecRange=vecRange, meanISR=meanISR)
