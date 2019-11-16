@@ -44,9 +44,11 @@ If the metric is Fisher, logdet0 or Wasserstein the mean is found with an iterat
 algorithm with tolerance given by optional keyword argument `tol`.
 By default `tol` is set by the function
 [mean](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#Statistics.mean).
+For those iterative algorithms a particular initialization can be provided
+as an Hermitian matrix by optional keyword argument `meanInit`.
 
 A set of ``k`` optional non-negative weights `w` can be provided
-for computing instead the weighted mean ``G``.
+for computing a weighted mean ``G``, for any metrics.
 If `w` is non-empty and optional keyword argument `✓w` is true (default),
 the weights are normalized so as to sum up to 1,
 otherwise they are used as they are passed and should be already normalized.
@@ -56,6 +58,8 @@ repeatedly without normalizing the same weights vector each time.
 If an Hermitian matrix is provided as optional keyword argument `meanISR`,
 then the mean ``G`` is not computed, intead this matrix is used
 directly in the formula as the inverse square root (ISR) ``G^{-1/2}``.
+If `meanISR` is provided, arguments `tol` and `meanInit` have no effect
+whatsoever.
 
 If `meanISR` is not provided, return the 2-tuple ``(X, G^{-1/2})``,
 otherwise return only matrix ``X``.
@@ -75,11 +79,9 @@ be smaller. (see [vecP](https://marco-congedo.github.io/PosDefManifold.jl/dev/ri
 ).
 
 if optional keyword argument `⏩` if true (default),
-the computation of the mean (if this is obtained
-with an iterative algorithm, e.g., using the Fisher metric)
-and the projection on the tangent space are multi-threaded.
-Multi-threading is automatically disabled if the number of threads
-Julia is instructed to use is ``<2`` or ``<3k``.
+the computation of the mean and the projection on the tangent space
+are multi-threaded. Multi-threading is automatically disabled if the
+number of threads Julia is instructed to use is ``<2`` or ``<2k``.
 
 **Examples**:
 ```
@@ -109,24 +111,30 @@ function tsMap(metric :: Metric,
          ✓w   	   :: Bool   			 = true,
          ⏩   	  :: Bool   		    = true,
 		 meanISR   :: Union{ℍ, Nothing}  = nothing,
+		 meanInit  :: Union{ℍ, Nothing}  = nothing,
 	  	 tol       :: Real               = 0.,
 		 transpose :: Bool   			 = true,
 		 vecRange  :: UnitRange          = 1:size(𝐏[1], 1))
 
 	k, n, getMeanISR = dim(𝐏, 1), dim(𝐏, 2), meanISR==nothing
-    getMeanISR ? G⁻½ = pow(mean(metric, 𝐏; w=w, ✓w=✓w, tol=tol, ⏩=⏩), -0.5) : G⁻½ = meanISR
+    getMeanISR ? G⁻½ = pow(mean(metric, 𝐏;
+	                            w=w,
+								✓w=✓w,
+								init=meanInit,
+								tol=tol,
+								⏩=⏩), -0.5) : G⁻½ = meanISR
 
 	# length of the tangent vectors for the given vecRange
 	m=_triNum(𝐏[1], vecRange)
 
 	if transpose
 		V = Array{eltype(𝐏[1]), 2}(undef, k, m)
-	    ⏩==true ? (@threads for i = 1:k V[i, :] = vecP(ℍ(log(ℍ(G⁻½ * 𝐏[i] * G⁻½))); range=vecRange) end) :
-	                         (for i = 1:k V[i, :] = vecP(ℍ(log(ℍ(G⁻½ * 𝐏[i] * G⁻½))); range=vecRange) end)
+	    ⏩==true ? (@threads  for i = 1:k V[i, :] = vecP(log(cong(G⁻½, 𝐏[i], ℍ)); range=vecRange) end) :
+	                (@inbounds for i = 1:k V[i, :] = vecP(log(cong(G⁻½, 𝐏[i], ℍ)); range=vecRange) end)
 	else
 		V = Array{eltype(𝐏[1]), 2}(undef, m, k)
-		⏩==true ? (@threads for i = 1:k V[:, i] = vecP(ℍ(log(ℍ(G⁻½ * 𝐏[i] * G⁻½))); range=vecRange) end) :
-	                         (for i = 1:k V[:, i] = vecP(ℍ(log(ℍ(G⁻½ * 𝐏[i] * G⁻½))); range=vecRange) end)
+		⏩==true ? (@threads  for i = 1:k V[:, i] = vecP(log(cong(G⁻½, 𝐏[i], ℍ)); range=vecRange) end) :
+	                (@inbounds for i = 1:k V[:, i] = vecP(log(cong(G⁻½, 𝐏[i], ℍ)); range=vecRange) end)
 	end
     return getMeanISR ? (V, G⁻½) : V
 end
@@ -404,7 +412,7 @@ end
 function _GetThreads(n::Int, callingFunction::String)
 	threads=Threads.nthreads()
 	threads==1 && @warn 📌*", function "*callingFunction*": Julia is instructed to use only one thread."
-	if n<threads*3
+	if n<threads && n<3
 		@warn 📌*", function "*callingFunction*": the number of operations (n) is too low for taking advantage of multi-threading" threads n
 		threads=1
 	end
