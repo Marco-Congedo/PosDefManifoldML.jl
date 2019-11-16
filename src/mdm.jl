@@ -88,11 +88,12 @@ end
 function fit(model :: MDMmodel,
               𝐏Tr   :: ℍVector,
               yTr   :: Vector;
-           w       :: Vector = [],
-           ✓w      :: Bool  = true,
-           tol     :: Real   = 0.,
-           verbose :: Bool  = true,
-           ⏩      :: Bool  = true)
+       w        :: Vector = [],
+       ✓w       :: Bool  = true,
+       meanInit :: Union{ℍVector, Nothing} = nothing,
+       tol      :: Real  = 1e-7,
+       verbose  :: Bool  = true,
+       ⏩       :: Bool  = true)
 ```
 
 Fit an [`MDM`](@ref) machine learning model,
@@ -100,6 +101,9 @@ with training data `𝐏Tr`, of type
 [ℍVector](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1),
 and corresponding labels `yTr`, of type [IntVector](@ref).
 Return the fitted model.
+
+Labels must be provided using the natural numbers, i.e.,
+`1` for the first class, `2` for the second class, etc.
 
 Fitting an MDM model involves only computing a mean of all the
 matrices in each class. Those class means are computed according
@@ -116,12 +120,17 @@ separatedly for each class, which is what is ensured by this
 function if `✓w` is true.
 
 Optional keyword argument `tol` is the tolerance required for those algorithms
-that compute the mean iteratively (they are those adoptenf the Fisher, logde0
+that compute the mean iteratively (they are those adopting the Fisher, logde0
 or Wasserstein metric). For details on this argument see
 the functions that are called for computing the means:
 - Fisher metric: [gmean](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.geometricMean)
 - logdet0 metric: [ld0mean](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.logdet0Mean)
 - Wasserstein metric: [Wasmean](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.wasMean).
+For those algorithm an initialization can be provided with optional keyword
+argument `meanInit`. If provided, this must be a vector of `Hermitian`
+matrices of the [ℍVector](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%F0%9D%95%84Vector-type-1)
+type and must contain as many initializations as classes, in the
+natural order corresponding to the class labels (see above).
 
 If `verbose` is true (default), information is printed in the REPL.
 This option is included to allow repeated calls to this function
@@ -146,11 +155,12 @@ m=fit(MDM(Fisher), PTr, yTr)
 function fit(model :: MDMmodel,
               𝐏Tr   :: ℍVector,
               yTr   :: Vector;
-           w       :: Vector = [],
-           ✓w      :: Bool   = true,
-           tol     :: Real   = 0.,
-           verbose :: Bool   = true,
-           ⏩      :: Bool   = true)
+       w        :: Vector = [],
+       ✓w       :: Bool   = true,
+       meanInit :: Union{ℍVector, Nothing} = nothing,
+       tol      :: Real   = 1e-7,
+       verbose  :: Bool   = true,
+       ⏩       :: Bool   = true)
 
     ⌚=now()
 
@@ -166,7 +176,10 @@ function fit(model :: MDMmodel,
     for j = 1:k push!(𝐏[yTr[j]], 𝐏Tr[j]) end
     if !isempty(w) for j = 1:k push!(W[yTr[j]], w[j]) end end
 
-    ℳ.means = ℍVector([getMean(ℳ.metric, 𝐏[i], w = W[i], ✓w=✓w, tol=tol, ⏩=⏩) for i=1:z])
+    meanInit==nothing ? ℳ.means = ℍVector([getMean(ℳ.metric, 𝐏[i];
+                                              w=W[i], ✓w=✓w, tol=tol, ⏩=⏩) for i=1:z]) :
+                        ℳ.means = ℍVector([getMean(ℳ.metric, 𝐏[i];
+                                             w=W[i], ✓w=✓w, meanInit=meanInit[i], tol=tol, ⏩=⏩) for i=1:z])
     ℳ.featDim =_triNum(𝐏Tr[1])
 
     verbose && println(defaultFont, "Done in ", now()-⌚,".")
@@ -278,10 +291,11 @@ end
 ```
 function getMean(metric :: Metric,
                  𝐏      :: ℍVector;
-              tol :: Real   = 0.,
-              w   :: Vector = [],
-              ✓w :: Bool    = true,
-              ⏩ :: Bool    = true)
+              w        :: Vector = [],
+              ✓w       :: Bool    = true,
+              meanInit :: Union{ℍ, Nothing} = nothing,
+              tol      :: Real   = 0.,
+              ⏩      :: Bool    = true)
 ```
 
 Typically, you will not need this function as it is called by the
@@ -303,7 +317,7 @@ then the iterative algorithm converges.
 
 See method (3) of the [mean](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#Statistics.mean)
 function for the meaning of the optional keyword arguments
-`w`, `✓w` and `⏩`, to which they are passed.
+`w`, `✓w`, `meanInit`, `tol` and `⏩`, to which they are passed.
 
 The returned mean is flagged by Julia as an Hermitian matrix
 (see [LinearAlgebra](https://docs.julialang.org/en/v1/stdlib/LinearAlgebra/)).
@@ -311,30 +325,31 @@ The returned mean is flagged by Julia as an Hermitian matrix
 """
 function getMean(metric :: Metric,
                  𝐏      :: ℍVector;
-              tol :: Real = 0.,
-              w   :: Vector = [],
-              ✓w :: Bool   = true,
-              ⏩ :: Bool   = true)
+              w        :: Vector = [],
+              ✓w       :: Bool    = true,
+              meanInit :: Union{ℍ, Nothing} = nothing,
+              tol      :: Real   = 0.,
+              ⏩      :: Bool    = true)
 
-    tol==0. ? tolerance = √eps(real(eltype(𝐏[1]))) : tolerance = tol
+  tol==0. ? tolerance = √eps(real(eltype(𝐏[1]))) : tolerance = tol
 
-    if      metric == Fisher
-                G, iter, convergence = gMean(𝐏; w=w, ✓w=✓w, tol=tolerance, ⏩=⏩)
-    elseif  metric == logdet0
-                G, iter, convergence = ld0Mean(𝐏; w=w, ✓w=✓w, tol=tolerance, ⏩=⏩)
-    elseif  metric == Wasserstein
-                G, iter, convergence = wasMean(𝐏; w=w, ✓w=✓w, tol=tolerance, ⏩=⏩)
-    else        G = mean(metric, 𝐏, w=w, ✓w=✓w, ⏩=⏩)
-    end
+  if      metric == Fisher
+              G, iter, convergence = gMean(𝐏; w=w, ✓w=✓w, init=meanInit, tol=tolerance, ⏩=⏩)
+  elseif  metric == logdet0
+              G, iter, convergence = ld0Mean(𝐏; w=w, ✓w=✓w, init=meanInit, tol=tolerance, ⏩=⏩)
+  elseif  metric == Wasserstein
+              G, iter, convergence = wasMean(𝐏; w=w, ✓w=✓w, init=meanInit, tol=tolerance, ⏩=⏩)
+  else        G = mean(metric, 𝐏, w=w, ✓w=✓w, ⏩=⏩)
+  end
 
-    if metric ∈ (Fisher, logdet0, Wasserstein) && convergence > tolerance
-        tolerance == 0. ? toltype="default" : toltype="chosen"
-        @error 📌*", getMean function: the iterative algorithm for computing
-        the means did not converge using the "*toltype*" tolerance.
-        Check your data and try an higher tolerance (with the `tol`=... argument)."
-    else
-        return G
-    end
+  if metric ∈ (Fisher, logdet0, Wasserstein) && convergence > tolerance
+      tolerance == 0. ? toltype="default" : toltype="chosen"
+      @error 📌*", getMean function: the iterative algorithm for computing
+      the means did not converge using the "*toltype*" tolerance.
+      Check your data and try an higher tolerance (with the `tol`=... argument)."
+  else
+      return G
+  end
 end
 
 

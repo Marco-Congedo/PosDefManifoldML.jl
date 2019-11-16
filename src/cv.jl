@@ -84,11 +84,11 @@ CVacc(s::String)=CVacc(s, nothing, nothing, nothing, nothing, nothing, nothing, 
 function cvAcc(model   :: MLmodel,
                𝐏Tr     :: ℍVector,
                yTr     :: IntVector;
+           tol       :: Real      = 0.,
            nFolds    :: Int       = min(10, length(yTr)÷3),
            scoring   :: Symbol    = :b,
            shuffle   :: Bool      = false,
            vecRange  :: UnitRange = 𝐏Tr isa ℍVector ? (1:size(𝐏Tr[1], 2)) : (1:size(𝐏Tr, 2)),
-           tol       :: Real      = 0.,
            verbose   :: Bool      = true,
            outModels :: Bool      = false,
            fitArgs...)
@@ -100,6 +100,15 @@ the number of folds `nFolds`,
 return a [`CVacc`](@ref) structure.
 
 **optional keyword arguments**
+
+The `Fisher`, `logdet0` and `Wasserstein` metric of the machine learning models
+require an iterative algorithm for computing means in the manifold
+of positive definite matrices.
+Argument `tol` is the tolerance for convergence of these iterative algorithms.
+In order to speed up computations, set `tol` to something
+between 10e-6 (still a fairly good convergence) and 10e-3 (coarse convergence,
+hence possible drop of classification accuracy, but many less iterations
+required).
 
 `nFolds` by default is set to the minimum between 10 and the number
 of observation ÷ 3 (integer division).
@@ -117,13 +126,6 @@ see function [`cvSetup`](@ref), to which this argument is passed.
 Argument `vecRange` has an effect only for machine learning models in the
 tangent space. For its meaning see function [`fit`](@ref) and [`predict`](@ref),
 to which it is passed for each fold.
-
-Argument `tol` is the tolerance for convergence of the algorithms
-used for computing means on the manifold of positive definite matrices.
-Only for the Fisher, logdet0 and Wasserstein metric the algorithm is
-iterative. In order to speed up computations, set `tol` to something
-between 10e-6 (still a fairly good convergence) and 10e-3 (coarse convergence
-but much less iterations required).
 
 If `verbose` is true (default), information is printed in the REPL.
 This option is included to allow repeated calls to this function
@@ -185,11 +187,11 @@ cv=cvAcc(MDM(Fisher), PTr, yTr; nFolds=8, shuffle=true)
 function cvAcc(model   :: MLmodel,
                𝐏Tr     :: ℍVector,
                yTr     :: IntVector;
+           tol       :: Real      = 1e-7,
            nFolds    :: Int       = min(10, length(yTr)÷3),
            scoring   :: Symbol    = :b,
            shuffle   :: Bool      = false,
            vecRange  :: UnitRange = 𝐏Tr isa ℍVector ? (1:size(𝐏Tr[1], 2)) : (1:size(𝐏Tr, 2)),
-           tol       :: Real      = 0.,
            verbose   :: Bool      = true,
            outModels :: Bool      = false,
            fitArgs...)
@@ -217,11 +219,26 @@ function cvAcc(model   :: MLmodel,
 
     if model isa ENLRmodel
         # make sure the user doesn't fit arguments that skrew up the cv
-        fitArgs✔=_rmArgs((:meanISR, :fitType, :verbose, :⏩,
+        fitArgs✔=_rmArgs((:meanISR, :meanInit, :fitType, :verbose, :⏩,
                          :offsets, :lambda, :folds); fitArgs...)
 
         # overwrite the `alpha` value in `model` if the user has passed keyword `alpha`
         if (α=_getArgValue(:alpha; fitArgs...)) ≠ nothing model.alpha=α end
+    end
+
+    # get means initializations. Be careful here with the behavior for other models
+    # NB for the MDM model the initialization is a vector of means for each class,
+    # for the ENLR model it is the mean of such means.
+    # This is a quick approximation since the initialization is not critical,
+    # but it hastens the computation time since itera. alg. require less iters.
+
+    if      model.metric in (Fisher, logdet0)
+                M0=means(logEuclidean, 𝐐; ⏩=true)
+                if model isa ENLRmodel M0=mean(logEuclidean, M0; ⏩=true) end
+    elseif  model.metric == Wasserstein
+                M0=ℍVector([generalizedMean(𝐐[i], 0.5; ⏩=true) for i=1:length(𝐐)])
+                if model isa ENLRmodel M0=generalizedMean(M0, 0.5; ⏩=true) end
+    else    M0=nothing;
     end
 
     # perform cv
@@ -238,11 +255,19 @@ function cvAcc(model   :: MLmodel,
         # fit machine learning model
         if      model isa MDMmodel
                 ℳ[f]=fit(MDM(model.metric), 𝐐Tr[f], zTr[f];
-                         tol=tol, verbose=false, ⏩=true)
+                         meanInit=M0,
+                         tol=tol,
+                         verbose=false,
+                         ⏩=true)
 
         elseif  model isa ENLRmodel
                 ℳ[f]=fit(ENLR(model.metric), 𝐐Tr[f], zTr[f];
-                         vecRange=vecRange, verbose=false, ⏩=true, fitArgs✔...)
+                         meanInit=M0,
+                         tol=tol,
+                         vecRange=vecRange,
+                         verbose=false,
+                         ⏩=true,
+                         fitArgs✔...)
 
         # elseif...
         end
