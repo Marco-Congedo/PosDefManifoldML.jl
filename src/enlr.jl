@@ -194,6 +194,7 @@ function fit(model  :: ENLRmodel,
                yTr  :: IntVector;
            w        :: Union{Symbol, Tuple, Vector} = [],
            meanISR  :: Union{ℍ, Nothing} = nothing,
+		   meanInit :: Union{ℍ, Nothing} = nothing,
            fitType  :: Symbol = :best,
            vecRange :: UnitRange = 𝐏Tr isa ℍVector ? (1:size(𝐏Tr[1], 2)) : (1:size(𝐏Tr, 2)),
            verbose  :: Bool = true,
@@ -275,6 +276,8 @@ will be written in the `.meanISR` field of the created [`ENLR`](@ref) struct.
 If `meanISRis` is not provided and the `.metric` field of the `model`
 is Fisher, logdet0 or Wasserstein, the tolerance of the iterative algorithm
 used to compute the mean is set to the argument passed as `tol` (default 1e-7).
+Also, in this case a particular initialization for those iterative algorithms
+can be provided as an `Hermitian` matrix with argument `meanInit`.
 
 This function also allows to fit a model passing as
 training data `𝐏Tr` directly a matrix of feature vectors,
@@ -437,6 +440,7 @@ function fit(model  :: ENLRmodel,
                yTr  :: IntVector;
            w        :: Union{Symbol, Tuple, Vector} = [],
            meanISR  :: Union{ℍ, Nothing} = nothing,
+		   meanInit :: Union{ℍ, Nothing} = nothing,
            fitType  :: Symbol = :best,
            vecRange :: UnitRange = 𝐏Tr isa ℍVector ? (1:size(𝐏Tr[1], 2)) : (1:size(𝐏Tr, 2)),
            verbose  :: Bool = true,
@@ -487,7 +491,7 @@ function fit(model  :: ENLRmodel,
     if 𝐏Tr isa ℍVector
         verbose && println(greyFont, "Projecting data onto the tangent space...")
         if meanISR==nothing
-            (X, G⁻½)=tsMap(ℳ.metric, 𝐏Tr; w=w, ⏩=⏩, vecRange=vecRange, tol=tol)
+            (X, G⁻½)=tsMap(ℳ.metric, 𝐏Tr; w=w, ⏩=⏩, vecRange=vecRange, meanInit=meanInit, tol=tol)
             ℳ.meanISR = G⁻½
         else
             X=tsMap(ℳ.metric, 𝐏Tr; w=w, ⏩=⏩, vecRange=vecRange, meanISR=meanISR)
