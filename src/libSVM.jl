@@ -1,11 +1,14 @@
 using LIBSVM
 
 mutable struct wrapperSVM <: TSmodel
-    internalModel :: LIBSVM.SVM
-	metric        :: Metric
-    function wrapperSVM(metric :: Metric=Fisher;)
-	   println(defaultFont, "constructor wrapperSVM")
-	   new(nothing,metric)
+    	metric        :: Metric
+		internalModel
+		meanISR
+    function wrapperSVM(metric :: Metric = Fisher;
+		         		   internalModel = nothing,
+				                 meanISR = nothing)
+	   				 println(defaultFont, "constructor wrapperSVM")
+	   	 			 new(metric,internalModel,meanISR)
     end
 end
 
@@ -30,10 +33,11 @@ function fit(model :: wrapperSVM,
     if 𝐏Tr isa ℍVector
         verbose && println(greyFont, "Projecting data onto the tangent space...")
         if meanISR==nothing
+			println(defaultFont, "meanISR is nothing")
             (X, G⁻½)=tsMap(ℳ.metric, 𝐏Tr; ⏩=⏩)
-			typeof(X)
             ℳ.meanISR = G⁻½
         else
+			println(defaultFont, "meanISR is NOT nothing")
             X=tsMap(ℳ.metric, 𝐏Tr; ⏩=⏩, meanISR=meanISR)
             ℳ.meanISR = meanISR
         end
@@ -41,12 +45,14 @@ function fit(model :: wrapperSVM,
         X=𝐏Tr
     end
 
+    println(defaultFont, "Converting")
     #convert data to LIBSVM format
 	instances = X
 
     # convert labels to LIBSVM format
     labels = yTr
 
+    println(defaultFont, "Calculating")
     model = LIBSVM.svmtrain(instances, labels);
 
     ℳ.internalModel = model
