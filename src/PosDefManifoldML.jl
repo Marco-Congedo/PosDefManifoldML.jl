@@ -44,7 +44,7 @@ IntVector=Vector{Int}
 import Base:show
 import GLMNet.predict
 import Distributions.fit
-import LIBSVM.predict
+import LIBSVM.svmpredict
 import LIBSVM.svmtrain
 
 export

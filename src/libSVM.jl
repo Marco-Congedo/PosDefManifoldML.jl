@@ -1,5 +1,3 @@
-using LIBSVM
-
 mutable struct wrapperSVM <: TSmodel
     	metric        :: Metric
 		internalModel
