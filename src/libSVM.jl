@@ -31,18 +31,18 @@ predictErr(yTe, yPred)
 ```
 """
 
-mutable struct wrapperSVM <: TSmodel
+mutable struct svm <: TSmodel
     	metric        :: Metric
 		internalModel
 		meanISR
-    function wrapperSVM(metric :: Metric = Fisher;
+    function svm(metric :: Metric = Fisher;
 		         		   internalModel = nothing,
 				                 meanISR = nothing)
 	   	 			 new(metric,internalModel,meanISR)
     end
 end
 
-function fit(model :: wrapperSVM,
+function fit(model :: svm,
                𝐏Tr :: Union{ℍVector, Matrix{Float64}},
                yTr :: IntVector,
            meanISR :: Union{ℍ, Nothing} = nothing,
@@ -87,7 +87,7 @@ function fit(model :: wrapperSVM,
     return ℳ
 end
 
-function predict(model   :: wrapperSVM,
+function predict(model   :: svm,
                  𝐏Te     :: Union{ℍVector, Matrix{Float64}},
                  what    :: Symbol = :labels,
                 vecRange :: UnitRange = 𝐏Te isa ℍVector ? (1:size(𝐏Te[1], 2)) : (1:size(𝐏Te, 2)),
@@ -114,7 +114,7 @@ function predict(model   :: wrapperSVM,
     instances = X'
 
     #(predicted_labels, decision_values) = svmpredict(model.internalModel, instances);
-	(predicted_labels, decision_values) = svmpredict(model.internalModel, instances; verbose = verbose)
+	(predicted_labels, decision_values) = svmpredict(model.internalModel, instances;)
     🃏 = predicted_labels
 
     verbose && println(defaultFont, "Done in ", now()-⌚,".")

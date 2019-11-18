@@ -68,7 +68,7 @@ export
     ENLR,
 	
 	# from libSVM.jl
-	wrapperSVM,
+	svm,
 
     # from cv.jl
     CVacc,
