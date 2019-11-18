@@ -1,3 +1,14 @@
+#   Unit "libSVM.jl" of the PosDefManifoldML Package for Julia language
+#   v 0.2.1 - last update 18th of October 2019
+#
+#   MIT License
+#   Copyright (c) 2019,
+#   Anton Andreev, CNRS, Grenoble, France:
+
+# ? CONTENTS :
+#   This unit implements a wrapper to libSVM. It projects data to tangent space
+#   and it applies SVM classification using Julia's SVM wrapper.
+
 mutable struct wrapperSVM <: TSmodel
     	metric        :: Metric
 		internalModel
@@ -5,7 +16,6 @@ mutable struct wrapperSVM <: TSmodel
     function wrapperSVM(metric :: Metric = Fisher;
 		         		   internalModel = nothing,
 				                 meanISR = nothing)
-	   				 println(defaultFont, "constructor wrapperSVM")
 	   	 			 new(metric,internalModel,meanISR)
     end
 end
@@ -18,7 +28,7 @@ function fit(model :: wrapperSVM,
 		         ⏩ :: Bool = true,
           parallel :: Bool=false)
 
-    println(defaultFont, "Start")
+    #println(defaultFont, "Start")
     ⌚=now() # get the time in ms
 
     # output model
@@ -31,11 +41,9 @@ function fit(model :: wrapperSVM,
     if 𝐏Tr isa ℍVector
         verbose && println(greyFont, "Projecting data onto the tangent space...")
         if meanISR==nothing
-			println(defaultFont, "meanISR is nothing")
             (X, G⁻½)=tsMap(ℳ.metric, 𝐏Tr; ⏩=⏩)
             ℳ.meanISR = G⁻½
         else
-			println(defaultFont, "meanISR is NOT nothing")
             X=tsMap(ℳ.metric, 𝐏Tr; ⏩=⏩, meanISR=meanISR)
             ℳ.meanISR = meanISR
         end
@@ -43,13 +51,12 @@ function fit(model :: wrapperSVM,
         X=𝐏Tr
     end
 
-    println(defaultFont, "Converting")
     #convert data to LIBSVM format
 	#first dimension is features
 	#second dimension is observations
 	instances = X'
 
-    println(defaultFont, "Calculating")
+    verbose && println(defaultFont, "Calculating")
     model = LIBSVM.svmtrain(instances, yTr);
 
     ℳ.internalModel = model
