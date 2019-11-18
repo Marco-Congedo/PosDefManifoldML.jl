@@ -60,4 +60,36 @@ function fit(model :: wrapperSVM,
     return ℳ
 end
 
-#end #end of module
+function predict(model   :: wrapperSVM,
+                 𝐏Te     :: Union{ℍVector, Matrix{Float64}},
+                 what    :: Symbol = :labels,
+                vecRange :: UnitRange = 𝐏Te isa ℍVector ? (1:size(𝐏Te[1], 2)) : (1:size(𝐏Te, 2)),
+                 checks  :: Bool = true,
+                 verbose :: Bool = true,
+                  ⏩     :: Bool = true)
+
+    ⌚=now()
+
+    # checks
+    if checks
+        if !_whatIsValid(what, "predict ("*_modelStr(model)*")") return end
+    end
+
+    # projection onto the tangent space
+    if 𝐏Te isa ℍVector
+        verbose && println(greyFont, "Projecting data onto the tangent space...")
+        X=tsMap(model.metric, 𝐏Te; meanISR=model.meanISR, ⏩=⏩, vecRange=vecRange)
+    else X=𝐏Te[:, vecRange] end
+
+    #convert data to LIBSVM format
+    #first dimension is features
+    #second dimension is observations
+    instances = X'
+
+    (predicted_labels, decision_values) = svmpredict(model.internalModel, instances);
+    🃏 = predicted_labels
+
+    verbose && println(defaultFont, "Done in ", now()-⌚,".")
+    verbose && println(titleFont, "\nPredicted ",_what2Str(what),":", defaultFont)
+    return 🃏
+end
