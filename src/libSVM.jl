@@ -47,13 +47,12 @@ function fit(model :: wrapperSVM,
 
     println(defaultFont, "Converting")
     #convert data to LIBSVM format
+	#first dimension is features
+	#second dimension is observations
 	instances = X'
 
-    # convert labels to LIBSVM format
-    labels = yTr
-
     println(defaultFont, "Calculating")
-    model = LIBSVM.svmtrain(instances, labels);
+    model = LIBSVM.svmtrain(instances, yTr);
 
     ℳ.internalModel = model
 
