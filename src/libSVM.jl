@@ -9,6 +9,28 @@
 #   This unit implements a wrapper to libSVM. It projects data to tangent space
 #   and it applies SVM classification using Julia's SVM wrapper.
 
+"""
+**Examples**:
+```
+# Note: creating models with the default creator is possible,
+# but not useful in general.
+
+using PosDefManifoldML
+
+# generate data
+PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80)
+
+# create an SVM model
+model=fit(wrapperSVM(), PTr, yTr)
+
+# predict using this model
+yPred=predict(model, PTe, :l)
+
+# calculate prediction error
+predictErr(yTe, yPred)
+```
+"""
+
 mutable struct wrapperSVM <: TSmodel
     	metric        :: Metric
 		internalModel
@@ -91,7 +113,8 @@ function predict(model   :: wrapperSVM,
     #second dimension is observations
     instances = X'
 
-    (predicted_labels, decision_values) = svmpredict(model.internalModel, instances);
+    #(predicted_labels, decision_values) = svmpredict(model.internalModel, instances);
+	(predicted_labels, decision_values) = svmpredict(model.internalModel, instances; verbose = verbose)
     🃏 = predicted_labels
 
     verbose && println(defaultFont, "Done in ", now()-⌚,".")
