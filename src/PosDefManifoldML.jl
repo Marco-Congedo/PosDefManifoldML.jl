@@ -85,7 +85,7 @@ include("mdm.jl")
 include("enlr.jl")
 include("cv.jl")
 include("tools.jl")
-include("libSVM.jl")
+include("svm.jl")
 
 
 println("\n⭐ "," Welcome to the",titleFont," ",📌," ",defaultFont,"package", " ⭐\n")
