@@ -47,7 +47,7 @@ function fit(model :: wrapperSVM,
 
     println(defaultFont, "Converting")
     #convert data to LIBSVM format
-	instances = X
+	instances = X'
 
     # convert labels to LIBSVM format
     labels = yTr
