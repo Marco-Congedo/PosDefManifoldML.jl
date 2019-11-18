@@ -46,6 +46,7 @@ import GLMNet.predict
 import Distributions.fit
 import LIBSVM.svmpredict
 import LIBSVM.svmtrain
+import LIBSVM.SVC, LIBSVM.NuSVC, LIBSVM.OneClassSVM, LIBSVM.NuSVR, LIBSVM.EpsilonSVR, LIBSVM.LinearSVC, LIBSVM.Linearsolver, LIBSVM.Kernel
 
 export
 

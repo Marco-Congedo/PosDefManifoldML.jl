@@ -20,8 +20,8 @@ using PosDefManifoldML
 # generate data
 PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80)
 
-# create an SVM model
-model=fit(wrapperSVM(), PTr, yTr)
+# create and train an SVM model
+model=fit(svm(), PTr, yTr)
 
 # predict using this model
 yPred=predict(model, PTe, :l)
@@ -35,10 +35,22 @@ mutable struct svm <: TSmodel
     	metric        :: Metric
 		internalModel
 		meanISR
-    function svm(metric :: Metric = Fisher;
+		svmtype       ::Type
+		kernel        ::Kernel.KERNEL
+		epsilon       ::Float64
+		cost          ::Float64
+		gamma         ::Float64
+    function svm(	    metric :: Metric = Fisher,
 		         		   internalModel = nothing,
-				                 meanISR = nothing)
-	   	 			 new(metric,internalModel,meanISR)
+				                 meanISR = nothing,
+								 svmtype = LIBSVM.SVC,
+                           		  kernel = Kernel.RadialBasis,
+								 epsilon = 0.1,
+								    cost = 1.0,
+								   gamma = -1
+								 )
+	   	 			 new(metric, internalModel, meanISR,
+                         svmtype, kernel, epsilon, cost, gamma) #can not set a default value here
     end
 end
 
@@ -73,13 +85,23 @@ function fit(model :: svm,
         X=𝐏Tr
     end
 
-    #convert data to LIBSVM format
+    nFeatures = size(X,2)
+
+    if ℳ.gamma == -1
+		ℳ.gamma = 1 / nFeatures
+	end
+
+	verbose && println(defaultFont, "nFeatures: " * string(nFeatures))
+	verbose && println(defaultFont, "nObservations: " * string(nObs))
+	verbose && println(defaultFont, "gamma: " * string(ℳ.gamma))
+
+	#convert data to LIBSVM format
 	#first dimension is features
 	#second dimension is observations
 	instances = X'
 
     verbose && println(defaultFont, "Calculating")
-    model = LIBSVM.svmtrain(instances, yTr);
+    model = LIBSVM.svmtrain(instances, yTr; svmtype = ℳ.svmtype, kernel = ℳ.kernel, epsilon = ℳ.epsilon, cost=ℳ.cost, gamma = ℳ.gamma);
 
     ℳ.internalModel = model
 
