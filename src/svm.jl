@@ -41,12 +41,12 @@ model=fit(s, PTr, yTr)
 mutable struct svm <: TSmodel
     	metric        :: Metric
 		internalModel #used to store the training model from the SVM library
-		meanISR       :: Union{ℍVector, Nothing}
+		meanISR
 		svmtype       :: Type
 		kernel        :: Kernel.KERNEL
 		epsilon       :: Float64
 		cost          :: Float64
-		gamma         :: Float64
+		gamma         :: Float64 
     function svm(	              metric = Fisher,
 		         		   internalModel = nothing,
 				                 meanISR = nothing,
