@@ -20,7 +20,7 @@ using PosDefManifoldML
 # generate data
 PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80)
 
-# create and train an SVM model with default SVM parameters
+# create and train an SVM model with default parameters for tangent space calculation and SVM
 model=fit(svm(), PTr, yTr)
 
 # predict using this model
@@ -28,19 +28,26 @@ yPred=predict(model, PTe, :l)
 
 # calculate prediction error
 predictErr(yTe, yPred)
+
+You can supply parameters for both tangent space calculaton and SVM:
+
+s = svm(Fisher, nothing, nothing, LIBSVM.SVC, Kernel.RadialBasis, 0.1, 1.0, -1)
+
+model=fit(s, PTr, yTr)
+
 ```
 """
 
 mutable struct svm <: TSmodel
     	metric        :: Metric
-		internalModel
-		meanISR
-		svmtype       ::Type
-		kernel        ::Kernel.KERNEL
-		epsilon       ::Float64
-		cost          ::Float64
-		gamma         ::Float64
-    function svm(	    metric :: Metric = Fisher,
+		internalModel #used to store the training model from the SVM library
+		meanISR       :: Union{ℍVector, Nothing}
+		svmtype       :: Type
+		kernel        :: Kernel.KERNEL
+		epsilon       :: Float64
+		cost          :: Float64
+		gamma         :: Float64
+    function svm(	              metric = Fisher,
 		         		   internalModel = nothing,
 				                 meanISR = nothing,
 								 svmtype = LIBSVM.SVC,
@@ -141,6 +148,7 @@ function fit(model :: svm,
 	verbose && println(defaultFont, "nFeatures: " * string(nFeatures))
 	verbose && println(defaultFont, "nObservations: " * string(nObs))
 	verbose && println(defaultFont, "gamma: " * string(ℳ.gamma))
+	verbose && println(defaultFont, "epsilon: " * string(ℳ.epsilon))
 
 	#convert data to LIBSVM format
 	#first dimension is features
