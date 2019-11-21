@@ -381,6 +381,7 @@ function cvSetup(k       :: Int,
     shuffle ? a=shuffle!( Vector(1:k)) : a=Vector(1:k)
     indTrain = [IntVector(undef, 0) for i=1:nCV]
     indTest  = [IntVector(undef, 0) for i=1:nCV]
+    
     # vectors of indices for test and training sets
     j=1
     for i=1:nCV-1
