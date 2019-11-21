@@ -12,15 +12,16 @@
 
 """
 ```
-function tsMap(	metric :: Metric,
-		𝐏 :: ℍVector;
-		w :: Vector = [],
-		✓w :: Bool = true,
-		⏩ :: Bool = true,
-		meanISR   :: Union{ℍ, Nothing} = nothing,
-		tol       :: Real              = 0.,
-		transpose :: Bool              = true,
-		vecRange  :: UnitRange         = 1:size(𝐏[1], 1))
+function tsMap(metric :: Metric,
+               𝐏      :: ℍVector;
+         w    	   :: Vector 			 = [],
+         ✓w   	   :: Bool   			 = true,
+         ⏩   	  :: Bool   		    = true,
+		 meanISR   :: Union{ℍ, Nothing}  = nothing,
+		 meanInit  :: Union{ℍ, Nothing}  = nothing,
+	  	 tol       :: Real               = 0.,
+		 transpose :: Bool   			 = true,
+		 vecRange  :: UnitRange          = 1:size(𝐏[1], 1))
 ```
 
 The [tangent space mapping](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.logMap)

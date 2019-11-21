@@ -86,6 +86,14 @@ Brain-Computer Interfaces, 4(3), 155-174.
 M. Congedo, A. Barachant, E. Kharati Koopaei (2017b) [Fixed Point Algorithms for Estimating Power Means of Positive Definite Matrices](https://bit.ly/2HKEcGk),
 IEEE Transactions on Signal Processing, 65(9), 2211-2220.
 
+Rodrigues PLC, Jutten C, Congedo M (2019)
+[Riemannian Procrustes Analysis : Transfer Learning for Brain-Computer Interfaces](https://hal.archives-ouvertes.fr/hal-01971856/document), 
+IEEE Transactions on Biomedical Engineering, 66(8), 2390-2401.
+
+P. Zanini P, M. Congedo, C. Jutten, S. Said, Y. Berthoumieu (2018)
+[Transfer Learning: a Riemannian geometry framework with applications to Brain-Computer Interfaces](https://hal.archives-ouvertes.fr/hal-01923278/document),
+IEEE Transactions on Biomedical Engineering, 65(5), 1107-1116.
+
 **Resources on GLMNet**
 
 [webinar by Trevor Hastie](https://www.youtube.com/watch?v=BU2gjoLPfDc&feature=youtu.be)
