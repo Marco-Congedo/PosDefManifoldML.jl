@@ -572,10 +572,11 @@ function predict(model   :: ENLRmodel,
                  what    :: Symbol = :labels,
                  fitType :: Symbol = :best,
                  onWhich :: Int    = Int(fitType==:best);
-            vecRange :: UnitRange  = 𝐏Te isa ℍVector ? (1:size(𝐏Te[1], 2)) : (1:size(𝐏Te, 2)),
-            checks  :: Bool = true,
-            verbose :: Bool = true,
-            ⏩     :: Bool = true)
+			transfer   :: Union{ℍ, Nothing} = nothing,
+            vecRange   :: UnitRange = 𝐏Te isa ℍVector ? (1:size(𝐏Te[1], 2)) : (1:size(𝐏Te, 2)),
+            checks     :: Bool = true,
+            verbose    :: Bool = true,
+            ⏩        :: Bool = true)
 ```
 
 Given an [`ENLR`](@ref) `model` trained (fitted) on 2 classes
@@ -613,6 +614,19 @@ Argumet `onWhich` has no effect if `fitType` = `:best`.
     If you want to use the `fitType` = `:path` option you need to invoke
     the fit function with optional keyword argument `fitType`=`:path` or
     `fitType`=`:all`. See the [`fit`](@ref) function for details.
+
+Option keyword argument `transfer` can be used to specify the principal
+inverse square root (ISR) of a new mean to be used as base point for
+projecting the matrices in `𝐏Te` onto the tangent space.
+By default `transfer` is equal to nothing,
+implying that the base point will be the mean used to fit the model.
+Passing a new mean ISR allows the *adaptation* first described in
+Barachant et *al.*(2013). Typically `transfer` is the ISR
+of the mean of the matrices in `𝐏Te` or of a subset of them.
+Notice that this actually performs *transfer learning* by parallel
+transporting both the training and test data to the identity matrix
+as defined in Zanini et *al.*(2018) and taken up in
+Rodrigues et *al.*(2019)[🎓](@ref).
 
 Optional keyword argument `vecRange` has the same meaning as in the
 [`fit`](@ref) function. In general, if you have used it to fit the model
@@ -684,10 +698,11 @@ function predict(model   :: ENLRmodel,
                  what    :: Symbol = :labels,
                  fitType :: Symbol = :best,
                  onWhich :: Int    = Int(fitType==:best);
-            vecRange :: UnitRange = 𝐏Te isa ℍVector ? (1:size(𝐏Te[1], 2)) : (1:size(𝐏Te, 2)),
-            checks  :: Bool = true,
-            verbose :: Bool = true,
-            ⏩     :: Bool = true)
+			transfer   :: Union{ℍ, Nothing} = nothing,
+            vecRange   :: UnitRange = 𝐏Te isa ℍVector ? (1:size(𝐏Te[1], 2)) : (1:size(𝐏Te, 2)),
+            checks     :: Bool = true,
+            verbose    :: Bool = true,
+            ⏩        :: Bool = true)
 
     ⌚=now()
 
@@ -703,7 +718,10 @@ function predict(model   :: ENLRmodel,
     # projection onto the tangent space
     if 𝐏Te isa ℍVector
         verbose && println(greyFont, "Projecting data onto the tangent space...")
-        X=tsMap(model.metric, 𝐏Te; meanISR=model.meanISR, ⏩=⏩, vecRange=vecRange)
+        X=tsMap(model.metric, 𝐏Te;
+				meanISR = transfer==nothing ? model.meanISR : transfer,
+				⏩=⏩,
+				vecRange=vecRange)
     else X=𝐏Te[:, vecRange] end
 
     # prediction

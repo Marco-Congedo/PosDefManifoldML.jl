@@ -25,6 +25,7 @@ mutable struct MDM <: MDMmodel
     metric  :: Metric = Fisher;
     featDim :: Int
     means   :: ℍVector
+    imeans  :: ℍVector
 end
 ```
 
@@ -49,8 +50,14 @@ The field `means` is an
 [ℍVector](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1)
 holding the class means, i.e., one mean for each class.
 This field is not to be specified by the user, instead,
-the means are computed when the MDM model is fit using the
+the means are computed when the MDM model is fitted using the
 [`fit`](@ref) function and are accessible only thereafter.
+
+The field `imeans` is an ℍVector holding the inverse of the
+matrices in `means`. This also is not to be specified by the user,
+is computed when the model is fitted and is accessible only thereafter.
+It is used to optimize the computation of distances if the
+model is fitted useing the Fisher metric (default).
 
 **Examples**:
 ```
@@ -74,9 +81,11 @@ mutable struct MDM <: MDMmodel
     metric :: Metric
     featDim
     means
+    imeans
     function MDM(metric :: Metric = Fisher;
               featDim = nothing,
-              means   = nothing)
+              means   = nothing,
+              imeans  = nothing)
         new(metric, featDim, means)
     end
 end
@@ -180,6 +189,18 @@ function fit(model :: MDMmodel,
                                               w=W[i], ✓w=✓w, tol=tol, ⏩=⏩) for i=1:z]) :
                         ℳ.means = ℍVector([getMean(ℳ.metric, 𝐏[i];
                                              w=W[i], ✓w=✓w, meanInit=meanInit[i], tol=tol, ⏩=⏩) for i=1:z])
+
+    # store the inverse of the means for optimizing distance computations
+    # if the metric is Fisher and the matrices are small
+    if ℳ.metric==Fisher && size(𝐏Tr[1], 1)<=100
+        if ⏩
+            ℳ.imeans=ℍVector(undef, length(ℳ.means))
+            @threads for i=1:length(ℳ.means) @inbounds ℳ.imeans[i]=inv(ℳ.means[i]) end
+        else
+            ℳ.imeans=ℍVector([inv(G) for G ∈ ℳ.means])
+        end
+    end
+
     ℳ.featDim =_triNum(𝐏Tr[1])
 
     verbose && println(defaultFont, "Done in ", now()-⌚,".")
@@ -265,7 +286,7 @@ function predict(model  :: MDMmodel,
     ⌚=now()
 
     verbose && println(greyFont, "Computing distances...")
-    D = getDistances(model.metric, model.means, 𝐏Te, ⏩=⏩)
+    D = getDistances(model.metric, model.means, 𝐏Te; imeans=model.imeans, ⏩=⏩)
     (z, k)=size(D)
 
     verbose && println("Predicting...")
@@ -359,8 +380,9 @@ end
 function getDistances(metric :: Metric,
                       means  :: ℍVector,
                       𝐏      :: ℍVector;
-                scale :: Bool = false,
-                  ⏩ :: Bool = true)
+                imeans :: Union{ℍVector, Nothing} = false,
+                scale  :: Bool = false,
+                  ⏩  :: Bool = true)
 ```
 Typically, you will not need this function as it is called by the
 [`predict`](@ref) function.
@@ -376,6 +398,10 @@ The squared distance is computed according to the chosen `metric`, of type
 See [metrics](https://marco-congedo.github.io/PosDefManifold.jl/dev/introToRiemannianGeometry/#metrics-1)
 for details on the supported distance functions.
 
+The computation of distances is optimized for the Fisher metric
+if an ℍVector holding the inverse of the means in `means` is passed as
+optional keyword argument `imeans`.
+
 If `scale` is true,
 the distances are divided by the size of the matrices in `𝐏`.
 This is used to compare disctances computed on manifolds with
@@ -390,21 +416,25 @@ The result is a ``z``x``k`` matrix of squared distances.
 function getDistances(metric :: Metric,
              means  :: ℍVector,
              𝐏      :: ℍVector;
-          scale :: Bool = false,
-          ⏩   :: Bool = true)
+          imeans :: Union{ℍVector, Nothing} = false,
+          scale  :: Bool = false,
+          ⏩    :: Bool = true)
 
     z, k = length(means), length(𝐏)
     if ⏩
         D = Matrix{eltype(𝐏[1])}(undef, z, k)
-
         threads, ranges = _GetThreadsAndLinRanges(length(𝐏), "getDistances")
 
         dist(i::Int, r::Int) =
-            for j in ranges[r] D[i, j]=PosDefManifold.distance²(metric, 𝐏[j], means[i]) end
+           if metric==Fisher && imeans≠nothing
+               for j in ranges[r] D[i, j]=sum(log.(eigvals(imeans[i]*𝐏[j]; permute=false, scale=false)).^2) end
+           else
+               for j in ranges[r] D[i, j]=distance²(metric, 𝐏[j], means[i]) end
+           end
 
         for i=1:z @threads for r=1:length(ranges) dist(i, r) end end
     else
-        D=[PosDefManifold.distance²(metric, 𝐏[j], means[i]) for i=1:z, j=1:k]
+        D=[distance²(metric, 𝐏[j], means[i]) for i=1:z, j=1:k]
     end
     # optimize in PosDefManifold, don't need to compute all distances for some metrics
     return scale ? D./size(𝐏[1], 1) : D
@@ -431,5 +461,6 @@ function Base.show(io::IO, ::MIME{Symbol("text/plain")}, M::MDM)
         println(io, separatorFont," .metric  ", defaultFont, string(M.metric))
         println(io, separatorFont," .featDim ", defaultFont, "$(M.featDim) ($(n)*($(n)+1)/2)")
         println(io, separatorFont," .means   ", defaultFont, "vector of $(nc) Hermitian matrices")
+        println(io, separatorFont," .imeans  ", defaultFont, "vector of $(nc) Hermitian matrices")
     end
 end

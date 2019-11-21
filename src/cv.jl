@@ -196,7 +196,7 @@ function cvAcc(model   :: MLmodel,
            outModels :: Bool      = false,
            fitArgs...)
 
-    ⌚=now()
+    ⌚ = now()
     verbose && println(greyFont, "\nPerforming $(nFolds)-fold cross-validation...")
 
     z  = length(unique(yTr))            # number of classes
@@ -231,7 +231,6 @@ function cvAcc(model   :: MLmodel,
     # for the ENLR model it is the mean of such means.
     # This is a quick approximation since the initialization is not critical,
     # but it hastens the computation time since itera. alg. require less iters.
-
     if      model.metric in (Fisher, logdet0)
                 M0=means(logEuclidean, 𝐐; ⏩=true)
                 if model isa ENLRmodel M0=mean(logEuclidean, M0; ⏩=true) end
@@ -247,10 +246,10 @@ function cvAcc(model   :: MLmodel,
         for i=1:z @inbounds 𝐐Te[f][i] = [𝐐[i][j] for j ∈ indTe[i][f]] end
 
         # get training labels for current cross-validation (CV)
-        for i=1:z, j ∈ indTr[i][f] push!(zTr[f], Int64(i)) end
+        for i=1:z, j ∈ indTr[i][f] @inbounds push!(zTr[f], Int64(i)) end
 
         # get training data for current cross-validation (CV)
-        for i=1:z, j ∈ indTr[i][f] push!(𝐐Tr[f], 𝐐[i][j]) end
+        for i=1:z, j ∈ indTr[i][f] @inbounds push!(𝐐Tr[f], 𝐐[i][j]) end
 
         # fit machine learning model
         if      model isa MDMmodel
