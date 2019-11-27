@@ -477,11 +477,16 @@ _getDim(𝐏Tr :: Union{ℍVector, Matrix{Float64}}) =
 _modelStr(model::MLmodel) =
   if 		model isa MDMmodel
 	  		return "MDM"
+
   elseif    model isa ENLRmodel
     		if     model.alpha≈1. return "Lasso logit regression"
     		elseif model.alpha≈0. return "Ridge logit regression"
     		else                  return "El. Net (α=$(round(model.alpha; digits=2))) log. reg."
 			end
+
+  elseif    model isa SVMmodel
+    		return "Support-Vector Machine" # xxxx add here important info
+
   else      return "unknown"
   end
 

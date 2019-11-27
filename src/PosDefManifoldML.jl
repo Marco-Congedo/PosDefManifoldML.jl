@@ -21,7 +21,7 @@ using LinearAlgebra, Base.Threads, Random, Statistics, PosDefManifold
 using Dates:now
 using GLMNet:GLMNet, glmnet, glmnetcv, GLMNetPath, GLMNetCrossValidation
 using Distributions:Distributions, Binomial
-using LIBSVM
+using LIBSVM: svmpredict, svmtrain, SVC, NuSVC, OneClassSVM, NuSVR, EpsilonSVR, LinearSVC, Linearsolver, Kernel
 
 # Special instructions and variables
 BLAS.set_num_threads(Sys.CPU_THREADS-Threads.nthreads())
@@ -44,9 +44,6 @@ IntVector=Vector{Int}
 import Base:show
 import GLMNet.predict
 import Distributions.fit
-import LIBSVM.svmpredict
-import LIBSVM.svmtrain
-import LIBSVM.SVC, LIBSVM.NuSVC, LIBSVM.OneClassSVM, LIBSVM.NuSVR, LIBSVM.EpsilonSVR, LIBSVM.LinearSVC, LIBSVM.Linearsolver, LIBSVM.Kernel
 
 export
 
@@ -67,9 +64,10 @@ export
     # from enlr.jl
     ENLRmodel,
     ENLR,
-	
+
 	# from libSVM.jl
-	svm,
+	SVM,
+	SVC, NuSVC, OneClassSVM, NuSVR, EpsilonSVR, LinearSVC, Linearsolver, Kernel,
 
     # from cv.jl
     CVacc,

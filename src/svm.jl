@@ -9,6 +9,8 @@
 #   This unit implements a wrapper to libSVM. It projects data to tangent space
 #   and it applies SVM classification using Julia's SVM wrapper.
 
+abstract type SVMmodel<:TSmodel end
+
 """
 **Examples**:
 ```
@@ -21,7 +23,7 @@ using PosDefManifoldML
 PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80)
 
 # create and train an SVM model with default parameters for tangent space calculation and SVM
-model=fit(svm(), PTr, yTr)
+model=fit(SVM(), PTr, yTr)
 
 # predict using this model
 yPred=predict(model, PTe, :l)
@@ -31,48 +33,46 @@ predictErr(yTe, yPred)
 
 You can supply parameters for both tangent space calculaton and SVM:
 
-s = svm(Fisher, nothing, nothing, LIBSVM.SVC, Kernel.RadialBasis, 0.1, 1.0, -1)
+s = SVM(Fisher, nothing, nothing, SVC, Kernel.RadialBasis, 0.1, 1.0, -1)
 
 model=fit(s, PTr, yTr)
 
 ```
 """
 
-mutable struct svm <: TSmodel
+mutable struct SVM <: SVMmodel
     	metric        :: Metric
-		internalModel #used to store the training model from the SVM library
-		meanISR
 		svmtype       :: Type
 		kernel        :: Kernel.KERNEL
-		epsilon       :: Float64
-		cost          :: Float64
-		gamma         :: Float64 
-    function svm(	              metric = Fisher,
-		         		   internalModel = nothing,
-				                 meanISR = nothing,
-								 svmtype = LIBSVM.SVC,
-                           		  kernel = Kernel.RadialBasis,
-								 epsilon = 0.1,
-								    cost = 1.0,
-								   gamma = -1 #can not set a default value herem because it requires the number of observations
-								 )
-	   	 			 new(metric, internalModel, meanISR,
-                         svmtype, kernel, epsilon, cost, gamma)
+		meanISR
+		epsilon
+		cost
+		gamma
+		svmModel #used to store the training model from the SVM library
+    function SVM( metric :: Metric=Fisher;
+				  svmtype = SVC,
+                  kernel  = Kernel.RadialBasis,
+				  meanISR = nothing,
+				  epsilon = nothing,
+				  cost    = nothing,
+				  gamma   = nothing,
+				  svmModel = nothing)
+	   	 			 new(metric, svmtype, kernel, meanISR,
+					     epsilon, cost, gamma, svmModel)
     end
 end
 
 """
 ```
-mutable struct svm <: TSmodel
+mutable struct SVM <: SVMmodel
     	metric        :: Metric
-		internalModel
+		svmtype       :: Type
+		kernel        :: Kernel.KERNEL
 		meanISR
-
-		svmtype       ::Type
-		kernel        ::Kernel.KERNEL
-		epsilon       ::Float64
-		cost          ::Float64
-		gamma         ::Float64
+		epsilon
+		cost
+		gamma
+		svmModel
 end
 ```
 
@@ -93,7 +93,7 @@ the `.meanISR` field has no use and is set to `nothing`.
 
 The following are parameters that are passed to the LIBSVM package:
 
-`svmtype::Type=LIBSVM.SVC`: Type of SVM to train `SVC` (for C-SVM), `NuSVC`
+`svmtype::Type=SVC`: Type of SVM to train `SVC` (for C-SVM), `NuSVC`
     `OneClassSVM`, `EpsilonSVR` or `NuSVR`. Defaults to `OneClassSVM` if
     `y` is not used
 
@@ -108,13 +108,20 @@ The following are parameters that are passed to the LIBSVM package:
 """
 
 
-function fit(model :: svm,
-               𝐏Tr :: Union{ℍVector, Matrix{Float64}},
-               yTr :: IntVector,
-           meanISR :: Union{ℍ, Nothing} = nothing,
-           verbose :: Bool = true,
-		         ⏩ :: Bool = true,
-          parallel :: Bool=false)
+function fit(model  :: SVMmodel,
+               𝐏Tr  :: Union{ℍVector, Matrix{Float64}},
+               yTr  :: IntVector;
+		   w        :: Union{Symbol, Tuple, Vector} = [],
+           meanISR  :: Union{ℍ, Nothing} = nothing,
+		   vecRange :: UnitRange = 𝐏Tr isa ℍVector ? (1:size(𝐏Tr[1], 2)) : (1:size(𝐏Tr, 2)),
+		   svmtype  :: Type = SVC,
+		   kernel   :: Kernel.KERNEL = Kernel.RadialBasis,
+		   epsilon  :: Float64 = 0.1,
+		   cost     :: Float64 = 1.0,
+		   gamma    :: Float64 = 1/_getDim(𝐏Tr, vecRange),
+           verbose  :: Bool = true,
+		         ⏩  :: Bool = true,
+          parallel  :: Bool=false)
 
     #println(defaultFont, "Start")
     ⌚=now() # get the time in ms
@@ -123,48 +130,46 @@ function fit(model :: svm,
     ℳ=deepcopy(model)
 
     # checks
-    𝐏Tr isa ℍVector ? nObs=length(𝐏Tr) : nObs=size(𝐏Tr, 1)
+    # 𝐏Tr isa ℍVector ? nObs=length(𝐏Tr) : nObs=size(𝐏Tr, 1)
+
+	# check w argument and get weights
+    (w=_getWeights(w, yTr, "fit ("*_modelStr(ℳ)*" model)")) == nothing && return
 
     # projection onto the tangent space
     if 𝐏Tr isa ℍVector
         verbose && println(greyFont, "Projecting data onto the tangent space...")
         if meanISR==nothing
-            (X, G⁻½)=tsMap(ℳ.metric, 𝐏Tr; ⏩=⏩)
+            (X, G⁻½)=tsMap(ℳ.metric, 𝐏Tr; w=w, vecRange=vecRange, ⏩=⏩)
             ℳ.meanISR = G⁻½
         else
-            X=tsMap(ℳ.metric, 𝐏Tr; ⏩=⏩, meanISR=meanISR)
+            X=tsMap(ℳ.metric, 𝐏Tr; w=w, vecRange=vecRange, meanISR=meanISR, ⏩=⏩)
             ℳ.meanISR = meanISR
         end
     else
         X=𝐏Tr
     end
 
-    nFeatures = size(X,2)
+	ℳ.svmtype = svmtype
+	ℳ.kernel = kernel
+    ℳ.gamma = gamma
+	ℳ.epsilon = epsilon
+	ℳ.cost = cost
 
-    if ℳ.gamma == -1
-		ℳ.gamma = 1 / nFeatures
-	end
-
-	verbose && println(defaultFont, "nFeatures: " * string(nFeatures))
-	verbose && println(defaultFont, "nObservations: " * string(nObs))
-	verbose && println(defaultFont, "gamma: " * string(ℳ.gamma))
-	verbose && println(defaultFont, "epsilon: " * string(ℳ.epsilon))
-
-	#convert data to LIBSVM format
-	#first dimension is features
-	#second dimension is observations
+	#convert data to LIBSVM format; first dim is features, second dim is observations
 	instances = X'
 
-    verbose && println(defaultFont, "Calculating")
-    model = LIBSVM.svmtrain(instances, yTr; svmtype = ℳ.svmtype, kernel = ℳ.kernel, epsilon = ℳ.epsilon, cost=ℳ.cost, gamma = ℳ.gamma);
+    verbose && println(defaultFont, "Fitting SVM model...")
+    model = svmtrain(instances, yTr; svmtype = ℳ.svmtype, kernel = ℳ.kernel, epsilon = ℳ.epsilon, cost=ℳ.cost, gamma = ℳ.gamma);
 
-    ℳ.internalModel = model
+    ℳ.svmModel = model
 
     verbose && println(defaultFont, "Done in ", now()-⌚,".")
     return ℳ
 end
 
-function predict(model   :: svm,
+
+
+function predict(model   :: SVMmodel,
                  𝐏Te     :: Union{ℍVector, Matrix{Float64}},
                  what    :: Symbol = :labels,
                 vecRange :: UnitRange = 𝐏Te isa ℍVector ? (1:size(𝐏Te[1], 2)) : (1:size(𝐏Te, 2)),
@@ -185,13 +190,10 @@ function predict(model   :: svm,
         X=tsMap(model.metric, 𝐏Te; meanISR=model.meanISR, ⏩=⏩, vecRange=vecRange)
     else X=𝐏Te[:, vecRange] end
 
-    #convert data to LIBSVM format
-    #first dimension is features
-    #second dimension is observations
+    #convert data to LIBSVM format first dim is features, second dim is observations
     instances = X'
 
-    #(predicted_labels, decision_values) = svmpredict(model.internalModel, instances);
-	(predicted_labels, decision_values) = svmpredict(model.internalModel, instances;)
+	(predicted_labels, decision_values) = svmpredict(model.svmModel, instances;)
     🃏 = predicted_labels
 
     verbose && println(defaultFont, "Done in ", now()-⌚,".")
