@@ -33,9 +33,7 @@ predictErr(yTe, yPred)
 
 You can supply parameters for both tangent space calculaton and SVM:
 
-s = SVM(Fisher, nothing, nothing, SVC, Kernel.RadialBasis, 0.1, 1.0, -1)
-
-model=fit(s, PTr, yTr)
+model=fit(SVM(), PTr, yTr, cost = 1.0)
 
 ```
 """
@@ -74,6 +72,12 @@ mutable struct SVM <: SVMmodel
 		gamma
 		svmModel
 end
+```
+
+ATTENTION: This class is not used to set the parameters, just to store them. You need to set the parameterts in the FIT function.
+Example:
+```
+model=fit(SVM(), PTr, yTr, cost = 1.0)
 ```
 
 `.metric`, of type
