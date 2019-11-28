@@ -115,14 +115,17 @@ The following are parameters that are passed to the LIBSVM package:
 function fit(model  :: SVMmodel,
                𝐏Tr  :: Union{ℍVector, Matrix{Float64}},
                yTr  :: IntVector;
+		   # Tnagent space parameters
 		   w        :: Union{Symbol, Tuple, Vector} = [],
            meanISR  :: Union{ℍ, Nothing} = nothing,
 		   vecRange :: UnitRange = 𝐏Tr isa ℍVector ? (1:size(𝐏Tr[1], 2)) : (1:size(𝐏Tr, 2)),
+		   # SVM paramters
 		   svmtype  :: Type = SVC,
 		   kernel   :: Kernel.KERNEL = Kernel.RadialBasis,
 		   epsilon  :: Float64 = 0.1,
 		   cost     :: Float64 = 1.0,
 		   gamma    :: Float64 = 1/_getDim(𝐏Tr, vecRange),
+		   # Generic parametes
            verbose  :: Bool = true,
 		         ⏩  :: Bool = true,
           parallel  :: Bool=false)
