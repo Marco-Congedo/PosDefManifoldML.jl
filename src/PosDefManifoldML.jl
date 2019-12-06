@@ -21,6 +21,7 @@ using LinearAlgebra, Base.Threads, Random, Statistics, PosDefManifold
 using Dates:now
 using GLMNet:GLMNet, glmnet, glmnetcv, GLMNetPath, GLMNetCrossValidation
 using Distributions:Distributions, Binomial
+using LIBSVM: svmpredict, svmtrain, SVC, NuSVC, OneClassSVM, NuSVR, EpsilonSVR, LinearSVC, Linearsolver, Kernel
 
 # Special instructions and variables
 BLAS.set_num_threads(Sys.CPU_THREADS)
@@ -64,6 +65,10 @@ export
     ENLRmodel,
     ENLR,
 
+	# from libSVM.jl
+	SVM,
+	SVC, NuSVC, OneClassSVM, NuSVR, EpsilonSVR, LinearSVC, Linearsolver, Kernel,
+
     # from cv.jl
     CVacc,
     cvAcc,
@@ -79,6 +84,7 @@ include("mdm.jl")
 include("enlr.jl")
 include("cv.jl")
 include("tools.jl")
+include("svm.jl")
 
 
 println("\n⭐ "," Welcome to the", titleFont," ",📌," ",defaultFont,"package", " ⭐\n")
