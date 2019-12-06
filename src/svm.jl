@@ -43,6 +43,8 @@ mutable struct SVM <: SVMmodel
 		svmtype       :: Type
 		kernel        :: Kernel.KERNEL
 		meanISR
+		featDim
+		# LIBSVM args
 		epsilon
 		cost
 		gamma
@@ -51,11 +53,12 @@ mutable struct SVM <: SVMmodel
 				  svmtype = SVC,
                   kernel  = Kernel.RadialBasis,
 				  meanISR = nothing,
+				  featDim = nothing,
 				  epsilon = nothing,
 				  cost    = nothing,
 				  gamma   = nothing,
 				  svmModel = nothing)
-	   	 			 new(metric, svmtype, kernel, meanISR,
+	   	 			 new(metric, svmtype, kernel, meanISR, featDim,
 					     epsilon, cost, gamma, svmModel)
     end
 end
@@ -122,7 +125,7 @@ function fit(model  :: SVMmodel,
 		   # SVM paramters
 		   svmtype  :: Type = SVC,
 		   kernel   :: Kernel.KERNEL = Kernel.RadialBasis,
-		   epsilon  :: Float64 = 0.1,
+		   epsilon  :: Float64 = 0.001,
 		   cost     :: Float64 = 1.0,
 		   gamma    :: Float64 = 1/_getDim(𝐏Tr, vecRange),
 		   # Generic parametes
@@ -161,6 +164,7 @@ function fit(model  :: SVMmodel,
     ℳ.gamma = gamma
 	ℳ.epsilon = epsilon
 	ℳ.cost = cost
+	ℳ.featDim = size(X, 2)
 
 	#convert data to LIBSVM format; first dim is features, second dim is observations
 	instances = X'
@@ -206,4 +210,50 @@ function predict(model   :: SVMmodel,
     verbose && println(defaultFont, "Done in ", now()-⌚,".")
     verbose && println(titleFont, "\nPredicted ",_what2Str(what),":", defaultFont)
     return 🃏
+end
+
+
+
+# ++++++++++++++++++++  Show override  +++++++++++++++++++ # (REPL output)
+function Base.show(io::IO, ::MIME{Symbol("text/plain")}, M::SVM)
+    println(io, titleFont, "\n↯ SVM LIBSVM machine learning model")
+    println(io, defaultFont, "  ", _modelStr(M))
+    println(io, separatorFont, "⭒  ⭒    ⭒       ⭒          ⭒", defaultFont)
+    println(io, "type    : PD Tangent Space model")
+    println(io, "features: tangent vectors of length $(M.featDim)")
+    println(io, "classes : 2")
+    println(io, "fields  : ")
+	println(io, separatorFont," .metric      ", defaultFont, string(M.metric))
+
+	if 		M.svmtype==SVC s="SVC"
+	elseif  M.svmtype==C-SVM s="C-SVM"
+	elseif  M.svmtype==EpsilonSVR s="EpsilonSVR"
+	elseif  M.svmtype==OneClassSVM s="OneClassSVM"
+	elseif  M.svmtype==NuSVR s="NuSVR"
+	else    s = "Warning: the SVM type is unknown"
+	end
+	println(io, separatorFont," .svmtype     ", defaultFont, "$s")
+
+	println(io, separatorFont," .kernel      ", defaultFont, "$(string(M.kernel))")
+
+	#`kernel::Kernels.KERNEL=Kernel.RadialBasis`: Model kernel `Linear`, `polynomial`,
+	#    `RadialBasis`, `Sigmoid` or `Precomputed`
+
+	if M.meanISR == nothing
+        println(io, greyFont, " .meanISR      not created")
+    else
+        n=size(M.meanISR, 1)
+        println(io, separatorFont," .meanISR     ", defaultFont, "$(n)x$(n) Hermitian matrix")
+    end
+
+	M.epsilon==nothing ? println(io, "       not created ") :
+						 println(io, separatorFont," .epsilon     ", defaultFont, "$(round(M.epsilon, digits=9))")
+
+    M.cost==nothing ?    println(io, "       not created ") :
+						 println(io, separatorFont," .cost        ", defaultFont, "$(round(M.cost, digits=3))")
+
+    M.gamma==nothing ?   println(io, "       not created ") :
+ 						 println(io, separatorFont," .gamma       ", defaultFont, "$(round(M.gamma, digits=5))")
+
+	println(io, separatorFont," .svmModel ", defaultFont, "   (LIBSVM model)")
 end
