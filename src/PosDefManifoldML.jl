@@ -24,7 +24,7 @@ using Distributions:Distributions, Binomial
 using LIBSVM: svmpredict, svmtrain, SVC, NuSVC, OneClassSVM, NuSVR, EpsilonSVR, LinearSVC, Linearsolver, Kernel
 
 # Special instructions and variables
-BLAS.set_num_threads(Sys.CPU_THREADS-Threads.nthreads())
+BLAS.set_num_threads(Sys.CPU_THREADS)
 
 # constants #
 const 📌            = "PosDefManifoldML"
@@ -87,13 +87,12 @@ include("tools.jl")
 include("svm.jl")
 
 
-println("\n⭐ "," Welcome to the",titleFont," ",📌," ",defaultFont,"package", " ⭐\n")
+println("\n⭐ "," Welcome to the", titleFont," ",📌," ",defaultFont,"package", " ⭐\n")
 @info " "
 println(" Your Machine `",gethostname(),"` (",Sys.MACHINE, ")")
 println(" runs on kernel ",Sys.KERNEL," with word size ",Sys.WORD_SIZE,".")
-println(" CPU  Threads: ",Sys.CPU_THREADS)
-# Sys.BINDIR # julia bin directory
+println(" CPU  Threads: ", Sys.CPU_THREADS)
 println(" Base.Threads: ", "$(Threads.nthreads())")
-println(" BLAS Threads: ", "$(Sys.CPU_THREADS-Threads.nthreads())", "\n")
+println(" BLAS Threads: ", "$(Sys.CPU_THREADS)", "\n")
 
 end # module

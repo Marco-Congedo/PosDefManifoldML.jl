@@ -242,6 +242,8 @@ function cvAcc(model   :: MLmodel,
 
     # perform cv
     @threads for f=1:nFolds
+        print(defaultFont, rand(dice), " ") # print a random dice in the REPL
+
         # get testing data for current cross-validation (CV)
         for i=1:z @inbounds 𝐐Te[f][i] = [𝐐[i][j] for j ∈ indTe[i][f]] end
 
@@ -297,10 +299,8 @@ function cvAcc(model   :: MLmodel,
 
         CM[f]/=sumCM # confusion matrices in percent
 
-        # activate this when @spawn is used (Julia v0.3)
-        # print(rand(dice), " ") # print a random dice in the REPL
     end
-    verbose && println("Done in ", defaultFont, now()-⌚)
+    verbose && println(greyFont, "\nDone in ", defaultFont, now()-⌚)
 
     # compute mean and sd (balanced) accuracy
     avg=mean(s);
@@ -381,7 +381,7 @@ function cvSetup(k       :: Int,
     shuffle ? a=shuffle!( Vector(1:k)) : a=Vector(1:k)
     indTrain = [IntVector(undef, 0) for i=1:nCV]
     indTest  = [IntVector(undef, 0) for i=1:nCV]
-    
+
     # vectors of indices for test and training sets
     j=1
     for i=1:nCV-1
