@@ -1,11 +1,11 @@
 #   Unit "mdm.jl" of the PosDefManifoldML Package for Julia language
-#   v 0.2.1 - last update 18th of October 2019
+#   v 0.3.0 - last update 8th of December 2019
 #
 #   MIT License
 #   Copyright (c) 2019,
-#   Saloni Jain, Indian Institute of Technology, Kharagpur, India
 #   Marco Congedo, CNRS, Grenoble, France:
 #   https://sites.google.com/site/marcocongedo/home
+#   Saloni Jain, Indian Institute of Technology, Kharagpur, India
 
 # ? CONTENTS :
 #   This unit implements the Riemannian minimum distance to mean
@@ -100,7 +100,7 @@ function fit(model :: MDMmodel,
        w        :: Vector = [],
        ✓w       :: Bool  = true,
        meanInit :: Union{ℍVector, Nothing} = nothing,
-       tol      :: Real  = 1e-7,
+       tol      :: Real  = 1e-5,
        verbose  :: Bool  = true,
        ⏩       :: Bool  = true)
 ```
@@ -130,7 +130,7 @@ function if `✓w` is true.
 
 Optional keyword argument `tol` is the tolerance required for those algorithms
 that compute the mean iteratively (they are those adopting the Fisher, logde0
-or Wasserstein metric). For details on this argument see
+or Wasserstein metric). It defaults to 1e-5. For details on this argument see
 the functions that are called for computing the means:
 - Fisher metric: [gmean](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.geometricMean)
 - logdet0 metric: [ld0mean](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.logdet0Mean)
@@ -167,7 +167,7 @@ function fit(model :: MDMmodel,
        w        :: Vector = [],
        ✓w       :: Bool   = true,
        meanInit :: Union{ℍVector, Nothing} = nothing,
-       tol      :: Real   = 1e-7,
+       tol      :: Real   = 1e-5,
        verbose  :: Bool   = true,
        ⏩       :: Bool   = true)
 
@@ -447,8 +447,8 @@ function Base.show(io::IO, ::MIME{Symbol("text/plain")}, M::MDM)
     if M.means==nothing
         println(io, greyFont, "\n↯ MDM machine learning model")
         println(io, "⭒  ⭒    ⭒       ⭒          ⭒")
-        println(io, ".metric :", string(M.metric), defaultFont)
-        println(io, "Non-fitted model")
+        println(io, ".metric : ", string(M.metric), defaultFont)
+        println(io, "Unfitted model")
     else
         println(io, titleFont, "\n↯ MDM machine learning model")
         println(io, separatorFont, "⭒  ⭒    ⭒       ⭒          ⭒", defaultFont)
@@ -457,10 +457,12 @@ function Base.show(io::IO, ::MIME{Symbol("text/plain")}, M::MDM)
         println(io, "type    : PD Manifold model")
         println(io, "features: $(n)x$(n) Hermitian matrices")
         println(io, "classes : $(nc)")
-        println(io, "fields  : ")
+        println(io, separatorFont, "Fields  : ")
+        # # #
+        println(io, greyFont, " MDM Parametrization", defaultFont)
         println(io, separatorFont," .metric  ", defaultFont, string(M.metric))
-        println(io, separatorFont," .featDim ", defaultFont, "$(M.featDim) ($(n)*($(n)+1)/2)")
         println(io, separatorFont," .means   ", defaultFont, "vector of $(nc) Hermitian matrices")
         println(io, separatorFont," .imeans  ", defaultFont, "vector of $(nc) Hermitian matrices")
+        println(io, separatorFont," .featDim ", defaultFont, "$(M.featDim) ($(n)*($(n)+1)/2)")
     end
 end

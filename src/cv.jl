@@ -1,11 +1,11 @@
 #   Unit "cv.jl" of the PosDefManifoldML Package for Julia language
-#   v 0.2.1 - last update 18th of October 2019
+#   v 0.3.0 - last update 8th of December 2019
 #
 #   MIT License
 #   Copyright (c) 2019,
-#   Saloni Jain, Indian Institute of Technology, Kharagpur, India
 #   Marco Congedo, CNRS, Grenoble, France:
 #   https://sites.google.com/site/marcocongedo/home
+#   Saloni Jain, Indian Institute of Technology, Kharagpur, India
 
 # ? CONTENTS :
 #   This unit implements cross-validation procedures for estimating

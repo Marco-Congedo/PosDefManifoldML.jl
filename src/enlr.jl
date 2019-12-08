@@ -1,5 +1,5 @@
 #   Unit "enlr.jl" of the PosDefManifoldML Package for Julia language
-#   v 0.2.1 - last update 18th of October 2019
+#   v 0.3.0 - last update 8th of December 2019
 #
 #   MIT License
 #   Copyright (c) 2019,
@@ -26,11 +26,13 @@ abstract type ENLRmodel<:TSmodel end
 ```
 mutable struct ENLR <: ENLRmodel
     metric      :: Metric = Fisher;
-    alpha       :: Real
+    alpha       :: Real = 1.0
     standardize :: Bool
     intercept   :: Bool
     meanISR     :: Union{ℍVector, Nothing}
+	vecRange    :: UnitRange
     featDim     :: Int
+	# GLMNet Models
     path        :: GLMNet.GLMNetPath
     cvλ         :: GLMNet.GLMNetCrossValidation
     best        :: GLMNet.GLMNetPath
@@ -60,21 +62,11 @@ upon creation of the model by the default creator.
 Instead, they are filled later when a model is created by the
 [`fit`](@ref) function:
 
-`.standardize`. If true, predictors are standardized so that
-they are in the same units. By default is true for lasso models
-(``α=1``), false otherwise (``0≤α<1``).
-
-`.intercept` is true (default) if the logistic regression model
-has an intercept term.
-
-`.meanISR` is optionally passed to the [`fit`](@ref)
-function. By default it is computed thereby.
-If the data used to train the model
-are not positive definite matrices, but Euclidean feature vectors,
-the `.meanISR` field has no use and is set to `nothing`.
+For the content of fields `standardize`, `intercept`, `meanISR` and `vecRange`,
+please see the documentation of the [`fit`](@ref) function.
 
 if the data used to train the model are positive definite matrices,
-`.featDim` is the length of the vectorized tangent vectors
+`.featDim` is the length of the vectorized tangent vectors.
 This is given by ``n(n+1)÷2`` (integer division), where ``n``
 is the dimension of the original PD matrices on which the model is applied
 once they are mapped onto the tangent space.
@@ -160,7 +152,6 @@ m2=fit(ENLR(logEuclidean), PTr, yTr; alpha=0)
 # The metric, instead, cannot be overwritten.
 
 ```
-
 """
 mutable struct ENLR <: ENLRmodel
     metric   :: Metric
@@ -168,6 +159,7 @@ mutable struct ENLR <: ENLRmodel
     standardize
     intercept
     meanISR
+	vecRange
     featDim
     path
     cvλ
@@ -177,12 +169,13 @@ mutable struct ENLR <: ENLRmodel
                standardize = nothing,
                intercept   = nothing,
                meanISR     = nothing,
+			   vecRange    = nothing,
                featDim     = nothing,
                path        = nothing,
                cvλ         = nothing,
                best        = nothing)
         new(metric, alpha, standardize, intercept,
-            meanISR, featDim, path, cvλ, best)
+            meanISR, vecRange, featDim, path, cvλ, best)
     end
 end
 
@@ -192,18 +185,19 @@ end
 function fit(model  :: ENLRmodel,
                𝐏Tr  :: Union{ℍVector, Matrix{Float64}},
                yTr  :: IntVector;
-           w        :: Union{Symbol, Tuple, Vector} = [],
-           meanISR  :: Union{ℍ, Nothing} = nothing,
-		   meanInit :: Union{ℍ, Nothing} = nothing,
-           fitType  :: Symbol = :best,
-           vecRange :: UnitRange = 𝐏Tr isa ℍVector ? (1:size(𝐏Tr[1], 2)) : (1:size(𝐏Tr, 2)),
-           verbose  :: Bool = true,
-           ⏩      :: Bool = true,
+		   # parameters for projection onto the tangent space
+           w        	:: Union{Symbol, Tuple, Vector} = [],
+           meanISR  	:: Union{ℍ, Nothing} = nothing,
+		   meanInit 	:: Union{ℍ, Nothing} = nothing,
+           vecRange 	:: UnitRange = 𝐏Tr isa ℍVector ? (1:size(𝐏Tr[1], 2)) : (1:size(𝐏Tr, 2)),
+           fitType  	:: Symbol = :best,
+		   verbose  	:: Bool = true,
+           ⏩      	   :: Bool = true,
            # arguments for `GLMNet.glmnet` function
-           alpha            :: Real = model.alpha==nothing ? 1.0 : model.alpha,
+           alpha            :: Real = model.alpha,
            weights          :: Vector{Float64} = ones(Float64, length(yTr)),
            intercept        :: Bool = true,
-           standardize      :: Bool = alpha≈1.0 ? true : false,
+		   standardize  	:: Bool = true,
            penalty_factor   :: Vector{Float64} = ones(Float64, _getDim(𝐏Tr, vecRange)),
            constraints      :: Matrix{Float64} = [x for x in (-Inf, Inf), y in 1:_getDim(𝐏Tr, vecRange)],
            offsets          :: Union{Vector{Float64}, Nothing} = nothing,
@@ -212,7 +206,7 @@ function fit(model  :: ENLRmodel,
            nlambda          :: Int = 100,
            lambda_min_ratio :: Real = (length(yTr) < _getDim(𝐏Tr, vecRange) ? 1e-2 : 1e-4),
            lambda           :: Vector{Float64} = Float64[],
-           tol              :: Real = 1e-7,
+           tol              :: Real = 1e-5,
            maxit            :: Int = 1000000,
            algorithm        :: Symbol = :newtonraphson,
            # selection method
@@ -224,14 +218,14 @@ function fit(model  :: ENLRmodel,
                n, r = divrem(size(yTr, 1), nfolds)
                shuffle!([repeat(1:nfolds, outer=n); 1:r])
            end,
-           parallel ::Bool=false)
-
+           parallel ::Bool=true)
 ```
+
 Create and fit an [`ENLR`](@ref) machine learning model,
 with training data `𝐏Tr`, of type
 [ℍVector](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1),
 and corresponding labels `yTr`, of type [IntVector](@ref).
-Return the fitted model.
+Return the fitted model(s) as an instance of the [`ENLR`](@ref) structure.
 
 As for all ML models acting in the tangent space,
 fitting an ENLR model involves computing a mean of all the
@@ -246,7 +240,9 @@ of the `model`, with optional weights `w`.
 The `.metric` field of the `model` is passed to the [`tsMap`](@ref) function.
 By default the metric is the Fisher metric. See the examples
 here below to see how to change metric.
-See [mdm.jl](@ref) for the available metrics.
+See [mdm.jl](@ref) or check out directly the documentation
+of [PosDefManifold.jl](https://marco-congedo.github.io/PosDefManifold.jl/dev/)
+for the available metrics.
 
 **Optional keyword arguments**
 
@@ -255,11 +251,12 @@ for computing the mean to pass in the tangent space.
 This is equivalent to passing as argument `w=:uniform` (or `w=:u`).
 You can also pass as argument:
 
-- `w=:balanced` (or simply `w=:b`). If the two classes are unbalanced, the weights
-  should be inversely proportional to the number of examples for each class,
-  in such a way that each class contributes equally to the computation of the mean.
-  This is equivalent of passing `w=tsWeights(yTr)`, see the [`tsWeights`](@ref)
-  function for details.
+- `w=:balanced` (or simply `w=:b`). If the two classes are unbalanced,
+  the weights should be inversely proportional to the number of examples
+  for each class, in such a way that each class contributes equally
+  to the computation of the mean.
+  This is equivalent of passing `w=tsWeights(yTr)`. See the
+  [`tsWeights`](@ref) function for details.
 - `w=v`, where `v` is a user defined vector of non-negative weights for the
   observations, thus, `v` must contain the same number of elements as `yTr`.
   For example, `w=[1.0, 1.0, 2.0, 2.0, ...., 1.0]`
@@ -272,10 +269,10 @@ If `meanISR` is passed as argument, the mean is not computed,
 instead this matrix is the inverse square root (ISR) of the mean
 used for projecting the matrices in the tangent space (see [`tsMap`](@ref)).
 Passed or computed, the inverse square root (ISR) of the mean
-will be written in the `.meanISR` field of the created [`ENLR`](@ref) struct.
+will be written in the `.meanISR` field of the created [`ENLR`](@ref) structure.
 If `meanISRis` is not provided and the `.metric` field of the `model`
 is Fisher, logdet0 or Wasserstein, the tolerance of the iterative algorithm
-used to compute the mean is set to the argument passed as `tol` (default 1e-7).
+used to compute the mean is set to the argument passed as `tol` (default 1e-5).
 Also, in this case a particular initialization for those iterative algorithms
 can be provided as an `Hermitian` matrix with argument `meanInit`.
 
@@ -283,30 +280,30 @@ This function also allows to fit a model passing as
 training data `𝐏Tr` directly a matrix of feature vectors,
 where each feature vector is a row of the matrix.
 In this case the `metric` of the ENLR model and argument `meanISR` are not used.
-Therefore, the `.meanISR` field of the created [`ENLR`](@ref) struct
+Therefore, the `.meanISR` field of the created [`ENLR`](@ref) structure
 will be set to `nothing`.
 
-If `fitType` = `:best` (default), a cross-validation procedure is run
-to find the best lambda hyperparameter for the training data. This finds
-a single model that is written into the `.best` field of the model
-that will be created.
-
-If `fitType` = `:path`, the regularization path for several values of
-the lambda hyperparameter if found for the training data.
-This creates several models, which are written into the
-`.path` field of the model
-that will be created, none of which
-is optimal, in the cross-validation sense, for the training data.
-
-If `fitType` = `:all`, both the above fits are performed and all fields
-of the model that will be created will be filled in.
-
 If a `UnitRange` is passed with optional keyword argument `vecRange`,
-then if `𝐏Tr` is a vector of `Hermitian`matrices, the vectorization
+then if `𝐏Tr` is a vector of `Hermitian` matrices, the vectorization
 of those matrices once they are projected onto the tangent space
 concerns only the rows (or columns) given in the specified range,
-else if `𝐏Tr` is a matrix of feature vectors in the rows, then
+else if `𝐏Tr` is a matrix with feature vectors arranged in its rows, then
 only the columns of `𝐏Tr` given in the specified range will be used.
+
+If `fitType` = `:best` (default), a cross-validation procedure is run
+to find the best lambda hyperparameter for the given training data.
+This finds a single model that is written into the `.best` field
+of the [`ENLR`](@ref) structure that will be created.
+
+If `fitType` = `:path`, the regularization path for several values of
+the lambda hyperparameter is found for the given training data.
+This creates several models, which are written into the
+`.path` field of the [`ENLR`](@ref) structure that will be created,
+none of which is optimal, in the cross-validation sense, for the
+given training data.
+
+If `fitType` = `:all`, both the above fits are performed and all fields
+of the [`ENLR`](@ref) structure that will be created will be filled in.
 
 If `verbose` is true (default), information is printed in the REPL.
 This option is included to allow repeated calls to this function
@@ -314,7 +311,8 @@ without crowding the REPL.
 
 The `⏩` argument (true by default) is passed to the [`tsMap`](@ref)
 function for projecting the matrices in `𝐏Tr` onto the tangent space
-using multi-threading.
+and to the `GLMNet.glmnetcv` function to run inner cross-validation
+to find the `best` model using multi-threading.
 
 The remaining optional keyword arguments, are
 
@@ -342,9 +340,10 @@ It defaults to 1 for all matrices.
 `intercept`: whether to fit an intercept term.
 The intercept is always unpenalized. Defaults to true.
 
-`standardize`: whether to standardize predictors so that they are in the
-same units. Differently from GLMNet.jl, by default this is true for lasso models
-(``α=1``), false otherwise (``0≤α<1``).
+`standardize`: if true (default), GLMNet standardize the predictors
+(presumably this amounts to transform to unit variance) so that they are
+in the same units. This is a common choice for regularized
+regression models.
 
 `penalty_factor`: a vector of length ``n(n+1)/2``, where ``n``
 is the dimension of the original PD matrices on which the model is applied,
@@ -357,6 +356,8 @@ set the corresponding entry to zero.
 (first column) and upper bounds (second column) on each predictor.
 By default, this is [-Inf Inf] for each predictor (each element
 of tangent vectors).
+
+`offset`: see documentation of original GLMNet package [🎓](@ref).
 
 `dfmax`: The maximum number of predictors in the largest model.
 
@@ -374,7 +375,10 @@ this defaults to 0.0001, otherwise 0.01.
 By default, this is determined
 from `nlambda` and `lambda_min_ratio`.
 
-`tol`: Convergence criterion. Defaults to 1e-7.
+`tol`: Is the convergence criterion for both the computation
+of a mean for projecting onto the tangent space
+(if the metric requires an iterative algorithm)
+and for the GLMNet fitting algorithm. Defaults to 1e-5.
 
 `maxit`: The maximum number of iterations of the cyclic coordinate
 descent algorithm. If convergence is not achieved, a warning is returned.
@@ -395,8 +399,9 @@ Note that in selecting a model, the model with only the intercept term,
 if it exists, is ignored. See [`ENLRmodel`](@ref) for a description
 of the `.cvλ` field of the model structure.
 
-Arguments `nfolds`, `folds` and `parallel` are passed to the
-`GLMNet.glmnetcv` function. Please refer to the resources on GLMNet
+Arguments `nfolds` and `folds` are passed to the
+`GLMNet.glmnetcv` function along with the `⏩` argument.
+Please refer to the resources on GLMNet
 for details [🎓](@ref).
 
 **See**: [notation & nomenclature](@ref), [the ℍVector type](@ref).
@@ -438,18 +443,19 @@ m=fit(ENLR(), PTr, yTr; fitType=:all)
 function fit(model  :: ENLRmodel,
                𝐏Tr  :: Union{ℍVector, Matrix{Float64}},
                yTr  :: IntVector;
-           w        :: Union{Symbol, Tuple, Vector} = [],
-           meanISR  :: Union{ℍ, Nothing} = nothing,
-		   meanInit :: Union{ℍ, Nothing} = nothing,
-           fitType  :: Symbol = :best,
-           vecRange :: UnitRange = 𝐏Tr isa ℍVector ? (1:size(𝐏Tr[1], 2)) : (1:size(𝐏Tr, 2)),
-           verbose  :: Bool = true,
-           ⏩      :: Bool = true,
+		   # parameters for projection onto the tangent space
+           w        	:: Union{Symbol, Tuple, Vector} = [],
+           meanISR  	:: Union{ℍ, Nothing} = nothing,
+		   meanInit 	:: Union{ℍ, Nothing} = nothing,
+           vecRange 	:: UnitRange = 𝐏Tr isa ℍVector ? (1:size(𝐏Tr[1], 2)) : (1:size(𝐏Tr, 2)),
+           fitType  	:: Symbol = :best,
+		   verbose  	:: Bool = true,
+           ⏩      	   :: Bool = true,
            # arguments for `GLMNet.glmnet` function
-           alpha            :: Real = model.alpha==nothing ? 1.0 : model.alpha,
+           alpha            :: Real = model.alpha,
            weights          :: Vector{Float64} = ones(Float64, length(yTr)),
            intercept        :: Bool = true,
-           standardize      :: Bool = alpha≈1.0 ? true : false,
+		   standardize  	:: Bool = true,
            penalty_factor   :: Vector{Float64} = ones(Float64, _getDim(𝐏Tr, vecRange)),
            constraints      :: Matrix{Float64} = [x for x in (-Inf, Inf), y in 1:_getDim(𝐏Tr, vecRange)],
            offsets          :: Union{Vector{Float64}, Nothing} = nothing,
@@ -458,7 +464,7 @@ function fit(model  :: ENLRmodel,
            nlambda          :: Int = 100,
            lambda_min_ratio :: Real = (length(yTr) < _getDim(𝐏Tr, vecRange) ? 1e-2 : 1e-4),
            lambda           :: Vector{Float64} = Float64[],
-           tol              :: Real = 1e-7,
+           tol              :: Real = 1e-5,
            maxit            :: Int = 1000000,
            algorithm        :: Symbol = :newtonraphson,
            # selection method
@@ -470,35 +476,24 @@ function fit(model  :: ENLRmodel,
                n, r = divrem(size(yTr, 1), nfolds)
                shuffle!([repeat(1:nfolds, outer=n); 1:r])
            end,
-           parallel ::Bool=false)
+           parallel ::Bool=true)
 
     ⌚=now() # get the time in ms
+    ℳ=deepcopy(model) # output model
 
-    # output model
-    ℳ=deepcopy(model)
+	# overwrite fields in `ℳ` if the user has passed them here as arguments,
+	# otherwise use as arguments the values in the fields of `ℳ`, e.g., the default
+	if alpha ≠ 1.0 ℳ.alpha = alpha else alpha = ℳ.alpha end
 
-    # overwrite the `alpha` value in `ℳ` if the user has passed keyword `alpha`
-    if alpha ≠ ℳ.alpha ℳ.alpha = alpha end
-
-    # check w argument and get weights
+    # check w argument and get weights for input matrices
     (w=_getWeights(w, yTr, "fit ("*_modelStr(ℳ)*" model)")) == nothing && return
 
     # other checks
     𝐏Tr isa ℍVector ? nObs=length(𝐏Tr) : nObs=size(𝐏Tr, 1)
     !_check_fit(ℳ, nObs, length(yTr), length(w), length(weights), "ENLR") && return
 
-    # projection onto the tangent space
-    if 𝐏Tr isa ℍVector
-        verbose && println(greyFont, "Projecting data onto the tangent space...")
-        if meanISR==nothing
-            (X, G⁻½)=tsMap(ℳ.metric, 𝐏Tr; w=w, ⏩=⏩, vecRange=vecRange, meanInit=meanInit, tol=tol)
-            ℳ.meanISR = G⁻½
-        else
-            X=tsMap(ℳ.metric, 𝐏Tr; w=w, ⏩=⏩, vecRange=vecRange, meanISR=meanISR)
-            ℳ.meanISR = meanISR
-        end
-    else X=𝐏Tr[:, vecRange]
-    end
+	# project data onto the tangent space or just copy the features if 𝐏Tr is a matrix
+	X=_getFeat_fit!(ℳ, 𝐏Tr, meanISR, meanInit, tol, w, vecRange, true, verbose, ⏩)
 
     # convert labels in GLMNet format
     y = convert(Matrix{Float64}, [(yTr.==1) (yTr.==2)])
@@ -507,6 +502,7 @@ function fit(model  :: ENLRmodel,
     ℳ.standardize = standardize
     ℳ.intercept   = intercept
     ℳ.featDim     = size(X, 2)
+	ℳ.vecRange    = vecRange
 
     # collect the argumenst for `glmnet` function excluding the `lambda` argument
     fitArgs_λ = (alpha            = alpha,
@@ -573,8 +569,6 @@ function predict(model   :: ENLRmodel,
                  fitType :: Symbol = :best,
                  onWhich :: Int    = Int(fitType==:best);
 			transfer   :: Union{ℍ, Nothing} = nothing,
-            vecRange   :: UnitRange = 𝐏Te isa ℍVector ? (1:size(𝐏Te[1], 2)) : (1:size(𝐏Te, 2)),
-            checks     :: Bool = true,
             verbose    :: Bool = true,
             ⏩        :: Bool = true)
 ```
@@ -603,9 +597,12 @@ cross-validation is used for prediction.
 
 If `fitType` = `:path`,
 
-- if `onWhich` is a valid serial number for a model in the `model.path`, this model is used for prediction,
+- if `onWhich` is a valid serial number for a model in the `model.path`,
+then this model is used for prediction,
 
-- if `onWhich` is zero, all model in the `model.path` will be used for predictions, thus the output will be multiplied by the number of models in `model.path`.
+- if `onWhich` is zero, all model in the `model.path` will be used for
+predictions, thus the output will be multiplied by the number of
+models in `model.path`.
 
 Argumet `onWhich` has no effect if `fitType` = `:best`.
 
@@ -615,7 +612,7 @@ Argumet `onWhich` has no effect if `fitType` = `:best`.
     the fit function with optional keyword argument `fitType`=`:path` or
     `fitType`=`:all`. See the [`fit`](@ref) function for details.
 
-Option keyword argument `transfer` can be used to specify the principal
+Optional keyword argument `transfer` can be used to specify the principal
 inverse square root (ISR) of a new mean to be used as base point for
 projecting the matrices in `𝐏Te` onto the tangent space.
 By default `transfer` is equal to nothing,
@@ -625,15 +622,8 @@ Barachant et *al.*(2013). Typically `transfer` is the ISR
 of the mean of the matrices in `𝐏Te` or of a subset of them.
 Notice that this actually performs *transfer learning* by parallel
 transporting both the training and test data to the identity matrix
-as defined in Zanini et *al.*(2018) and taken up in
+as defined in Zanini et *al.*(2018) and later taken up in
 Rodrigues et *al.*(2019)[🎓](@ref).
-
-Optional keyword argument `vecRange` has the same meaning as in the
-[`fit`](@ref) function. In general, if you have used it to fit the model
-youwill use the same here.
-
-If `checks` is true (default), checks on the validity of the arguments
-are performed. This can be set to false to spped up computations.
 
 If `verbose` is true (default), information is printed in the REPL.
 This option is included to allow repeated calls to this function
@@ -699,48 +689,39 @@ function predict(model   :: ENLRmodel,
                  fitType :: Symbol = :best,
                  onWhich :: Int    = Int(fitType==:best);
 			transfer   :: Union{ℍ, Nothing} = nothing,
-            vecRange   :: UnitRange = 𝐏Te isa ℍVector ? (1:size(𝐏Te[1], 2)) : (1:size(𝐏Te, 2)),
-            checks     :: Bool = true,
             verbose    :: Bool = true,
             ⏩        :: Bool = true)
 
     ⌚=now()
 
     # checks
-    if checks
-        if !_whatIsValid(what, "predict ("*_modelStr(model)*")") return end
-        if !_fitTypeIsValid(fitType, "predict ("*_modelStr(model)*")") return end
-        if fitType==:best && model.best==nothing @error 📌*", predict function: the best model has not been fitted"; return end
-        if fitType==:path && model.path==nothing @error 📌*", predict function: the regularization path has not been fitted"; return end
-        if !_ENLRonWhichIsValid(model, fitType, onWhich, "predict ("*_modelStr(model)*")") return end
-    end
+    if !_whatIsValid(what, "predict ("*_modelStr(model)*")") return end
+    if !_fitTypeIsValid(fitType, "predict ("*_modelStr(model)*")") return end
+    if fitType==:best && model.best==nothing @error 📌*", predict function: the best model has not been fitted"; return end
+    if fitType==:path && model.path==nothing @error 📌*", predict function: the regularization path has not been fitted"; return end
+    if !_ENLRonWhichIsValid(model, fitType, onWhich, "predict ("*_modelStr(model)*")") return end
 
     # projection onto the tangent space
-    if 𝐏Te isa ℍVector
-        verbose && println(greyFont, "Projecting data onto the tangent space...")
-        X=tsMap(model.metric, 𝐏Te;
-				meanISR = transfer==nothing ? model.meanISR : transfer,
-				⏩=⏩,
-				vecRange=vecRange)
-    else X=𝐏Te[:, vecRange] end
+	X=_getFeat_Predict!(model, 𝐏Te, transfer, model.vecRange, true, verbose, ⏩)
 
     # prediction
     verbose && println("Predicting "*_ENLRonWhichStr(model, fitType, onWhich)*"...")
     if 		fitType==:best
-        path=model.best
-        onWhich=1
+        	path=model.best
+        	onWhich=1
     elseif  fitType==:path
-        path=model.path
+        	path=model.path
     end
-    onWhich==0 ? π=GLMNet.predict(path, X) :
-                 π=GLMNet.predict(path, X, onWhich)
+
+    onWhich==0 ? π=GLMNet.predict(path, X) : π=GLMNet.predict(path, X, onWhich)
+
     k, l=size(π, 1), length(path.lambda)
-    if     what == :functions || what == :f
-        🃏=π
-    elseif what == :labels || what == :l
-        onWhich==0 ? 🃏=[π[i, j]<0 ? 1 : 2 for i=1:k, j=1:l] : 🃏=[y<0 ? 1 : 2 for y ∈ π]
-    elseif what == :probabilities || what == :p
-        onWhich==0 ? 🃏=[softmax([-π[i, j], 0]) for i=1:k, j=1:l] : 🃏=[softmax([-y, 0]) for y ∈ π]
+    if     	what == :functions || what == :f
+        	🃏=π
+    elseif 	what == :labels || what == :l
+        	onWhich==0 ? 🃏=[π[i, j]<0 ? 1 : 2 for i=1:k, j=1:l] : 🃏=[y<0 ? 1 : 2 for y ∈ π]
+    elseif 	what == :probabilities || what == :p
+        	onWhich==0 ? 🃏=[softmax([-π[i, j], 0]) for i=1:k, j=1:l] : 🃏=[softmax([-y, 0]) for y ∈ π]
     end
 
     verbose && println(defaultFont, "Done in ", now()-⌚,".")
@@ -756,31 +737,38 @@ function Base.show(io::IO, ::MIME{Symbol("text/plain")}, M::ENLR)
         if M.best==nothing
             println(io, greyFont, "\n↯ ENLR GLMNet machine learning model")
             println(io, "⭒  ⭒    ⭒       ⭒          ⭒")
-            println(io, ".metric :", string(M.metric))
-            println(io, ".alpha  :", "$(round(M.alpha, digits=3))", defaultFont)
-            println(io, "Non-fitted model")
+            println(io, ".metric : ", string(M.metric))
+            println(io, ".alpha  : ", "$(round(M.alpha, digits=3))", defaultFont)
+            println(io, "Unfitted model")
             return
         end
     end
 
-    println(io, titleFont, "\n↯ ENLR GLMNet machine learning model")
-    println(io, defaultFont, "  ", _modelStr(M))
+    println(io, titleFont, "\n↯ GLMNet ENLR machine learning model")
+    println(io, separatorFont, "  ", _modelStr(M))
     println(io, separatorFont, "⭒  ⭒    ⭒       ⭒          ⭒", defaultFont)
     println(io, "type    : PD Tangent Space model")
     println(io, "features: tangent vectors of length $(M.featDim)")
     println(io, "classes : 2")
-    println(io, "fields  : ")
+    println(io, separatorFont, "Fields  : ")
+	# # #
+	println(io, greyFont, " Tangent Space Parametrization", defaultFont)
     println(io, separatorFont," .metric      ", defaultFont, string(M.metric))
-    println(io, separatorFont," .alpha       ", defaultFont, "$(round(M.alpha, digits=3))")
-    println(io, separatorFont," .intercept   ", defaultFont, string(M.intercept))
-    println(io, separatorFont," .standardize ", defaultFont, string(M.standardize))
-    if M.meanISR == nothing
+	if M.meanISR == nothing
         println(io, greyFont, " .meanISR      not created")
     else
         n=size(M.meanISR, 1)
         println(io, separatorFont," .meanISR     ", defaultFont, "$(n)x$(n) Hermitian matrix")
     end
+    println(io, separatorFont," .vecRange    ", defaultFont, "$(M.vecRange)")
     println(io, separatorFont," .featDim     ", defaultFont, "$(M.featDim)")
+	# # #
+	println(io, greyFont, " ENLR Parametrization", defaultFont)
+    println(io, separatorFont," .alpha       ", defaultFont, "$(round(M.alpha, digits=3))")
+    println(io, separatorFont," .intercept   ", defaultFont, string(M.intercept))
+	println(io, separatorFont," .standardize ", defaultFont, string(M.standardize))
+
+
     if M.path==nothing
         println(io, greyFont," .path struct `GLMNetPath`:")
         println(io, "       not created ")

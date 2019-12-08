@@ -3,7 +3,7 @@ using Documenter, PosDefManifoldML
 
 makedocs(
    sitename="PosDefManifoldML",
-   authors="Saloni Jain, Marco Congedo",
+   authors="Marco Congedo, Saloni Jain, Anton Andreev",
    modules=[PosDefManifoldML],
    pages =
    [

@@ -9,7 +9,7 @@ This is the main unit containing the **PosDefManifoldML** *module*.
 | [LinearAlgebra](https://bit.ly/2W5Wq8W) |  [PosDefManifold](https://github.com/Marco-Congedo/PosDefManifold.jl)|
 | [Statistics](https://bit.ly/2Oem3li) |  [GLMNet](https://github.com/JuliaStats/GLMNet.jl)|
 | [Random](https://github.com/JuliaStdlibs/Random.jl) | [Distributions](https://github.com/JuliaStats/Distributions.jl)|
-| [Dates](https://github.com/JuliaStdlibs/Dates.jl)| |
+| [Dates](https://github.com/JuliaStdlibs/Dates.jl)| [LIBSVM](https://github.com/mpastell/LIBSVM.jl)|
 
 The main module does not contains functions.
 
@@ -78,4 +78,5 @@ upper case letters in order to allow reading in the REPL.
 
 - MDM: minimum distance to mean
 - ENLR: Elastic-Net Logistic Regression
+- SVM: Support-Vector Machine
 - cv: cross-validation

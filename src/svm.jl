@@ -1,87 +1,37 @@
 #   Unit "libSVM.jl" of the PosDefManifoldML Package for Julia language
-#   v 0.2.1 - last update 18th of October 2019
+#   v 0.3.0 - last update 8th of December 2019
 #
 #   MIT License
 #   Copyright (c) 2019,
-#   Anton Andreev, CNRS, Grenoble, France:
+#   Anton Andreev, Marco Congedo, CNRS, Grenoble, France:
 
 # ? CONTENTS :
 #   This unit implements a wrapper to libSVM. It projects data to tangent space
 #   and it applies SVM classification using Julia's SVM wrapper.
 
+"""
+```
+abstract type SVMmodel<:TSmodel end
+```
+Abstract type for **Support-Vector Machine (SVM)**
+learning models. See [MLmodel](@ref).
+"""
 abstract type SVMmodel<:TSmodel end
 
 """
-**Examples**:
-```
-# Note: creating models with the default creator is possible,
-# but not useful in general.
-
-using PosDefManifoldML
-
-# generate data
-PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80)
-
-# create and train an SVM model with default parameters for tangent space calculation and SVM
-model=fit(SVM(), PTr, yTr)
-
-# predict using this model
-yPred=predict(model, PTe, :l)
-
-# calculate prediction error
-predictErr(yTe, yPred)
-
-You can supply parameters for both tangent space calculaton and SVM:
-
-model=fit(SVM(), PTr, yTr, cost = 1.0)
-
-```
-"""
-
-mutable struct SVM <: SVMmodel
-    	metric        :: Metric
-		svmtype       :: Type
-		kernel        :: Kernel.KERNEL
-		meanISR
-		featDim
-		# LIBSVM args
-		epsilon
-		cost
-		gamma
-		svmModel #used to store the training model from the SVM library
-    function SVM( metric :: Metric=Fisher;
-				  svmtype = SVC,
-                  kernel  = Kernel.RadialBasis,
-				  meanISR = nothing,
-				  featDim = nothing,
-				  epsilon = nothing,
-				  cost    = nothing,
-				  gamma   = nothing,
-				  svmModel = nothing)
-	   	 			 new(metric, svmtype, kernel, meanISR, featDim,
-					     epsilon, cost, gamma, svmModel)
-    end
-end
-
-"""
 ```
 mutable struct SVM <: SVMmodel
-    	metric        :: Metric
-		svmtype       :: Type
-		kernel        :: Kernel.KERNEL
-		meanISR
-		epsilon
-		cost
-		gamma
-		svmModel
-end
+    	metric      :: Metric
+		svmType     :: Type
+		kernel      :: Kernel.KERNEL
+		rescale     :: Tuple
+		meanISR		:: Union{ℍVector, Nothing}
+		vecRange    :: UnitRange
+		featDim		:: Int
+		svmModel #store the training model from the SVM library
 ```
-
-ATTENTION: This class is not used to set the parameters, just to store them. You need to set the parameterts in the FIT function.
-Example:
-```
-model=fit(SVM(), PTr, yTr, cost = 1.0)
-```
+SVM machine learning models are incapsulated in this
+mutable structure. Fields:
 
 `.metric`, of type
 [Metric](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#Metric::Enumerated-type-1),
@@ -92,120 +42,402 @@ for the available metrics. If the data used to train the model
 are not positive definite matrices, but Euclidean feature vectors,
 the `.metric` field has no use.
 
+`svmType`, a generic Type of SVM models used in LIBSVM.
+Available types are:
+- `SVC`: *C-Support Vector Classification*. The fit time complexity is more
+   than quadratic with the number of observations. The multiclass support is handled
+   according to a one-vs-one scheme,
+- `NuSVC`: *Nu-Support Vector Classification*. Similar to SVC but uses a
+   parameter to control the number of support vectors,
+- `OneClassSVM`: Unsupervised Outlier Detection. Estimate the support of a high-dimensional distribution,
+- `EpsilonSVR`: *Epsilon-Support Vector Regression*,
+- `NuSVR`: *Nu-Support Vector Regression*.
+The default is `SVC`, unless labels are not provided while fitting
+the model, in which case it defaults to `OneClassSVM`.
+
+`kernel`, a kernel type.
+Available types are
+- `Kernel.RadialBasis` (default)
+- `Kernel.Linear`
+- `Kernel.Polynomial`
+- `Kernel.Sigmoid`
+- `Kernel.Precomputed`.
+
+All other fields do not correspond to arguments passed
+upon creation of the model by the default creator.
+Instead, they are filled later when a model is created by the
+[`fit`](@ref) function:
+
+For the content of fields `rescale` and `vecRange`,
+please see the documentation of the [`fit`](@ref) function for the
+ENLR model.
+
 `.meanISR` is optionally passed to the [`fit`](@ref)
 function. By default it is computed thereby.
 If the data used to train the model
 are not positive definite matrices, but Euclidean feature vectors,
 the `.meanISR` field has no use and is set to `nothing`.
 
-The following are parameters that are passed to the LIBSVM package:
+if the data used to train the model are positive definite matrices,
+`.featDim` is the length of the vectorized tangent vectors.
+This is given by ``n(n+1)÷2`` (integer division), where ``n``
+is the dimension of the original PD matrices on which the model is applied
+once they are mapped onto the tangent space.
+If feature vectors are used to train the model, `.featDim` is the length
+of these vectors. If for fitting the model you have provided an optional
+keyword argument `vecRange`, `.featDim` will be reduced accordingly.
 
-`svmtype::Type=SVC`: Type of SVM to train `SVC` (for C-SVM), `NuSVC`
-    `OneClassSVM`, `EpsilonSVR` or `NuSVR`. Defaults to `OneClassSVM` if
-    `y` is not used
+`svmModel` holds the model structure created by LIBSVM when the model is fitted.
 
-`kernel::Kernels.KERNEL=Kernel.RadialBasis`: Model kernel `Linear`, `polynomial`,
-    `RadialBasis`, `Sigmoid` or `Precomputed`
+**Examples**:
+```
+# Note: creating models with the default creator is possible,
+# but not useful in general.
 
-`gamma::Float64=1.0/size(X, 1)` : γ for kernels
+using PosDefManifoldML
 
-`cost::Float64=1.0`: cost parameter C of C-SVC, epsilon-SVR, and nu-SVR
+# create an empty SVM model
+m = SVM(Fisher)
 
-`epsilon::Float64=0.1`: epsilon in loss function of epsilon-SVR
+# since the Fisher metric is the default metric,
+# this is equivalent to
+m = SVM()
+
+# create an empty SVM model using the logEuclidean metric
+m = SVM(logEuclidean)
+
+# Empty models can be passed as first argument of the `fit` function
+# to fit a model. For instance, this will fit an SVM model of the same
+# kind of `m` and put the fitted model in `m1`:
+m1=fit(m, PTr, yTr)
+
+# in general you don't need this machinery for fitting a model,
+# since you can specify a model by creating one on the fly:
+m2=fit(SVM(logEuclidean), PTr, yTr; kernel=Sigmoid)
+
+# which is equivalent to
+m2=fit(m, PTr, yTr; kernel=Sigmoid)
+
+# note that, albeit model `m` has been created as an SVM model
+# with the default kernel (RadialBasis),
+# you have passed `m` and overwritten the `kernel` type.
+# You can also overwrite the `svmType`.
+# The metric, instead, cannot be overwritten.
+
+```
 """
+mutable struct SVM <: SVMmodel
+    	metric        :: Metric
+		svmType       :: Type
+		kernel        :: Kernel.KERNEL
+		rescale
+		meanISR
+		vecRange
+		featDim
+		# LIBSVM args
+		svmModel #used to store the training model from the SVM library
+    function SVM( metric :: Metric=Fisher;
+				  svmType 	  = SVC,
+                  kernel  	  = Kernel.RadialBasis,
+				  rescale 	  = nothing,
+				  meanISR 	  = nothing,
+				  vecRange    = nothing,
+				  featDim 	  = nothing,
+				  svmModel 	  = nothing)
+	   	 new(metric, svmType, kernel, rescale, meanISR,
+		     vecRange, featDim, svmModel)
+    end
+end
 
 
-function fit(model  :: SVMmodel,
-               𝐏Tr  :: Union{ℍVector, Matrix{Float64}},
-               yTr  :: IntVector;
-		   # Tnagent space parameters
-		   w        :: Union{Symbol, Tuple, Vector} = [],
-           meanISR  :: Union{ℍ, Nothing} = nothing,
-		   vecRange :: UnitRange = 𝐏Tr isa ℍVector ? (1:size(𝐏Tr[1], 2)) : (1:size(𝐏Tr, 2)),
+
+"""
+```
+function fit(model     :: SVMmodel,
+               𝐏Tr     :: Union{ℍVector, Matrix{Float64}},
+               yTr     :: IntVector=[];
+		   # parameters for projection onto the tangent space
+		   w           :: Union{Symbol, Tuple, Vector} = [],
+           meanISR     :: Union{ℍ, Nothing} = nothing,
+		   meanInit    :: Union{ℍ, Nothing} = nothing,
+		   vecRange    :: UnitRange = 𝐏Tr isa ℍVector ? (1:size(𝐏Tr[1], 2)) : (1:size(𝐏Tr, 2)),
 		   # SVM paramters
-		   svmtype  :: Type = SVC,
-		   kernel   :: Kernel.KERNEL = Kernel.RadialBasis,
-		   epsilon  :: Float64 = 0.001,
-		   cost     :: Float64 = 1.0,
-		   gamma    :: Float64 = 1/_getDim(𝐏Tr, vecRange),
-		   # Generic parametes
-           verbose  :: Bool = true,
-		         ⏩  :: Bool = true,
-          parallel  :: Bool=false)
+		   svmType     :: Type 		  = SVC,
+		   kernel      :: Kernel.KERNEL = Kernel.RadialBasis,
+		   epsilon     :: Float64 	  = 0.1,
+		   cost        :: Float64 	  = 1.0,
+		   gamma       :: Float64 	  = 1/_getDim(𝐏Tr, vecRange),
+		   degree      :: Int64   	  = 3,
+		   coef0	   :: Float64	  = 0.,
+		   nu		   :: Float64	  = 0.5,
+		   shrinking   :: Bool		  = true,
+		   probability :: Bool		  = false,
+		   weights     :: Union{Dict{Int, Float64}, Nothing} = nothing,
+		   cachesize   :: Float64     = 200.0,
+		   # Generic and common parameters
+		   tol         :: Real 		  = 1e-5,
+		   rescale     :: Tuple 	  = (-1, 1),
+           verbose     :: Bool 		  = true,
+		   ⏩  	      :: Bool 		= true)
+```
 
-    #println(defaultFont, "Start")
+Create and fit an [`SVM`](@ref) machine learning model,
+with training data `𝐏Tr`, of type
+[ℍVector](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1),
+and corresponding labels `yTr`, of type [IntVector](@ref).
+The label vector can be omitted if the `svmType` is `OneClassSVM`
+(see [`SVM`](@ref)).
+Return the fitted model as an instance of the [`SVM`](@ref) structure.
+
+As for all ML models acting in the tangent space,
+fitting an SVM model involves computing a mean of all the
+matrices in `𝐏Tr`, mapping all matrices onto the tangent space
+after parallel transporting them at the identity matrix
+and vectorizing them using the
+[vecP](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.vecP)
+operation. Once this is done, the support-vector machine is fitted.
+
+Arguments `w`, `meanISR`, `meanInit` and `vecRange` allow to tune
+the projection onto the tangent space. See the documentation
+of the [`fit`](@ref) function for the ENLR model here above for their meaning.
+
+`svmType` and `kernel` allow to chose among several
+available SVM models. See the documentation of [`SVM`](@ref).
+
+`epsilon`, with default 0.1, is the epsilon in loss function
+of the `epsilonSVR` SVM model.
+
+`cost`, with default 1.0`, is the cost parameter ``C`` of `SVC`,
+`epsilonSVR`, and `nuSVR` SVM models.
+
+`gamma`, defaulting to 1 divided by the length of the feature vectors,
+is the ``γ`` parameter for `RadialBasis`, `Polynomial` and `Sigmoid` kernels.
+
+`degree`, with default 3, is the degree for `Polynomial` kernels
+
+`coef0`, zero by default, is a parameter for the `Sigmoid` and `Polynomial` kernel.
+
+`nu`, with default 0.5, is the parameter ``𝜈`` of `nuSVC`,
+`OneClassSVM`, and `nuSVR` SVM models. It should be in the interval (0, 1].
+
+`shrinking`, true by default, sets whether to use the shrinking heuristics.
+
+`probability`, false by default sets whether to train a `SVC` or `SVR` model
+allowing probability estimates.
+
+if a Dict{Int, Float64} is passed as `weights` argument, it will be used
+to give weights to the classes. By default it is equal to `nothing`, implying
+equal weights to all classes.
+
+`cachesize` for the kernel, 200.0 by defaut (in MB), can be increased for very large problems.
+
+`tol` is the convergence criterion for both the computation
+of a mean for projecting onto the tangent space
+(if the metric requires an iterative algorithm)
+and for the LIBSVM fitting algorithm. Defaults to 1e-5.
+
+`rescale` is a 2-tuple of the lower and upper limit to rescale the feature vectors
+within these limits. The default is (-1, 1), since tangent vectors
+of PD matrices have positive and negative elements. If `𝐏Tr`
+is a feature matrix and the features are only positive, use (0, 1)
+instead. In order not to rescale the feature vectors, use ().
+
+If `verbose` is true (default), information is printed in the REPL.
+This option is included to allow repeated calls to this function
+without crowding the REPL. It may not work properly in a
+multithreaded context (see `⏩` argument here below).
+
+The `⏩` argument (true by default) is passed to the [`tsMap`](@ref)
+function for projecting the matrices in `𝐏Tr` onto the tangent space
+and to the LIBSVM function that perform the fit in order to run them
+in multi-threaded mode.
+
+For further information on tho LIBSVM arguments, refer to the
+resources on the LIBSVM package [🎓](@ref).
+
+**See**: [notation & nomenclature](@ref), [the ℍVector type](@ref).
+
+**See also**: [`predict`](@ref), [`cvAcc`](@ref).
+
+**Examples**
+```
+using PosDefManifoldML
+
+# generate some data
+PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.1)
+
+# Fit an SVC SVM model and find the best model by cross-validation:
+m=fit(SVM(), PTr, yTr)
+
+# ... balancing the weights for tangent space mapping
+m=fit(SVM(), PTr, yTr; w=tsWeights(yTr))
+
+# ... using the log-Eucidean metric for tangent space projection
+m=fit(SVM(logEuclidean), PTr, yTr)
+```
+"""
+function fit(model     :: SVMmodel,
+               𝐏Tr     :: Union{ℍVector, Matrix{Float64}},
+               yTr     :: IntVector=[];
+		   # parameters for projection onto the tangent space
+		   w           :: Union{Symbol, Tuple, Vector} = [],
+           meanISR     :: Union{ℍ, Nothing} = nothing,
+		   meanInit    :: Union{ℍ, Nothing} = nothing,
+		   vecRange    :: UnitRange = 𝐏Tr isa ℍVector ? (1:size(𝐏Tr[1], 2)) : (1:size(𝐏Tr, 2)),
+		   # paramters for LIBSVM svmtrain function
+		   svmType     :: Type 		  = SVC,
+		   kernel      :: Kernel.KERNEL = Kernel.RadialBasis,
+		   epsilon     :: Float64 	  = 0.1,
+		   cost        :: Float64 	  = 1.0,
+		   gamma       :: Float64 	  = 1/_getDim(𝐏Tr, vecRange),
+		   degree      :: Int64   	  = 3,
+		   coef0	   :: Float64	  = 0.,
+		   nu		   :: Float64	  = 0.5,
+		   shrinking   :: Bool		  = true,
+		   probability :: Bool		  = false,
+		   weights     :: Union{Dict{Int, Float64}, Nothing} = nothing,
+		   cachesize   :: Float64     = 200.0,
+		   # Generic and common parameters
+		   tol         :: Real 		  = 1e-5,
+		   rescale     :: Tuple 	  = (-1, 1),
+           verbose     :: Bool 		  = true,
+		   ⏩  	      :: Bool 		= true)
+
     ⌚=now() # get the time in ms
+    ℳ=deepcopy(model) # output model
 
-    # output model
-    ℳ=deepcopy(model)
+	# checks
+	isempty(yTr) && svmType≠OneClassSVM && throw(ArgumentError, "only for the `OneClassSVM` svmtpe the `y` vector may be empty")
 
-    # checks
-    # 𝐏Tr isa ℍVector ? nObs=length(𝐏Tr) : nObs=size(𝐏Tr, 1)
+	# overwrite fields in `ℳ` if the user has passed them here as arguments,
+	# otherwise use as arguments the values in the fields of `ℳ`, e.g., the default
+	if svmType ≠ SVC ℳ.svmType = svmType else svmType = ℳ.svmType end
+	if kernel ≠ Kernel.RadialBasis ℳ.kernel = kernel else kernel = ℳ.kernel end
 
-	# check w argument and get weights
+	# check w argument and get weights for input matrices
     (w=_getWeights(w, yTr, "fit ("*_modelStr(ℳ)*" model)")) == nothing && return
 
-    # projection onto the tangent space
-    if 𝐏Tr isa ℍVector
-        verbose && println(greyFont, "Projecting data onto the tangent space...")
-        if meanISR==nothing
-            (X, G⁻½)=tsMap(ℳ.metric, 𝐏Tr; w=w, vecRange=vecRange, ⏩=⏩)
-            ℳ.meanISR = G⁻½
-        else
-            X=tsMap(ℳ.metric, 𝐏Tr; w=w, vecRange=vecRange, meanISR=meanISR, ⏩=⏩)
-            ℳ.meanISR = meanISR
-        end
-    else
-        X=𝐏Tr
-    end
+	# other checks. Note: for this model the check on feature weights is forced to succeed since those weights are not supported
+    𝐏Tr isa ℍVector ? nObs=length(𝐏Tr) : nObs=size(𝐏Tr, 1)
+    !_check_fit(ℳ, nObs, length(yTr), length(w), length(yTr), "SVM") && return
 
-	ℳ.svmtype = svmtype
-	ℳ.kernel = kernel
-    ℳ.gamma = gamma
-	ℳ.epsilon = epsilon
-	ℳ.cost = cost
-	ℳ.featDim = size(X, 2)
+	# project data onto the tangent space or just copy the features if 𝐏Tr is a matrix
+	X=_getFeat_fit!(ℳ, 𝐏Tr, meanISR, meanInit, tol, w, vecRange, false, verbose, ⏩)
 
-	#convert data to LIBSVM format; first dim is features, second dim is observations
-	instances = X'
+	#rescale data if the user ask for
+	!isempty(rescale) && rescale!(X, rescale; dims=1)
 
-    verbose && println(defaultFont, "Fitting SVM model...")
-    model = svmtrain(instances, yTr; svmtype = ℳ.svmtype, kernel = ℳ.kernel, epsilon = ℳ.epsilon, cost=ℳ.cost, gamma = ℳ.gamma);
+    # set multi-threading in line with LIBSVM functioning
+	⏩==true ? nthreads=Sys.CPU_THREADS : nthreads=1
+
+    verbose && println(defaultFont, "Fitting SVM model...", greyFont)
+    model = svmtrain(X, yTr;
+				 svmtype     = svmType,
+				 kernel      = kernel,
+				 epsilon     = epsilon,
+				 cost        = cost,
+				 gamma       = gamma,
+				 tolerance   = tol,
+				 verbose     = verbose,
+				 degree      = degree,
+				 coef0	     = coef0,
+				 nu		     = nu,
+				 shrinking   = shrinking,
+				 probability = probability,
+				 weights     = weights,
+				 cachesize   = cachesize,
+				 nt          = nthreads);
 
     ℳ.svmModel = model
+	ℳ.svmType  = svmType
+	ℳ.kernel   = kernel
+	ℳ.rescale  = rescale
+	ℳ.vecRange = vecRange
+	ℳ.featDim  = size(X, 1)
 
     verbose && println(defaultFont, "Done in ", now()-⌚,".")
     return ℳ
 end
 
 
-
+"""
+```
 function predict(model   :: SVMmodel,
                  𝐏Te     :: Union{ℍVector, Matrix{Float64}},
-                 what    :: Symbol = :labels,
-                vecRange :: UnitRange = 𝐏Te isa ℍVector ? (1:size(𝐏Te[1], 2)) : (1:size(𝐏Te, 2)),
-                 checks  :: Bool = true,
-                 verbose :: Bool = true,
-                  ⏩     :: Bool = true)
+                 what    :: Symbol = :labels;
+			 transfer :: Union{ℍ, Nothing} = nothing,
+             verbose  :: Bool = true,
+             ⏩      :: Bool = true)
+```
 
-    ⌚=now()
+Given an [`SVM`](@ref) `model` trained (fitted) on 2 classes
+and a testing set of ``k`` positive definite matrices `𝐏Te` of type
+[ℍVector](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1),
+
+For the meaning of arguments `what`, `transfer` and `verbose`,
+see the documentation of the [`predict`](@ref) function
+for the ENLR model.
+
+If ⏩ = true (default) and `𝐏Te` is an ℍVector type, the projection onto the
+tangent space will be multi-threaded. Also, the prediction of the LIBSVM function
+will be multi-threaded.
+
+**See**: [notation & nomenclature](@ref), [the ℍVector type](@ref).
+
+**See also**: [`fit`](@ref), [`cvAcc`](@ref), [`predictErr`](@ref).
+
+**Examples**
+```
+using PosDefManifoldML
+
+# generate some data
+PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80)
+
+# fit an SVM model
+m=fit(SVM(Fisher), PTr, yTr)
+
+# predict labels
+yPred=predict(m, PTe, :l)
+# prediction error
+predErr=predictErr(yTe, yPred)
+
+# predict probabilities
+predict(m, PTe, :p)
+
+# output functions
+predict(m, PTe, :f)
+```
+"""
+function predict(model   :: SVMmodel,
+                 𝐏Te     :: Union{ℍVector, Matrix{Float64}},
+                 what    :: Symbol = :labels;
+			 transfer :: Union{ℍ, Nothing} = nothing,
+             verbose  :: Bool = true,
+             ⏩      :: Bool = true)
+
+    ⌚=now() # time in milliseconds
 
     # checks
-    if checks
-        if !_whatIsValid(what, "predict ("*_modelStr(model)*")") return end
+    if !_whatIsValid(what, "predict ("*_modelStr(model)*")") return end
+
+	# projection onto the tangent space. NB `false` put feature vecs in cols of X
+	X=_getFeat_Predict!(model, 𝐏Te, transfer, model.vecRange, false, verbose, ⏩)
+
+	#rescale data if the model has been fitted with riscaling
+	r=model.rescale
+	r ≠ nothing && !isempty(r) && rescale!(X, r; dims=1)
+
+	# set multi-threading in line with LIBSVM functioning
+	⏩==true ? nthreads=Sys.CPU_THREADS : nthreads=1
+
+    # prediction
+	verbose && println("Predicting using "*_modelStr(model)*" model...")
+	(labels, values) = svmpredict(model.svmModel, X; nt=nthreads)
+
+	if     what == :functions     || what == :f 🃏=values
+    elseif what == :labels 		  || what == :l 🃏=labels
+    elseif what == :probabilities || what == :p 🃏=[softmax(values)] # check this!
     end
-
-    # projection onto the tangent space
-    if 𝐏Te isa ℍVector
-        verbose && println(greyFont, "Projecting data onto the tangent space...")
-        X=tsMap(model.metric, 𝐏Te; meanISR=model.meanISR, ⏩=⏩, vecRange=vecRange)
-    else X=𝐏Te[:, vecRange] end
-
-    #convert data to LIBSVM format first dim is features, second dim is observations
-    instances = X'
-
-	(predicted_labels, decision_values) = svmpredict(model.svmModel, instances;)
-    🃏 = predicted_labels
 
     verbose && println(defaultFont, "Done in ", now()-⌚,".")
     verbose && println(titleFont, "\nPredicted ",_what2Str(what),":", defaultFont)
@@ -216,44 +448,40 @@ end
 
 # ++++++++++++++++++++  Show override  +++++++++++++++++++ # (REPL output)
 function Base.show(io::IO, ::MIME{Symbol("text/plain")}, M::SVM)
-    println(io, titleFont, "\n↯ SVM LIBSVM machine learning model")
-    println(io, defaultFont, "  ", _modelStr(M))
+	if M.svmModel == nothing
+        println(io, greyFont, "\n↯ SVM LIBSVM machine learning model")
+        println(io, "⭒  ⭒    ⭒       ⭒          ⭒")
+        println(io, ".metric  : ", string(M.metric))
+        println(io, ".svmType : ", "$(_modelStr(M))")
+		println(io, ".kernel  : ", "$(string(M.kernel))", defaultFont)
+        println(io, "Unfitted model")
+        return
+    end
+
+	println(io, titleFont, "\n↯ SVM "*_modelStr(M)*" machine learning model")
     println(io, separatorFont, "⭒  ⭒    ⭒       ⭒          ⭒", defaultFont)
     println(io, "type    : PD Tangent Space model")
     println(io, "features: tangent vectors of length $(M.featDim)")
     println(io, "classes : 2")
-    println(io, "fields  : ")
+    println(io, separatorFont, "Fields  : ")
+	# # #
+	println(io, greyFont, " Tangent Space Parametrization", defaultFont)
 	println(io, separatorFont," .metric      ", defaultFont, string(M.metric))
-
-	if 		M.svmtype==SVC s="SVC"
-	elseif  M.svmtype==C-SVM s="C-SVM"
-	elseif  M.svmtype==EpsilonSVR s="EpsilonSVR"
-	elseif  M.svmtype==OneClassSVM s="OneClassSVM"
-	elseif  M.svmtype==NuSVR s="NuSVR"
-	else    s = "Warning: the SVM type is unknown"
-	end
-	println(io, separatorFont," .svmtype     ", defaultFont, "$s")
-
-	println(io, separatorFont," .kernel      ", defaultFont, "$(string(M.kernel))")
-
-	#`kernel::Kernels.KERNEL=Kernel.RadialBasis`: Model kernel `Linear`, `polynomial`,
-	#    `RadialBasis`, `Sigmoid` or `Precomputed`
-
 	if M.meanISR == nothing
         println(io, greyFont, " .meanISR      not created")
     else
         n=size(M.meanISR, 1)
         println(io, separatorFont," .meanISR     ", defaultFont, "$(n)x$(n) Hermitian matrix")
     end
+	println(io, separatorFont," .vecRange    ", defaultFont, "$(M.vecRange)")
+	println(io, separatorFont," .featDim     ", defaultFont, "$(M.featDim)")
+    # # #
+	println(io, greyFont, " SVM Parametrization", defaultFont)
+    println(io, separatorFont," .svmType     ", defaultFont, "$(_modelStr(M))")
+	println(io, separatorFont," .kernel      ", defaultFont, "$(string(M.kernel))")
+    isempty(M.rescale) ? s="(false)" : s="(true)"
+	println(io, separatorFont," .rescale     ", defaultFont, "$(string(M.rescale)) "*s)
+	println(io, separatorFont," .kernel      ", defaultFont, "$(string(M.kernel))")
 
-	M.epsilon==nothing ? println(io, "       not created ") :
-						 println(io, separatorFont," .epsilon     ", defaultFont, "$(round(M.epsilon, digits=9))")
-
-    M.cost==nothing ?    println(io, "       not created ") :
-						 println(io, separatorFont," .cost        ", defaultFont, "$(round(M.cost, digits=3))")
-
-    M.gamma==nothing ?   println(io, "       not created ") :
- 						 println(io, separatorFont," .gamma       ", defaultFont, "$(round(M.gamma, digits=5))")
-
-	println(io, separatorFont," .svmModel ", defaultFont, "   (LIBSVM model)")
+    println(io, separatorFont," .svmModel ", defaultFont, "   LIBSVM model struct")
 end
