@@ -380,9 +380,9 @@ end
 function getDistances(metric :: Metric,
                       means  :: ℍVector,
                       𝐏      :: ℍVector;
-                imeans :: Union{ℍVector, Nothing} = false,
-                scale  :: Bool = false,
-                  ⏩  :: Bool = true)
+                imeans  :: Union{ℍVector, Nothing} = false,
+                scale   :: Bool = false,
+                ⏩      :: Bool = true)
 ```
 Typically, you will not need this function as it is called by the
 [`predict`](@ref) function.

@@ -12,16 +12,16 @@
 
 """
 ```
-function tsMap(metric :: Metric,
-               𝐏      :: ℍVector;
-         w    	   :: Vector 			 = [],
-         ✓w   	   :: Bool   			 = true,
-         ⏩   	  :: Bool   		    = true,
-		 meanISR   :: Union{ℍ, Nothing}  = nothing,
-		 meanInit  :: Union{ℍ, Nothing}  = nothing,
-	  	 tol       :: Real               = 0.,
-		 transpose :: Bool   			 = true,
-		 vecRange  :: UnitRange          = 1:size(𝐏[1], 1))
+function tsMap(	metric :: Metric,
+				𝐏      :: ℍVector;
+		w    	  :: Vector	= [],
+		✓w   	  :: Bool = true,
+		⏩   	 :: Bool = true,
+		meanISR   :: Union{ℍ, Nothing}  = nothing,
+		meanInit  :: Union{ℍ, Nothing}  = nothing,
+		tol       :: Real               = 0.,
+		transpose :: Bool   			 = true,
+		vecRange  :: UnitRange          = 1:size(𝐏[1], 1))
 ```
 
 The [tangent space mapping](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.logMap)
@@ -139,137 +139,6 @@ function tsMap(metric :: Metric,
 	end
     return getMeanISR ? (V, G⁻½) : V
 end
-
-
-"""
-```
-function gen2ClassData(n        ::  Int,
-                       k1train  ::  Int,
-                       k2train  ::  Int,
-                       k1test   ::  Int,
-                       k2test   ::  Int,
-                       separation :: Real = 0.1)
-```
-
-Generate a *training set* of `k1train`+`k2train`
-and a *test set* of `k1test`+`k2test`
-symmetric positive definite matrices.
-All matrices have size ``n``x``n``.
-
-The training and test sets can be used to train and test any [MLmodel](@ref).
-
-`separation` is a coefficient determining how well the two classs are
-separable; the higher it is, the more separable the two classes are.
-It must be in [0, 1] and typically a value of 0.5 already
-determines complete separation.
-
-Return a 4-tuple with
-
-- an [ℍVector](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1) holding the `k1train`+`k2train` matrices in the training set,
-- an ℍVector holding the `k1test`+`k2test` matrices in the test set,
-- a vector holding the `k1train`+`k2train` labels (integers) corresponding to the matrices of the training set,
-- a vector holding the `k1test`+`k2test` labels corresponding to the matrices of the test set (``1`` for class 1 and ``2`` for class 2).
-
-**Examples**
-
-```
-using PosDefManifoldML
-
-PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.25)
-
-# PTr=training set: 30 matrices for class 1 and 40 matrices for class 2
-# PTe=testing set: 60 matrices for class 1 and 80 matrices for class 2
-# all matrices are 10x10
-# yTr=a vector of 70 labels for the training set
-# yTe=a vector of 140 labels for the testing set
-
-```
-"""
-function gen2ClassData(n        ::  Int,
-                       k1train  ::  Int,
-                       k2train  ::  Int,
-                       k1test   ::  Int,
-                       k2test   ::  Int,
-                       separation :: Real = 0.1)
-	if separation<0 || separation >1
-		@error 📌*", function "*gen2ClassData*": argument `separation` must be in range [0, 1]."
-		return
-	end
-
-	G1=randP(n)
-    G2=randP(n)
-
-    # Create a set of k1+k2 random matrices and move the along
-    # the Fisher Geodesic with arclength (1-a) the first k1 toward G1
-    # and the last k2 toward G2. Geodesics are computed with the Schur method
-    function getMatrices(k1::Int, k2::Int, n::Int, a::Real, G1::ℍ, G2::ℍ)
-
-        function getChol(G::ℍ)
-            L = cholesky(G, check=false)
-            U⁻¹ = inv(L.U)
-            return L, U⁻¹
-        end
-
-        k=k1+k2
-        𝐗=ℍVector(undef, k)
-            L, U⁻¹=getChol(G1)
-            for i=1:k1
-                F = schur(U⁻¹' * randP(n) * U⁻¹)
-                𝐗[i]=ℍ(L.U' * (F.Z * F.T^a* F.Z') * L.U)
-            end
-            L, U⁻¹=getChol(G2)
-            for i=k1+1:k
-                F = schur(U⁻¹' * randP(n) * U⁻¹)
-                𝐗[i]=ℍ(L.U' * (F.Z * F.T^a* F.Z') * L.U)
-            end
-        return 𝐗
-    end
-
-    𝐗train=getMatrices(k1train, k2train, n, 1-separation, G1, G2)
-    𝐗test=getMatrices(k1test, k2test, n, 1-separation, G1, G2)
-    y𝐗train=IntVector([repeat([1], k1train); repeat([2], k2train)])
-    y𝐗test=IntVector([repeat([1], k1test); repeat([2], k2test)])
-
-    return 𝐗train, 𝐗test, y𝐗train, y𝐗test
-end
-
-
-"""
-```
-function predictErr(yTrue::IntVector, yPred::IntVector;
-	          digits::Int=3))
-```
-
-Return the percent prediction error given a vector of true labels and a vector
-of predicted labels.
-
-The order of arguments does not matter.
-
-The error is rounded to the number of optional keyword argument
-`digits`, 3 by default.
-
-**See** [`predict`](@ref)
-
-**Examples**
-
-```
-using PosDefManifoldML
-predictErr([1, 1, 2, 2], [1, 1, 1, 2])
-# return: 25.0
-```
-"""
-function predictErr(yTrue::IntVector, yPred::IntVector;
-	          digits::Int=3)
-	n1=length(yTrue)
-	n2=length(yPred)
-	if n1≠n2
-		@error 📌*", function predictErr: the length of the two argument vectors must be equal." n1 n2
-		return
-	else
-		round(sum(y1≠y2 for (y1, y2) ∈ zip(yTrue, yPred))/n1*100; digits=digits)
-	end
-end
-
 
 
 
@@ -395,9 +264,140 @@ end
 
 """
 ```
-function rescale!(X::Matrix{T},
-	              bounds::Tuple=(-1, 1);
-				  dims::Int=1) where T<:Real
+function gen2ClassData(n        ::  Int,
+                       k1train  ::  Int,
+                       k2train  ::  Int,
+                       k1test   ::  Int,
+                       k2test   ::  Int,
+                       separation :: Real = 0.1)
+```
+
+Generate a *training set* of `k1train`+`k2train`
+and a *test set* of `k1test`+`k2test`
+symmetric positive definite matrices.
+All matrices have size ``n``x``n``.
+
+The training and test sets can be used to train and test any [MLmodel](@ref).
+
+`separation` is a coefficient determining how well the two classs are
+separable; the higher it is, the more separable the two classes are.
+It must be in [0, 1] and typically a value of 0.5 already
+determines complete separation.
+
+Return a 4-tuple with
+
+- an [ℍVector](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1) holding the `k1train`+`k2train` matrices in the training set,
+- an ℍVector holding the `k1test`+`k2test` matrices in the test set,
+- a vector holding the `k1train`+`k2train` labels (integers) corresponding to the matrices of the training set,
+- a vector holding the `k1test`+`k2test` labels corresponding to the matrices of the test set (``1`` for class 1 and ``2`` for class 2).
+
+**Examples**
+
+```
+using PosDefManifoldML
+
+PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.25)
+
+# PTr=training set: 30 matrices for class 1 and 40 matrices for class 2
+# PTe=testing set: 60 matrices for class 1 and 80 matrices for class 2
+# all matrices are 10x10
+# yTr=a vector of 70 labels for the training set
+# yTe=a vector of 140 labels for the testing set
+
+```
+"""
+function gen2ClassData(n        ::  Int,
+                       k1train  ::  Int,
+                       k2train  ::  Int,
+                       k1test   ::  Int,
+                       k2test   ::  Int,
+                       separation :: Real = 0.1)
+	if separation<0 || separation >1
+		@error 📌*", function "*gen2ClassData*": argument `separation` must be in range [0, 1]."
+		return
+	end
+
+	G1=randP(n)
+    G2=randP(n)
+
+    # Create a set of k1+k2 random matrices and move the along
+    # the Fisher Geodesic with arclength (1-a) the first k1 toward G1
+    # and the last k2 toward G2. Geodesics are computed with the Schur method
+    function getMatrices(k1::Int, k2::Int, n::Int, a::Real, G1::ℍ, G2::ℍ)
+
+        function getChol(G::ℍ)
+            L = cholesky(G, check=false)
+            U⁻¹ = inv(L.U)
+            return L, U⁻¹
+        end
+
+        k=k1+k2
+        𝐗=ℍVector(undef, k)
+            L, U⁻¹=getChol(G1)
+            for i=1:k1
+                F = schur(U⁻¹' * randP(n) * U⁻¹)
+                𝐗[i]=ℍ(L.U' * (F.Z * F.T^a* F.Z') * L.U)
+            end
+            L, U⁻¹=getChol(G2)
+            for i=k1+1:k
+                F = schur(U⁻¹' * randP(n) * U⁻¹)
+                𝐗[i]=ℍ(L.U' * (F.Z * F.T^a* F.Z') * L.U)
+            end
+        return 𝐗
+    end
+
+    𝐗train=getMatrices(k1train, k2train, n, 1-separation, G1, G2)
+    𝐗test=getMatrices(k1test, k2test, n, 1-separation, G1, G2)
+    y𝐗train=IntVector([repeat([1], k1train); repeat([2], k2train)])
+    y𝐗test=IntVector([repeat([1], k1test); repeat([2], k2test)])
+
+    return 𝐗train, 𝐗test, y𝐗train, y𝐗test
+end
+
+
+"""
+```
+function predictErr(yTrue::IntVector, yPred::IntVector;
+	          		digits::Int=3))
+```
+
+Return the percent prediction error given a vector of true labels and a vector
+of predicted labels.
+
+The order of arguments does not matter.
+
+The error is rounded to the number of optional keyword argument
+`digits`, 3 by default.
+
+**See** [`predict`](@ref)
+
+**Examples**
+
+```
+using PosDefManifoldML
+predictErr([1, 1, 2, 2], [1, 1, 1, 2])
+# return: 25.0
+```
+"""
+function predictErr(yTrue::IntVector, yPred::IntVector;
+	          digits::Int=3)
+	n1=length(yTrue)
+	n2=length(yPred)
+	if n1≠n2
+		@error 📌*", function predictErr: the length of the two argument vectors must be equal." n1 n2
+		return
+	else
+		round(sum(y1≠y2 for (y1, y2) ∈ zip(yTrue, yPred))/n1*100; digits=digits)
+	end
+end
+
+
+
+"""
+```
+function rescale!(	X::Matrix{T},
+					bounds::Tuple=(-1, 1);
+					dims::Int=1) where T<:Real
 ```
 Rescale the columns or the rows of real matrix `X` to be in range [a, b],
 where a and b are the first and seconf elements of tuple `bounds`.
