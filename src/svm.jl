@@ -113,10 +113,10 @@ m1=fit(m, PTr, yTr)
 
 # in general you don't need this machinery for fitting a model,
 # since you can specify a model by creating one on the fly:
-m2=fit(SVM(logEuclidean), PTr, yTr; kernel=Sigmoid)
+m2=fit(SVM(logEuclidean), PTr, yTr; kernel=Kernel.Sigmoid)
 
 # which is equivalent to
-m2=fit(m, PTr, yTr; kernel=Sigmoid)
+m2=fit(m, PTr, yTr; kernel=Kernel.Sigmoid)
 
 # note that, albeit model `m` has been created as an SVM model
 # with the default kernel (RadialBasis),
@@ -270,7 +270,7 @@ PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.1)
 m=fit(SVM(), PTr, yTr)
 
 # ... balancing the weights for tangent space mapping
-m=fit(SVM(), PTr, yTr; w=tsWeights(yTr))
+m=fit(SVM(), PTr, yTr; w=:b)
 
 # ... using the log-Eucidean metric for tangent space projection
 m=fit(SVM(logEuclidean), PTr, yTr)
