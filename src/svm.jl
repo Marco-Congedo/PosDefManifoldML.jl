@@ -56,7 +56,7 @@ The default is `SVC`, unless labels are not provided while fitting
 the model, in which case it defaults to `OneClassSVM`.
 
 `kernel`, a kernel type.
-Available types are
+Available kernels are
 - `Kernel.RadialBasis` (default)
 - `Kernel.Linear`
 - `Kernel.Polynomial`
