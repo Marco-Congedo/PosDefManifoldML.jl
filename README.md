@@ -82,12 +82,28 @@ model=fit(ENLR(), PTr, yTr; alpha=0.5)
 # average accuracy obtained by 10-fold cross-validation:
 cv = cvAcc(ENLR(), PTr, yTr; alpha=0.5)
 
+# (1)
+# craete and fit (train) an SVM with Radial Basis kernel
+# finding the best model by cross-validation:
+model=fit(SVM(), PTr, yTr)
+#
+# predict labels (classify the testing set) using the 'best' model:
+yPred=predict(model, PTe, :l)
+#
+# prediction error in percent
+predictErr(yTe, yPred)
+
+# (2)
+# average accuracy obtained by 8-fold cross-validation:
+cv = cvAcc(SVM(), PTr, yTr; nFolds=8)
 ```
 
 ## About the Authors
 
 [Marco Congedo](https://sites.google.com/site/marcocongedo), corresponding
-author, is a research scientist of [CNRS](http://www.cnrs.fr/en) (Centre National de la Recherche Scientifique), working in [UGA](https://www.univ-grenoble-alpes.fr/english/) (University of Grenoble Alpes). **contact**: marco *dot* congedo *at* gmail *dot* com
+author, is a research scientist of [CNRS](http://www.cnrs.fr/en) (Centre National de la Recherche Scientifique), working at [UGA](https://www.univ-grenoble-alpes.fr/english/) (University of Grenoble Alpes). **contact**: marco *dot* congedo *at* gmail *dot* com
+
+Anton Adreev is a research engineer working at the same institution.
 
 Saloni Jain is a student at the
 [Indian Institute of Technology, Kharagpur](http://www.iitkgp.ac.in/), India.
