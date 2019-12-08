@@ -20,7 +20,8 @@ using LinearAlgebra, Base.Threads, Random, Statistics, PosDefManifold
 using Dates:now
 using GLMNet:GLMNet, glmnet, glmnetcv, GLMNetPath, GLMNetCrossValidation
 using Distributions:Distributions, Binomial
-using LIBSVM: svmpredict, svmtrain, SVC, NuSVC, OneClassSVM, NuSVR, EpsilonSVR, LinearSVC, Linearsolver, Kernel
+using LIBSVM: svmpredict, svmtrain, SVC, NuSVC, OneClassSVM, NuSVR, EpsilonSVR,
+      LinearSVC, Linearsolver, Kernel
 
 # Special instructions and variables
 BLAS.set_num_threads(Sys.CPU_THREADS)
@@ -69,7 +70,7 @@ export
 	SVMmodel,
 	SVM,
 	SVC, NuSVC, OneClassSVM, NuSVR, EpsilonSVR, LinearSVC, Linearsolver, Kernel,
-
+    
     # from cv.jl
     CVacc,
     cvAcc,
