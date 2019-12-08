@@ -32,9 +32,9 @@ begin
   push!(LOAD_PATH, scrDir)
   using LinearAlgebra, Base.Threads, Random, Dates, Statistics,
         Documenter, Distributions, GLMNet, PosDefManifold,
-  using Revise, PosDefManifoldML
+        Revise, PosDefManifoldML
 
   cd(docsDir)
-  clipboard("""include("make.jl")""")
+  clipboard("""makedocs(sitename="PosDefManifoldML", modules=[PosDefManifoldML])""")
   @info("\nhit CTRL+V+ENTER on the REPL for building the documentation.");
 end

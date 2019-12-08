@@ -12,6 +12,8 @@ and Euclidean machine learning classifiers.
 | [`tsWeights`](@ref)| generator of weights for tagent space mapping |
 | [`gen2ClassData`](@ref)| generate 2-class positive definite matrix data for testing Riemannian ML models |
 | [`predictErr`](@ref)| prediction error given a vector of true labels and a vector of predicted labels |
+| [`rescale!`](@ref)| Rescale the rows of a real matrix to be in range [a, b] |
+
 
 
 
@@ -20,4 +22,5 @@ tsMap
 tsWeights
 gen2ClassData
 predictErr
+rescale!
 ```

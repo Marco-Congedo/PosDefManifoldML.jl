@@ -1,9 +1,8 @@
 #   Unit "simulations.jl" of the PosDefManifoldML Package for Julia language
-#   v 0.2.1 - last update 18th of October 2019
+#   v 0.3.0 - last update 8th of December 2019
 #
 #   MIT License
 #   Copyright (c) 2019,
-#   Saloni Jain, Indian Institute of Technology, Kharagpur, India
 #   Marco Congedo, CNRS, Grenobe, France:
 #   https://sites.google.com/site/marcocongedo/home
 
@@ -44,6 +43,7 @@ IntVector=Vector{Int}
 import Base:show
 import GLMNet.predict
 import Distributions.fit
+# import StatsBase:fit, predict
 
 export
 
@@ -66,6 +66,7 @@ export
     ENLR,
 
 	# from libSVM.jl
+	SVMmodel,
 	SVM,
 	SVC, NuSVC, OneClassSVM, NuSVR, EpsilonSVR, LinearSVC, Linearsolver, Kernel,
 
@@ -78,7 +79,8 @@ export
     tsMap,
     tsWeights,
     gen2ClassData,
-    predictErr
+    predictErr,
+	rescale!
 
 include("mdm.jl")
 include("enlr.jl")

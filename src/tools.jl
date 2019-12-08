@@ -1,5 +1,5 @@
 #   Unit "tools.jl" of the PosDefManifoldML Package for Julia language
-#   v 0.2.1 - last update 18th of October 2019
+#   v 0.3.0 - last update 8th of December 2019
 #
 #   MIT License
 #   Copyright (c) 2019,
@@ -392,6 +392,43 @@ function tsWeights(y::Vector{Int}; classWeights=[])
     return w
 end
 
+
+"""
+```
+function rescale!(X::Matrix{T},
+	              bounds::Tuple=(-1, 1);
+				  dims::Int=1) where T<:Real
+```
+Rescale the columns or the rows of real matrix `X` to be in range [a, b],
+where a and b are the first and seconf elements of tuple `bounds`.
+
+By default rescaling apply to the columns. Use `dims=2` for rescaling
+the rows.
+
+This function is used, for instance, by the SVM fit and predict functions.
+"""
+function rescale!(X::Matrix{T},
+	              bounds::Tuple=(-1, 1);
+				  dims::Int=1) where T<:Real
+ dims∉(1, 2) && throw(ArgumentError, "rescale! function: the `dims` keyword argument must be either 1 or 2; dims=$dims")
+ length(bounds) ≠ 2 && throw(ArgumentError, "rescale! function: tuple `bounds` must contain two elements; bounds=$bounds")
+ a=first(bounds)
+ b=last(bounds)
+ a isa Number && b isa Number || throw(ArgumentError, "rescale! function: the two elements of tuple `bounds` must be numbers; bounds=$bounds")
+ c=b-a
+ c<=0 && throw(ArgumentError, "rescale! function: the two elements (a, b) of tuple `bounds` must verify b-a>0; bounds=$bounds")
+ @inbounds dims==1 ? (for j=1:size(X, 2)
+			 	        minX, maxX=extrema(X[:, j])
+				        range=maxX-minX
+			 	        for i=1:size(X, 1) X[i, j]=a+(c*(X[i, j]-minX)/range) end
+					end) :
+			        (for i=1:size(X, 1)
+			 			minX, maxX=extrema(X[i, :])
+						range=maxX-minX
+			 			for j=1:size(X, 2) X[i, j]=a+(c*(X[i, j]-minX)/range) end
+					end)
+end
+
 # -------------------------------------------------------- #
 # INTERNAL FUNCTIONS #
 
@@ -494,13 +531,19 @@ _modelStr(model::MLmodel) =
 	  		return "MDM"
 
   elseif    model isa ENLRmodel
-    		if     model.alpha≈1. return "Lasso logit regression"
-    		elseif model.alpha≈0. return "Ridge logit regression"
+    		if     model.alpha≈1. return "Lasso logistic regression"
+    		elseif model.alpha≈0. return "Ridge logistic regression"
     		else                  return "El. Net (α=$(round(model.alpha; digits=2))) log. reg."
 			end
 
   elseif    model isa SVMmodel
-    		return "Support-Vector Machine" # xxxx add here important info
+			if 		model.svmType==SVC 			return "SVC"
+			elseif  model.svmType==C-SVM 		return "C-SVM"
+			elseif  model.svmType==EpsilonSVR 	return "EpsilonSVR"
+			elseif  model.svmType==OneClassSVM 	return "OneClassSVM"
+			elseif  model.svmType==NuSVR 		return "NuSVR"
+			else    return  "Warning: the SVM type is unknown"
+			end
 
   else      return "unknown"
   end
@@ -585,3 +628,87 @@ function _getWeights(w :: Union{Symbol, Tuple, Vector}, y::IntVector, funcName::
 			return nothing
 	end
 end
+
+
+# Get the feature matrix for fit functions of ML model in the tangent space:
+# if `𝐏Tr` is a matrix just return the columns in `vecRange` (by default all).
+# if `𝐏Tr` is vector of Hermitian matrices, they are projected onto the
+# tangent space. If the the inversesquare root of a base point `meanISR`
+# is provided, the projection is obtained at this base point, otherwise the
+# mean of all points is computed and used as base point.
+# If the mean is to be computed by an iterative algorithm (e.g., if the metric
+# of the model is the Fisher metric), an initialization `meanInit`, weights
+# `w` and a tolerance `tol` are used.
+# Once projected onto the tangent spave, the matrces in `𝐏Tr` are vectorized
+# using only the rows (or columns) specified by `vecRange`.
+# if `verbose` is true, print "Projecting data onto the tangent space..."
+# if `transpose` the feature vectors are in the rows of `X`, otherwise in the
+# columns of `X`.
+# if ⏩ is true, the projection onto the tangent space
+# and the algorithm to compute the mean are multi-threaded
+function _getFeat_fit!(ℳ	    :: TSmodel,
+					   𝐏Tr	  	  :: Union{ℍVector, Matrix{Float64}},
+			 		   meanISR	 :: Union{ℍ, Nothing},
+					   meanInit	 :: Union{ℍ, Nothing},
+					   tol		 :: Real,
+			 	 	   w		 :: Union{Symbol, Tuple, Vector},
+			 	 	   vecRange	 :: UnitRange,
+					   transpose :: Bool,
+					   verbose	 :: Bool,
+					   ⏩	   :: Bool)
+	if 𝐏Tr isa ℍVector
+		verbose && println(greyFont, "Projecting data onto the tangent space...")
+		if meanISR==nothing
+			(X, G⁻½)=tsMap(ℳ.metric, 𝐏Tr;
+			               w=w,
+						   ⏩=⏩,
+						   vecRange=vecRange,
+						   meanInit=meanInit,
+						   tol=tol,
+						   transpose=transpose)
+			ℳ.meanISR = G⁻½
+		else
+			X=tsMap(ℳ.metric, 𝐏Tr;
+			        w=w,
+					⏩=⏩,
+					vecRange=vecRange,
+					meanISR=meanISR,
+					transpose=transpose)
+			ℳ.meanISR = meanISR
+		end
+	else X=𝐏Tr[:, vecRange]
+	end
+	return X
+end
+
+# Get the feature matrix for predict functions of ML model in the tangent space:
+# if `𝐏Te` is a matrix just return the columns in `vecRange` (by default all).
+# if `𝐏Te` is vector of Hermitian matrices, they are projected onto the
+# tangent space. If an inverse square root 5ISR) `tranfer` is provided
+# (typically the ISR of the mean of the matrices in `𝐏Te`), this is used
+# as ISR of the base point, otherwise the ISR of the base point stored in the
+# model ℳ is used. The latter is the classical approach, the former realizes the
+# adaptation (transfer learning) explained in Barachant et al. (2013).
+# Once projected onto the tangent spave, the matrces in `𝐏Te` are vectorized
+# using only the rows (or columns) specified by `vecRange`.
+# if `transpose` the feature vectors are in the rows of `X`, otherwise in the
+# columns of `X`.
+# if `verbose` is true, print "Projecting data onto the tangent space..."
+# if ⏩ is true, the projection onto the tangent space is multi-threaded
+_getFeat_Predict!(ℳ	   		:: TSmodel,
+			      𝐏Te		  :: Union{ℍVector, Matrix{Float64}},
+				  transfer   :: Union{ℍ, Nothing},
+				  vecRange	 :: UnitRange,
+				  transpose  :: Bool,
+				  verbose	 :: Bool,
+				  ⏩	       :: Bool) =
+	if 𝐏Te isa ℍVector
+		verbose && println(greyFont, "Projecting data onto the tangent space...")
+		return tsMap(ℳ.metric, 𝐏Te;
+				     meanISR = transfer==nothing ? ℳ.meanISR : transfer,
+				     ⏩=⏩,
+				     vecRange=vecRange,
+					 transpose=transpose)
+	else
+		return 𝐏Te[:, vecRange]
+	end

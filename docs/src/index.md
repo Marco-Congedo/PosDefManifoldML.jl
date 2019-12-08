@@ -11,17 +11,16 @@ execute the following command in Julia's REPL:
 
     ]add https://github.com/Marco-Congedo/PosDefManifoldML.jl
 
-### Disclaimer
+### Reviewers
 
-This package is still in a pre-release stage.
-Independent reviewers for both the code and the documentation is welcome.
+Independent reviewers for both the code and the documentation are welcome.
 
 ## About the Authors
 
 [Marco Congedo](https://sites.google.com/site/marcocongedo), corresponding
-author, is a research scientist of [CNRS](http://www.cnrs.fr/en) (Centre National de la Recherche Scientifique), working in [UGA](https://www.univ-grenoble-alpes.fr/english/) (University of Grenoble Alpes).
+author, is a research scientist of [CNRS](http://www.cnrs.fr/en) (Centre National de la Recherche Scientifique), working at [UGA](https://www.univ-grenoble-alpes.fr/english/) (University of Grenoble Alpes). **Contact**: first name dot last name at gmail dot com
 
-**Contact**: first name dot last name at gmail dot com
+Anton Andreev is a research engineer working at the same institution.
 
 Saloni Jain is a student at the
 [Indian Institute of Technology, Kharagpur](http://www.iitkgp.ac.in/), India.
@@ -44,8 +43,14 @@ logistic regression, random forest, etc.).
 
 *Schematic representation of Riemannian classification. Data points are either natively positive definite matrices or are converted into this form. The classification can be performed by Riemannian methods in the manifold of positive definite matrices or by Euclidean methods after projection onto the tangent space.*
 
-Currently implemented are the Riemannian **minimum-distance to mean** (MDM) classifier, acting on the manifold, and the
-**elastic-net logistic regression** (ENLR) classifier, including the pure **lasso** and pure **ridge** logistic regression, acting on the tangent space.
+Currently implemented models are:
+
+**Acting on the manifold of PD matrices**
+- the Riemannian *minimum-distance to mean* (MDM).
+
+**Acting on the tangent space**
+- *elastic-net logistic regression* (ENLR), including the pure *Lasso* and pure *Ridge* logistic regression;
+- *support-Vector machine* (SVM), including *C-Support Vector Classification* (C-SVC), *nu-SVC*, *one-class SVC*, *Epsilon Support-Vector Regression** (SVR) and *nu SVR**.
 
 For a formal introduction to the manifold of positive definite matrices
 the reader is referred to the monography written by Bhatia(2007)[🎓](@ref).
@@ -54,13 +59,14 @@ For an introduction to Riemannian geometry and an overview of mathematical tools
 
 ### Code units
 
-**PosDefManifoldML** is light-weight. It includes five code units (.jl files):
+**PosDefManifoldML** includes six code units (.jl files):
 
 | Unit   | Description |
 |:----------|:----------|
 | [MainModule](@ref) | Main module, declaring constants and types |
 | [mdm.jl](@ref) | Unit implementing the MDM( Minimum Distance to Mean) machine learning model |
 | [enlr.jl](@ref) | Unit implementing the ENLR( Elastic Net Logistic Regression) model, including the LASSO and RIDGE LR |
+| [svm.jl](@ref) | Unit implementing the SVM (Support-Vector MAchine) models|
 | [cv.jl](@ref)| Unit implementing cross-validation procedures |
 | [tools.jl](@ref) | Unit containing general tools useful for machine learning and internal functions|
 
@@ -87,7 +93,7 @@ M. Congedo, A. Barachant, E. Kharati Koopaei (2017b) [Fixed Point Algorithms for
 IEEE Transactions on Signal Processing, 65(9), 2211-2220.
 
 Rodrigues PLC, Jutten C, Congedo M (2019)
-[Riemannian Procrustes Analysis : Transfer Learning for Brain-Computer Interfaces](https://hal.archives-ouvertes.fr/hal-01971856/document), 
+[Riemannian Procrustes Analysis : Transfer Learning for Brain-Computer Interfaces](https://hal.archives-ouvertes.fr/hal-01971856/document),
 IEEE Transactions on Biomedical Engineering, 66(8), 2390-2401.
 
 P. Zanini P, M. Congedo, C. Jutten, S. Said, Y. Berthoumieu (2018)
@@ -106,6 +112,11 @@ IEEE Transactions on Biomedical Engineering, 65(5), 1107-1116.
 
 [A more advanced wrapper for GLMNet](https://github.com/linxihui/GLMNet.jl)
 
+**Resources on LIBSVM**
+[official page](https://www.csie.ntu.edu.tw/~cjlin/libsvm/)
+
+[github](https://github.com/cjlin1/libsvm)
+
 ## Contents
 
 ```@contents
@@ -114,6 +125,7 @@ Pages = [       "index.md",
                 "MainModule.md",
                 "mdm.md",
                 "enlr.md",
+								"svm.jl",
 								"cv.md",
 								"tools.md",
 		]
