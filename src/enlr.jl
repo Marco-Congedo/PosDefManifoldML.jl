@@ -379,6 +379,10 @@ from `nlambda` and `lambda_min_ratio`.
 of a mean for projecting onto the tangent space
 (if the metric requires an iterative algorithm)
 and for the GLMNet fitting algorithm. Defaults to 1e-5.
+In order to speed up computations, you may try to set a lower `tol`;
+The convergence will be faster but more coarse,
+with a possible drop of classification accuracy,
+depending on the signal-to-noise ratio of the input features.
 
 `maxit`: The maximum number of iterations of the cyclic coordinate
 descent algorithm. If convergence is not achieved, a warning is returned.

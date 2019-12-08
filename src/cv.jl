@@ -84,11 +84,9 @@ CVacc(s::String)=CVacc(s, nothing, nothing, nothing, nothing, nothing, nothing, 
 function cvAcc(model   :: MLmodel,
                𝐏Tr     :: ℍVector,
                yTr     :: IntVector;
-           tol       :: Real      = 0.,
            nFolds    :: Int       = min(10, length(yTr)÷3),
            scoring   :: Symbol    = :b,
            shuffle   :: Bool      = false,
-           vecRange  :: UnitRange = 𝐏Tr isa ℍVector ? (1:size(𝐏Tr[1], 2)) : (1:size(𝐏Tr, 2)),
            verbose   :: Bool      = true,
            outModels :: Bool      = false,
            fitArgs...)
@@ -100,15 +98,6 @@ the number of folds `nFolds`,
 return a [`CVacc`](@ref) structure.
 
 **optional keyword arguments**
-
-The `Fisher`, `logdet0` and `Wasserstein` metric of the machine learning models
-require an iterative algorithm for computing means in the manifold
-of positive definite matrices.
-Argument `tol` is the tolerance for convergence of these iterative algorithms.
-In order to speed up computations, set `tol` to something
-between 10e-6 (still a fairly good convergence) and 10e-3 (coarse convergence,
-hence possible drop of classification accuracy, but many less iterations
-required).
 
 `nFolds` by default is set to the minimum between 10 and the number
 of observation ÷ 3 (integer division).
@@ -123,15 +112,11 @@ if not to avoid a few unnecessary computations when the class are balanced.
 For the meaning of the `shuffle` argument (false by default),
 see function [`cvSetup`](@ref), to which this argument is passed.
 
-Argument `vecRange` has an effect only for machine learning models in the
-tangent space. For its meaning see function [`fit`](@ref) and [`predict`](@ref),
-to which it is passed for each fold.
-
 If `verbose` is true (default), information is printed in the REPL.
 This option is included to allow repeated calls to this function
 without crowding the REPL.
 
-if `outModels``is true return a 2-tuple holding a [`CVacc`](@ref) structure
+if `outModels` is true return a 2-tuple holding a [`CVacc`](@ref) structure
 and a `nFolds`-vector of the model fitted for each fold,
 otherwise (default), return only a [`CVacc`](@ref) structure.
 
@@ -142,16 +127,20 @@ their fit method are elegible to be passed here, however,
 the arguments listed in the following table for each model should not be passed.
 Note that if they are passed, they will be disabled:
 
-| MDM/MDMF |   ENLR    |
-|:--------:|:---------:|
-| `verbose`| `verbose` |
-|  `⏩`   | `⏩`      |
-|          | `meanISR` |
+| MDM/MDMF |   ENLR    |    SVM    |
+|:--------:|:---------:|:---------:|
+| `verbose`| `verbose` | `verbose` |
+|  `⏩`   | `⏩`      | `⏩`      |
+|          | `meanISR` | `meanISR` |
+|          | `meanInit`| `meanInit`|
 |          | `fitType` |
 |          | `offsets` |
 |          | `lambda`  |
 |          | `folds`   |
 
+Also, if you pass a `w` (weights for tangent space projection) argument,
+do not pass a vector of weights, just pass a symbol, e.g., `w=:b`
+for balancing weights.
 
 **See**: [notation & nomenclature](@ref), [the ℍVector type](@ref).
 
@@ -170,28 +159,30 @@ cv=cvAcc(MDM(Fisher), PTr, yTr)
 # ...using the lasso logistic regression classifier
 cv=cvAcc(ENLR(Fisher), PTr, yTr)
 
+# ...using the support-vector machine classifier
+cv=cvAcc(SVM(Fisher), PTr, yTr)
+
+# ...With a Polynomial kernel of order 3 (default)
+cv=cvAcc(SVM(Fisher), PTr, yTr; kernel=kernel.Polynomial)
+
 # perform 8-fold cross-validation instead
-cv=cvAcc(ENLR(Fisher), PTr, yTr; nFolds=8)
+# (and see that you can go pretty fast if your PC has 8 threads)
+cv=cvAcc(SVM(Fisher), PTr, yTr; nFolds=8)
 
-# ...using the elastic-net logistic regression (α=0.9) classifier
-cv=cvAcc(ENLR(Fisher), PTr, yTr; nFolds=8, alpha=0.9)
-
-# ...and standardizing the predictors
-cv=cvAcc(ENLR(Fisher), PTr, yTr; nFolds=8, alpha=0.9, standardize=true)
+# ...balance the weights for tangent space projection
+cv=cvAcc(ENLR(Fisher), PTr, yTr; nFolds=8, w=:b)
 
 # perform another cross-validation shuffling the folds
-cv=cvAcc(MDM(Fisher), PTr, yTr; nFolds=8, shuffle=true)
+cv=cvAcc(ENLR(Fisher), PTr, yTr; shuffle=true, nFolds=8, w=:b)
 
 ```
 """
 function cvAcc(model   :: MLmodel,
                𝐏Tr     :: ℍVector,
                yTr     :: IntVector;
-           tol       :: Real      = 1e-7,
            nFolds    :: Int       = min(10, length(yTr)÷3),
            scoring   :: Symbol    = :b,
            shuffle   :: Bool      = false,
-           vecRange  :: UnitRange = 𝐏Tr isa ℍVector ? (1:size(𝐏Tr[1], 2)) : (1:size(𝐏Tr, 2)),
            verbose   :: Bool      = true,
            outModels :: Bool      = false,
            fitArgs...)
@@ -217,31 +208,39 @@ function cvAcc(model   :: MLmodel,
     # get indeces for all CVs (separated for each class)
     @threads for i=1:z indTr[i], indTe[i] = cvSetup(length(𝐐[i]), nFolds; shuffle=shuffle) end
 
+    # make sure the user doesn't pass arguments that skrew up the cv
     if model isa ENLRmodel
-        # make sure the user doesn't fit arguments that skrew up the cv
         fitArgs✔=_rmArgs((:meanISR, :meanInit, :fitType, :verbose, :⏩,
                          :offsets, :lambda, :folds); fitArgs...)
-
         # overwrite the `alpha` value in `model` if the user has passed keyword `alpha`
-        if (α=_getArgValue(:alpha; fitArgs...)) ≠ nothing model.alpha=α end
+        if (a=_getArgValue(:alpha; fitArgs...)) ≠ nothing model.alpha=a end
+    end
+
+    if model isa SVMmodel
+        # make sure the user doesn't pass arguments that skrew up the cv
+        fitArgs✔=_rmArgs((:meanISR, :meanInit, :verbose, :⏩); fitArgs...)
+        # overwrite the `svmType` and `kernel` values in `model` if the user has passed then as kwargs
+        if (a=_getArgValue(:svmType; fitArgs...)) ≠ nothing model.svmType=a end
+        if (a=_getArgValue(:kernel;  fitArgs...)) ≠ nothing model.kernel =a end
     end
 
     # get means initializations. Be careful here with the behavior for other models
     # NB for the MDM model the initialization is a vector of means for each class,
-    # for the ENLR model it is the mean of such means.
+    # for the TSmodels it is the mean of such means.
     # This is a quick approximation since the initialization is not critical,
     # but it hastens the computation time since itera. alg. require less iters.
     if      model.metric in (Fisher, logdet0)
                 M0=means(logEuclidean, 𝐐; ⏩=true)
-                if model isa ENLRmodel M0=mean(logEuclidean, M0; ⏩=true) end
+                if model isa TSmodel M0=mean(logEuclidean, M0; ⏩=true) end
     elseif  model.metric == Wasserstein
                 M0=ℍVector([generalizedMean(𝐐[i], 0.5; ⏩=true) for i=1:length(𝐐)])
-                if model isa ENLRmodel M0=generalizedMean(M0, 0.5; ⏩=true) end
+                if model isa Tsmodel M0=generalizedMean(M0, 0.5; ⏩=true) end
     else    M0=nothing;
     end
 
     # perform cv
-    @threads for f=1:nFolds
+    #@threads for f=1:nFolds
+        for f=1:nFolds
         print(defaultFont, rand(dice), " ") # print a random dice in the REPL
 
         # get testing data for current cross-validation (CV)
@@ -254,43 +253,17 @@ function cvAcc(model   :: MLmodel,
         for i=1:z, j ∈ indTr[i][f] @inbounds push!(𝐐Tr[f], 𝐐[i][j]) end
 
         # fit machine learning model
-        if      model isa MDMmodel
-                ℳ[f]=fit(MDM(model.metric), 𝐐Tr[f], zTr[f];
-                         meanInit=M0,
-                         tol=tol,
-                         verbose=false,
-                         ⏩=true)
+        ℳ[f]=fit(model, 𝐐Tr[f], zTr[f];
+                  meanInit=M0,
+                  verbose=false,
+                  fitArgs✔...)
 
-        elseif  model isa ENLRmodel
-                ℳ[f]=fit(ENLR(model.metric), 𝐐Tr[f], zTr[f];
-                         meanInit=M0,
-                         tol=tol,
-                         vecRange=vecRange,
-                         verbose=false,
-                         ⏩=true,
-                         fitArgs✔...)
 
-        # elseif...
-        end
+        # predict labels for current fold
+        @inbounds for i=1:z pl[f][i]=predict(ℳ[f], 𝐐Te[f][i], :l; verbose=false) end
 
-        # predict labels and compute confusion matrix for current CV
-        # NB: when adding support for another model,one of the two following form should work
-        if      model isa MDMmodel
-                for i=1:z
-                    @inbounds pl[f][i]=predict(ℳ[f], 𝐐Te[f][i], :l;
-                                         verbose=false, ⏩=true)
-                end
-        elseif  model isa ENLRmodel
-                for i=1:z
-                    @inbounds pl[f][i]=predict(ℳ[f], 𝐐Te[f][i], :l;
-                                        vecRange=vecRange, verbose=false, ⏩=true)
-                end
-        # elseif...
-        end
-        for i=1:z, s=1:length(pl[f][i])
-            @inbounds CM[f][i, pl[f][i][s]] += 1.
-        end
-
+        # compute confusion matrix for current fold
+        @inbounds for i=1:z, s=1:length(pl[f][i]) CM[f][i, pl[f][i][s]]+=1. end
 
         # compute balanced accuracy or accuracy for current CV
         sumCM=sum(CM[f])
