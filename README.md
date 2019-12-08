@@ -4,13 +4,13 @@
 |:---------------------------------------:|
 | [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://Marco-Congedo.github.io/PosDefManifoldML.jl/dev) |
 
-**PosDefManifoldML** is a [**Julia**](https://julialang.org/) package for classifying data in the [**Riemannian manifolds**](https://en.wikipedia.org/wiki/Riemannian_manifold) **P** of real or complex [**positive definite matrices**](https://en.wikipedia.org/wiki/Definiteness_of_a_matrix). It is based on the [PosDefManifold.jl](https://github.com/Marco-Congedo/PosDefManifold.jl) and [GLMNet.jl](https://github.com/JuliaStats/GLMNet.jl) packages. 
+**PosDefManifoldML** is a [**Julia**](https://julialang.org/) package for classifying data in the [**Riemannian manifolds**](https://en.wikipedia.org/wiki/Riemannian_manifold) **P** of real or complex [**positive definite matrices**](https://en.wikipedia.org/wiki/Definiteness_of_a_matrix). It is based on the [PosDefManifold.jl](https://github.com/Marco-Congedo/PosDefManifold.jl), [GLMNet.jl](https://github.com/JuliaStats/GLMNet.jl) and [LIBSVM.jl](https://github.com/mpastell/LIBSVM.jl) packages. 
 
 [Machine learning](https://en.wikipedia.org/wiki/Machine_learning) (ML) in **P** can either operate directly on the manifold, which requires dedicated Riemannian methods, or the data can be projected onto the **tangent space**, where standard (Euclidean) machine learning methods apply (e.g., linear discriminant analysis, support-vector machine, logistic regression, random forest, deep neuronal networks, etc). 
 
 ![](/docs/src/assets/Fig1.jpg)
 
-For the moment being, **PosDefManifoldML** implements the Riemannian **Minimum Distance to Mean (MDM)** classifier, which operates directly in **P** and the **elastic net logistic regression** classifier in the tangent space, including the pure **Ridge** and pure **Lasso** logistic regresison model. The latter model can be used also for traditional (Euclidean) feature vectors, making of this package also a nice interface to the binomial family of generalized linear models implemented in *GLMNet.jl*.  
+For the moment being, **PosDefManifoldML** implements the Riemannian **Minimum Distance to Mean (MDM)** classifier, which operates directly in **P**, the **elastic net logistic regression** (including the pure **Ridge** and pure **Lasso** logistic regresison model) and several **support-vector machine** classifiers in the tangent space. The models operating in the tangent space can be used also for traditional (Euclidean) feature vectors, making of this package also a nice interface to the binomial family of generalized linear models implemented in *GLMNet.jl* and all SVM models implemented in *LIBSVM.jl*
 
 ## Installation
 
@@ -19,10 +19,9 @@ execute the following command in Julia's REPL:
 
     ]add https://github.com/Marco-Congedo/PosDefManifoldML.jl
 
-## Disclaimer
+## Reviewers
 
-This package is still in a pre-release stage.
-Independent reviewers are more then welcome.
+Independent reviewers are welcome.
 
 ## Examples
 
