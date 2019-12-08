@@ -17,6 +17,7 @@ makedocs(
       ],
       "ML Models: PD Tangent Space" => Any[
                   "Elastic-Net Logistic Regression" => "enlr.md",
+                  "Support-Vector Machine" => "svm.md",
       ],
       "fit, predict, cv" => "cv.md",
 
