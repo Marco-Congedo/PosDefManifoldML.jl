@@ -239,8 +239,7 @@ function cvAcc(model   :: MLmodel,
     end
 
     # perform cv
-    #@threads for f=1:nFolds
-        for f=1:nFolds
+    @threads for f=1:nFolds  # use for f=1:nFolds instead for debugging
         print(defaultFont, rand(dice), " ") # print a random dice in the REPL
 
         # get testing data for current cross-validation (CV)
@@ -270,7 +269,7 @@ function cvAcc(model   :: MLmodel,
         scoring == :b ? s[f] = 𝚺(CM[f][i, i]/𝚺(CM[f][i, :]) for i=1:z) / z :
                         s[f] = 𝚺(CM[f][i, i] for i=1:z)/ sumCM
 
-        CM[f]/=sumCM # confusion matrices in percent
+        CM[f]/=sumCM # confusion matrices in proportions
 
     end
     verbose && println(greyFont, "\nDone in ", defaultFont, now()-⌚)

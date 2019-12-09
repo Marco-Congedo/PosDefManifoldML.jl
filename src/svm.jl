@@ -56,12 +56,12 @@ The default is `SVC`, unless labels are not provided while fitting
 the model, in which case it defaults to `OneClassSVM`.
 
 `kernel`, a kernel type.
-Available kernels are
-- `Kernel.RadialBasis` (default)
-- `Kernel.Linear`
-- `Kernel.Polynomial`
-- `Kernel.Sigmoid`
-- `Kernel.Precomputed`.
+Available kernels are declared as constants in the main module. They are:
+- `RadialBasis` (default)
+- `Linear`
+- `Polynomial`
+- `Sigmoid`
+- `Precomputed`.
 
 All other fields do not correspond to arguments passed
 upon creation of the model by the default creator.
@@ -113,10 +113,10 @@ m1=fit(m, PTr, yTr)
 
 # in general you don't need this machinery for fitting a model,
 # since you can specify a model by creating one on the fly:
-m2=fit(SVM(logEuclidean), PTr, yTr; kernel=Kernel.Sigmoid)
+m2=fit(SVM(logEuclidean), PTr, yTr; kernel=Linear)
 
 # which is equivalent to
-m2=fit(m, PTr, yTr; kernel=Kernel.Sigmoid)
+m2=fit(m, PTr, yTr; kernel=Linear)
 
 # note that, albeit model `m` has been created as an SVM model
 # with the default kernel (RadialBasis),
@@ -138,7 +138,7 @@ mutable struct SVM <: SVMmodel
 		svmModel #used to store the training model from the SVM library
     function SVM( metric :: Metric=Fisher;
 				  svmType 	  = SVC,
-                  kernel  	  = Kernel.RadialBasis,
+                  kernel  	  = RadialBasis,
 				  rescale 	  = nothing,
 				  meanISR 	  = nothing,
 				  vecRange    = nothing,
@@ -164,7 +164,7 @@ function fit(model     :: SVMmodel,
 	   												  (1:size(𝐏Tr, 2)),
 	   # SVM paramters
 	   svmType		:: Type		= SVC,
-	   kernel		:: Kernel.KERNEL = Kernel.RadialBasis,
+	   kernel		:: Kernel.KERNEL = RadialBasis,
 	   epsilon		:: Float64	= 0.1,
 	   cost			:: Float64	= 1.0,
 	   gamma		:: Float64	= 1/_getDim(𝐏Tr, vecRange),
@@ -230,7 +230,8 @@ if a Dict{Int, Float64} is passed as `weights` argument, it will be used
 to give weights to the classes. By default it is equal to `nothing`, implying
 equal weights to all classes.
 
-`cachesize` for the kernel, 200.0 by defaut (in MB), can be increased for very large problems.
+`cachesize` for the kernel, 200.0 by defaut (in MB), can be increased for
+very large problems.
 
 `tol` is the convergence criterion for both the computation
 of a mean for projecting onto the tangent space
@@ -275,6 +276,25 @@ m=fit(SVM(), PTr, yTr; w=:b)
 
 # ... using the log-Eucidean metric for tangent space projection
 m=fit(SVM(logEuclidean), PTr, yTr)
+
+# ... using the linear kernel
+m=fit(SVM(logEuclidean), PTr, yTr, kernel=Linear)
+
+# or
+
+m=fit(SVM(logEuclidean; kernel=Linear), PTr, yTr)
+
+# ... using the Nu-Support Vector Classification
+m=fit(SVM(logEuclidean), PTr, yTr, kernel=Linear, svmtype=NuSVC)
+
+# or
+
+m=fit(SVM(logEuclidean, kernel=Linear, svmtype=NuSVC), PTr, yTr)
+
+# N.B. all other keyword arguments must be passed to the fit function
+# and not to the SVM constructor.
+
+
 ```
 """
 function fit(model     :: SVMmodel,
@@ -287,7 +307,7 @@ function fit(model     :: SVMmodel,
 		   vecRange    :: UnitRange = 𝐏Tr isa ℍVector ? (1:size(𝐏Tr[1], 2)) : (1:size(𝐏Tr, 2)),
 		   # paramters for LIBSVM svmtrain function
 		   svmType     :: Type 		  = SVC,
-		   kernel      :: Kernel.KERNEL = Kernel.RadialBasis,
+		   kernel      :: Kernel.KERNEL = RadialBasis,
 		   epsilon     :: Float64 	  = 0.1,
 		   cost        :: Float64 	  = 1.0,
 		   gamma       :: Float64 	  = 1/_getDim(𝐏Tr, vecRange),
@@ -313,7 +333,7 @@ function fit(model     :: SVMmodel,
 	# overwrite fields in `ℳ` if the user has passed them here as arguments,
 	# otherwise use as arguments the values in the fields of `ℳ`, e.g., the default
 	if svmType ≠ SVC ℳ.svmType = svmType else svmType = ℳ.svmType end
-	if kernel ≠ Kernel.RadialBasis ℳ.kernel = kernel else kernel = ℳ.kernel end
+	if kernel ≠ RadialBasis ℳ.kernel = kernel else kernel = ℳ.kernel end
 
 	# check w argument and get weights for input matrices
     (w=_getWeights(w, yTr, "fit ("*_modelStr(ℳ)*" model)")) == nothing && return

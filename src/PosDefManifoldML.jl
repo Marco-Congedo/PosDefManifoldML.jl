@@ -23,6 +23,7 @@ using Distributions:Distributions, Binomial
 using LIBSVM: svmpredict, svmtrain, SVC, NuSVC, OneClassSVM, NuSVR, EpsilonSVR,
       LinearSVC, Linearsolver, Kernel
 
+
 # Special instructions and variables
 BLAS.set_num_threads(Sys.CPU_THREADS)
 
@@ -33,6 +34,14 @@ const separatorFont = "\x1b[92m"
 const defaultFont   = "\x1b[0m"
 const greyFont      = "\x1b[90m"
 const dice = ("⚀", "⚁", "⚂", "⚃", "⚄", "⚅")
+
+# shortcut to LIBSVM kernels enum type
+const Linear 		= LIBSVM.Kernel.KERNEL(0)
+const Polynomial 	= LIBSVM.Kernel.KERNEL(1)
+const RadialBasis 	= LIBSVM.Kernel.KERNEL(2)
+const Sigmoid 		= LIBSVM.Kernel.KERNEL(3)
+const Precomputed 	= LIBSVM.Kernel.KERNEL(4)
+
 
 # types #
 abstract type MLmodel end # all machine learning models
@@ -53,6 +62,11 @@ export
     PDmodel,
     TSmodel,
     IntVector,
+	linear,
+	polynomial,
+	radialBasis,
+	sigmoid,
+	precomputed,
 
     # from mdm.jl
     MDMmodel,
@@ -70,7 +84,7 @@ export
 	SVMmodel,
 	SVM,
 	SVC, NuSVC, OneClassSVM, NuSVR, EpsilonSVR, LinearSVC, Linearsolver, Kernel,
-    
+
     # from cv.jl
     CVacc,
     cvAcc,
