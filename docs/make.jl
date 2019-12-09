@@ -20,7 +20,7 @@ makedocs(
                   "Support-Vector Machine" => "svm.md",
       ],
       "fit, predict, cv" => "cv.md",
-
+      "How to contribute" => "contribute.md", 
    ]
 )
 

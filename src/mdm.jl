@@ -96,7 +96,7 @@ end
 ```
 function fit(model :: MDMmodel,
               𝐏Tr   :: ℍVector,
-              yTr   :: Vector;
+              yTr   :: IntVector;
        w        :: Vector = [],
        ✓w       :: Bool  = true,
        meanInit :: Union{ℍVector, Nothing} = nothing,
@@ -163,7 +163,7 @@ m=fit(MDM(Fisher), PTr, yTr)
 """
 function fit(model :: MDMmodel,
               𝐏Tr   :: ℍVector,
-              yTr   :: Vector;
+              yTr   :: IntVector;
        w        :: Vector = [],
        ✓w       :: Bool   = true,
        meanInit :: Union{ℍVector, Nothing} = nothing,
