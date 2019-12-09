@@ -412,6 +412,8 @@ for details [🎓](@ref).
 
 **See also**: [`predict`](@ref), [`cvAcc`](@ref).
 
+**Tutorial**: [Example using the ENLR model](@ref).
+
 **Examples**
 ```
 using PosDefManifoldML

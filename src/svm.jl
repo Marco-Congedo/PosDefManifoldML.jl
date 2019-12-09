@@ -49,7 +49,7 @@ Available types are:
    according to a one-vs-one scheme,
 - `NuSVC`: *Nu-Support Vector Classification*. Similar to SVC but uses a
    parameter to control the number of support vectors,
-- `OneClassSVM`: Unsupervised Outlier Detection. Estimate the support of a high-dimensional distribution,
+- `OneClassSVM`: Unsupervised outlier detection. Estimate the support of a high-dimensional distribution,
 - `EpsilonSVR`: *Epsilon-Support Vector Regression*,
 - `NuSVR`: *Nu-Support Vector Regression*.
 The default is `SVC`, unless labels are not provided while fitting
@@ -260,6 +260,8 @@ resources on the LIBSVM package [🎓](@ref).
 **See**: [notation & nomenclature](@ref), [the ℍVector type](@ref).
 
 **See also**: [`predict`](@ref), [`cvAcc`](@ref).
+
+**Tutorial**: [Example using SVM models](@ref).
 
 **Examples**
 ```
@@ -502,7 +504,5 @@ function Base.show(io::IO, ::MIME{Symbol("text/plain")}, M::SVM)
 	println(io, separatorFont," .kernel      ", defaultFont, "$(string(M.kernel))")
     isempty(M.rescale) ? s="(false)" : s="(true)"
 	println(io, separatorFont," .rescale     ", defaultFont, "$(string(M.rescale)) "*s)
-	println(io, separatorFont," .kernel      ", defaultFont, "$(string(M.kernel))")
-
     println(io, separatorFont," .svmModel ", defaultFont, "   LIBSVM model struct")
 end
