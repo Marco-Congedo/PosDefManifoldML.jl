@@ -15,6 +15,13 @@ execute the following command in Julia's REPL:
 
 Independent reviewers for both the code and the documentation are welcome.
 
+### TroubleShoothing
+| Problem   | Solution |
+|:----------|:----------|
+| This error may appear at execution time
+the first time an SVM model is fitted or is passed to the cvAcc function | [Discourse](https://discourse.julialang.org/t/error-could-not-load-library-c-libsvm-dll/32056) |
+
+
 ## About the Authors
 
 [Marco Congedo](https://sites.google.com/site/marcocongedo), corresponding
