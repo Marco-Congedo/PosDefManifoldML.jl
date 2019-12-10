@@ -13,7 +13,7 @@
 """
 ```
 function tsMap(	metric :: Metric,
-				𝐏      :: ℍVector;
+		𝐏      :: ℍVector;
 		w    	  :: Vector	= [],
 		✓w   	  :: Bool = true,
 		⏩   	 :: Bool = true,

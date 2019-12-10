@@ -66,7 +66,7 @@ For an introduction to Riemannian geometry and an overview of mathematical tools
 | [MainModule](@ref) | Main module, declaring constants and types |
 | [mdm.jl](@ref) | Unit implementing the MDM( Minimum Distance to Mean) machine learning model |
 | [enlr.jl](@ref) | Unit implementing the ENLR( Elastic Net Logistic Regression) model, including the LASSO and RIDGE LR |
-| [svm.jl](@ref) | Unit implementing the SVM (Support-Vector MAchine) models|
+| [svm.jl](@ref) | Unit implementing the SVM (Support-Vector Machine) models|
 | [cv.jl](@ref)| Unit implementing cross-validation procedures |
 | [tools.jl](@ref) | Unit containing general tools useful for machine learning and internal functions|
 

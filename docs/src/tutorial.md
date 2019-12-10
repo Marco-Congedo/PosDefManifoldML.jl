@@ -269,7 +269,7 @@ Avaiable kernels are:
 - `Sigmoid`
 
 Several parameters are available for building all these kernels
-besides the linear one, which has no parameter. Lke for ENLR, for SVM models also an hyperparameter is to be found by cross-validation.
+besides the linear one, which has no parameter. Like for ENLR, for SVM models also an hyperparameter is to be found by cross-validation.
 
 **get data**
 
