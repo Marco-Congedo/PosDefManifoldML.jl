@@ -412,6 +412,8 @@ for details [🎓](@ref).
 
 **See also**: [`predict`](@ref), [`cvAcc`](@ref).
 
+**Tutorial**: [Example using the ENLR model](@ref).
+
 **Examples**
 ```
 using PosDefManifoldML
@@ -587,7 +589,7 @@ as an [IntVector](@ref).
 Those labels are '1' for class 1 and '2' for class 2;
 
 if `what` is `:probabilities` or `:p`, return the predicted **probabilities**
-for each matrix in `𝐏Te` to belong to a all classes, as a ``k``-vector
+for each matrix in `𝐏Te` to belong to each classe, as a ``k``-vector
 of ``z`` vectors holding reals in ``[0, 1]`` (probabilities).
 The 'probabilities' are obtained passing to a
 [softmax function](https://en.wikipedia.org/wiki/Softmax_function)

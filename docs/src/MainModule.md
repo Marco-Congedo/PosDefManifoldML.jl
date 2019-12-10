@@ -10,6 +10,7 @@ This is the main unit containing the **PosDefManifoldML** *module*.
 | [Statistics](https://bit.ly/2Oem3li) |  [GLMNet](https://github.com/JuliaStats/GLMNet.jl)|
 | [Random](https://github.com/JuliaStdlibs/Random.jl) | [Distributions](https://github.com/JuliaStats/Distributions.jl)|
 | [Dates](https://github.com/JuliaStdlibs/Dates.jl)| [LIBSVM](https://github.com/mpastell/LIBSVM.jl)|
+| [StatsBase](https://github.com/JuliaStats/StatsBase.jl) |  |
 
 The main module does not contains functions.
 
