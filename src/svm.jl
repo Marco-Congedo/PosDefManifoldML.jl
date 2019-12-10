@@ -61,7 +61,7 @@ Available kernels are declared as constants in the main module. They are:
 - `Linear`
 - `Polynomial`
 - `Sigmoid`
-- `Precomputed`.
+- `Precomputed` (not supported).
 
 All other fields do not correspond to arguments passed
 upon creation of the model by the default creator.
