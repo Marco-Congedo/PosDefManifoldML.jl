@@ -61,7 +61,7 @@ model is fitted useing the Fisher metric (default).
 
 **Examples**:
 ```
-using PosDefManifoldML
+using PosDefManifoldML, PosDefManifold
 
 # create an empty model
 m = MDM(Fisher)
@@ -151,7 +151,7 @@ without crowding the REPL.
 
 **Examples**
 ```
-using PosDefManifoldML
+using PosDefManifoldML, PosDefManifold
 
 # generate some data
 PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.25)
@@ -254,7 +254,7 @@ It f `⏩` is true (default), the computation of distances is multi-threaded.
 
 **Examples**
 ```
-using PosDefManifoldML
+using PosDefManifoldML, PosDefManifold
 
 # generate some data
 PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80)

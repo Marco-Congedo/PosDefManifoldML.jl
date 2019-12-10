@@ -18,7 +18,7 @@ A real data example will be added soon. For now, let us create simulated data fo
 First, let us create symmetric positive definite matrices (real positive definite matrices):
 
 ```
-using PosDefManifoldML
+using PosDefManifoldML, PosDefManifold
 
 PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.1);
 ```

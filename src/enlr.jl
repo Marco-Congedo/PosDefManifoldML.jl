@@ -123,7 +123,7 @@ when the [`fit`](@ref) function is invoked.
 # Note: creating models with the default creator is possible,
 # but not useful in general.
 
-using PosDefManifoldML
+using PosDefManifoldML, PosDefManifold
 
 # create an empty lasso model
 m = ENLR(Fisher)
@@ -416,7 +416,7 @@ for details [🎓](@ref).
 
 **Examples**
 ```
-using PosDefManifoldML
+using PosDefManifoldML, PosDefManifold
 
 # generate some data
 PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.1)
@@ -644,7 +644,7 @@ tangent space is multi-threaded.
 
 **Examples**
 ```
-using PosDefManifoldML
+using PosDefManifoldML, PosDefManifold
 
 # generate some data
 PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80)
@@ -703,8 +703,8 @@ function predict(model   :: ENLRmodel,
     # checks
     if !_whatIsValid(what, "predict ("*_modelStr(model)*")") return end
     if !_fitTypeIsValid(fitType, "predict ("*_modelStr(model)*")") return end
-    if fitType==:best && model.best==nothing @error 📌*", predict function: the best model has not been fitted"; return end
-    if fitType==:path && model.path==nothing @error 📌*", predict function: the regularization path has not been fitted"; return end
+    if fitType==:best && model.best==nothing @error 📌*", predict function: the best model has not been fitted; run the `fit`function with keyword argument `fitType=:best` or `fitType=:all`"; return end
+    if fitType==:path && model.path==nothing @error 📌*", predict function: the regularization path has not been fitted; run the `fit`function with keyword argument `fitType=:path` or `fitType=:all`"; return end
     if !_ENLRonWhichIsValid(model, fitType, onWhich, "predict ("*_modelStr(model)*")") return end
 
     # projection onto the tangent space
