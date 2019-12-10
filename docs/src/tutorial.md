@@ -20,7 +20,7 @@ First, let us create symmetric positive definite matrices (real positive definit
 ```
 using PosDefManifoldML
 
-PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80);
+PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.1);
 ```
 
 - `PTr` is the simulated training set, holding 30 matrices for class 1 and 40 matrices for class 2
@@ -127,7 +127,7 @@ that the [`fit`](@ref) and [`predict`](@ref) methods for ENLR models accept opti
 Let us get some simulated data (see the previous example for explanations).
 
 ```
-PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80);
+PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.1);
 ```
 
 ### ENLR Pipeline 1. (fit and predict)
@@ -276,7 +276,7 @@ besides the linear one, which has no parameter. Like for ENLR, for SVM models al
 Let us get some simulated data as in the previous examples.
 
 ```
-PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80);
+PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.1);
 ```
 
 ### SVM Pipeline 1. (fit and predict)
