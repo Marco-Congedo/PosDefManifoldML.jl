@@ -21,12 +21,12 @@ abstract type SVMmodel<:TSmodel end
 """
 ```
 mutable struct SVM <: SVMmodel
-		metric      :: Metric
-		svmType     :: Type
-		kernel      :: Kernel.KERNEL
-		rescale     :: Tuple
+		metric		:: Metric
+		svmType		:: Type
+		kernel		:: Kernel.KERNEL
+		rescale		:: Tuple
 		meanISR		:: Union{ℍVector, Nothing}
-		vecRange    :: UnitRange
+		vecRange	:: UnitRange
 		featDim		:: Int
 		svmModel #store the training model from the SVM library
 ```
@@ -68,26 +68,17 @@ upon creation of the model by the default creator.
 Instead, they are filled later when a model is created by the
 [`fit`](@ref) function:
 
-For the content of fields `rescale` and `vecRange`,
-please see the documentation of the [`fit`](@ref) function for the
-ENLR model.
+For the content of field `rescale` please see the documentation
+of the [`fit`](@ref) function for the SVM model.
 
-`.meanISR` is optionally passed to the [`fit`](@ref)
-function. By default it is computed thereby.
-If the data used to train the model
-are not positive definite matrices, but Euclidean feature vectors,
-the `.meanISR` field has no use and is set to `nothing`.
+For the content of fields `vecRange`, please see the documentation
+of the [`fit`](@ref) function for the ENLR model.
 
-if the data used to train the model are positive definite matrices,
-`.featDim` is the length of the vectorized tangent vectors.
-This is given by ``n(n+1)÷2`` (integer division), where ``n``
-is the dimension of the original PD matrices on which the model is applied
-once they are mapped onto the tangent space.
-If feature vectors are used to train the model, `.featDim` is the length
-of these vectors. If for fitting the model you have provided an optional
-keyword argument `vecRange`, `.featDim` will be reduced accordingly.
+For the content of the `.meanISR` and `.featDim` fields please
+see the documentation of the [`ENLR`](ref) structure.
 
-`svmModel` holds the model structure created by LIBSVM when the model is fitted.
+`svmModel` holds the model structure created by LIBSVM when the model is fitted
+(declared [here](https://github.com/mpastell/LIBSVM.jl/blob/master/src/LibSVMtypes.jl)).
 
 **Examples**:
 ```
@@ -105,6 +96,9 @@ m = SVM()
 
 # create an empty SVM model using the logEuclidean metric
 m = SVM(logEuclidean)
+
+# generate some data
+PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.1);
 
 # Empty models can be passed as first argument of the `fit` function
 # to fit a model. For instance, this will fit an SVM model of the same
@@ -156,30 +150,30 @@ end
 function fit(model     :: SVMmodel,
                𝐏Tr     :: Union{ℍVector, Matrix{Float64}},
                yTr     :: IntVector=[];
-       # parameters for projection onto the tangent space
-	   w			:: Union{Symbol, Tuple, Vector} = [],
-	   meanISR		:: Union{ℍ, Nothing} = nothing,
-	   meanInit		:: Union{ℍ, Nothing} = nothing,
-	   vecRange		:: UnitRange = 𝐏Tr isa ℍVector ? (1:size(𝐏Tr[1], 2)) :
-	   												  (1:size(𝐏Tr, 2)),
+           # parameters for projection onto the tangent space
+	   w :: Union{Symbol, Tuple, Vector} = [],
+	   meanISR :: Union{ℍ, Nothing} = nothing,
+	   meanInit :: Union{ℍ, Nothing} = nothing,
+	   vecRange	:: UnitRange = 𝐏Tr isa ℍVector ? (1:size(𝐏Tr[1], 2)) :
+	   											 (1:size(𝐏Tr, 2)),
 	   # SVM paramters
-	   svmType		:: Type		= SVC,
-	   kernel		:: Kernel.KERNEL = RadialBasis,
-	   epsilon		:: Float64	= 0.1,
-	   cost			:: Float64	= 1.0,
-	   gamma		:: Float64	= 1/_getDim(𝐏Tr, vecRange),
-	   degree		:: Int64	= 3,
-	   coef0		:: Float64	= 0.,
-	   nu			:: Float64	= 0.5,
-	   shrinking	:: Bool		= true,
-	   probability	:: Bool		= false,
-	   weights		:: Union{Dict{Int, Float64}, Nothing} = nothing,
-	   cachesize	:: Float64	= 200.0,
+	   svmType :: Type = SVC,
+	   kernel :: Kernel.KERNEL = RadialBasis,
+	   epsilon :: Float64 = 0.1,
+	   cost	:: Float64 = 1.0,
+	   gamma :: Float64	= 1/_getDim(𝐏Tr, vecRange),
+	   degree :: Int64	= 3,
+	   coef0 :: Float64	= 0.,
+	   nu :: Float64 = 0.5,
+	   shrinking :: Bool = true,
+	   probability :: Bool = false,
+	   weights :: Union{Dict{Int, Float64}, Nothing} = nothing,
+	   cachesize :: Float64	= 200.0,
 	   # Generic and common parameters
-	   tol			:: Real		= 1e-5,
-	   rescale		:: Tuple	= (-1, 1),
-	   verbose		:: Bool		= true,
-	   ⏩		   :: Bool	   = true)
+	   tol :: Real = 1e-5,
+	   rescale :: Tuple	= (-1, 1),
+	   verbose :: Bool = true,
+	   ⏩ :: Bool = true)
 ```
 
 Create and fit an [`SVM`](@ref) machine learning model,
@@ -203,12 +197,12 @@ the projection onto the tangent space. See the documentation
 of the [`fit`](@ref) function for the ENLR model here above for their meaning.
 
 `svmType` and `kernel` allow to chose among several
-available SVM models. See the documentation of [`SVM`](@ref).
+available SVM models. See the documentation of the [`SVM`](@ref) structure.
 
 `epsilon`, with default 0.1, is the epsilon in loss function
 of the `epsilonSVR` SVM model.
 
-`cost`, with default 1.0`, is the cost parameter ``C`` of `SVC`,
+`cost`, with default 1.0, is the cost parameter ``C`` of `SVC`,
 `epsilonSVR`, and `nuSVR` SVM models.
 
 `gamma`, defaulting to 1 divided by the length of the feature vectors,
@@ -226,7 +220,7 @@ is the ``γ`` parameter for `RadialBasis`, `Polynomial` and `Sigmoid` kernels.
 `probability`, false by default sets whether to train a `SVC` or `SVR` model
 allowing probability estimates.
 
-if a Dict{Int, Float64} is passed as `weights` argument, it will be used
+if a `Dict{Int, Float64}` is passed as `weights` argument, it will be used
 to give weights to the classes. By default it is equal to `nothing`, implying
 equal weights to all classes.
 
@@ -235,7 +229,7 @@ very large problems.
 
 `tol` is the convergence criterion for both the computation
 of a mean for projecting onto the tangent space
-(if the metric requires an iterative algorithm)
+(if the metric recquires an iterative algorithm)
 and for the LIBSVM fitting algorithm. Defaults to 1e-5.
 
 `rescale` is a 2-tuple of the lower and upper limit to rescale the feature vectors
@@ -268,7 +262,7 @@ resources on the LIBSVM package [🎓](@ref).
 using PosDefManifoldML
 
 # generate some data
-PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.1)
+PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.1);
 
 # Fit an SVC SVM model and find the best model by cross-validation:
 m=fit(SVM(), PTr, yTr)
