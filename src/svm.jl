@@ -75,7 +75,7 @@ For the content of fields `vecRange`, please see the documentation
 of the [`fit`](@ref) function for the ENLR model.
 
 For the content of the `.meanISR` and `.featDim` fields please
-see the documentation of the [`ENLR`](ref) structure.
+see the documentation of the [`ENLR`](@ref) structure.
 
 `svmModel` holds the model structure created by LIBSVM when the model is fitted
 (declared [here](https://github.com/mpastell/LIBSVM.jl/blob/master/src/LibSVMtypes.jl)).
