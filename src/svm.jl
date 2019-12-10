@@ -85,7 +85,7 @@ see the documentation of the [`ENLR`](@ref) structure.
 # Note: creating models with the default creator is possible,
 # but not useful in general.
 
-using PosDefManifoldML
+using PosDefManifoldML, PosDefManifold
 
 # create an empty SVM model
 m = SVM(Fisher)
@@ -259,7 +259,7 @@ resources on the LIBSVM package [🎓](@ref).
 
 **Examples**
 ```
-using PosDefManifoldML
+using PosDefManifoldML, PosDefManifold
 
 # generate some data
 PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.1);
@@ -405,7 +405,7 @@ will be multi-threaded.
 
 **Examples**
 ```
-using PosDefManifoldML
+using PosDefManifoldML, PosDefManifold
 
 # generate some data
 PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80)

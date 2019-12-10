@@ -148,7 +148,7 @@ for balancing weights.
 
 **Examples**
 ```
-using PosDefManifoldML
+using PosDefManifoldML, PosDefManifold
 
 # generate some data
 PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80)
@@ -325,7 +325,7 @@ Return the 2-tuple with:
 
 **Examples**
 ```
-using PosDefManifoldML
+using PosDefManifoldML, PosDefManifold
 
 cvSetup(10, 2)
 # return:
