@@ -538,7 +538,7 @@ _modelStr(model::MLmodel) =
 
   elseif    model isa SVMmodel
 			if 		model.svmType==SVC 			return "SVC"
-			elseif  model.svmType==C-SVM 		return "C-SVM"
+			elseif  model.svmType==NuSVC 		return "NuSVC"
 			elseif  model.svmType==EpsilonSVR 	return "EpsilonSVR"
 			elseif  model.svmType==OneClassSVM 	return "OneClassSVM"
 			elseif  model.svmType==NuSVR 		return "NuSVR"

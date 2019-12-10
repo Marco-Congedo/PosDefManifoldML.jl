@@ -58,7 +58,7 @@ m = fit(MDM(), PTr, yTr)
 In order to adopt another metric:
 
 ```
-m1 = fit(MDM(LogEuclidean), PTr, yTr)
+m1 = fit(MDM(logEuclidean), PTr, yTr)
 ```
 
 **Predict (classify data)**
@@ -294,19 +294,20 @@ Notice that as for the example above with for ENLR model, we have requested to c
 In order to fit a Nu-Support Vector Classification model:
 
 ```
-m2 = fit(NuSVC(), PTr, yTr; w=:b)
+m2 = fit(SVM(), PTr, yTr; w=:b, svmType=NuSVC)
 ```
 
 For using other kernels, e.g.:
 
 ```
-m3 = fit(NuSVC(), PTr, yTr; w=:b, kernel=Linear)
+m3 = fit(SVM(), PTr, yTr; w=:b, svmType=NuSVC, kernel=Linear)
 ```
 
 In the following we also request not to rescale predictors:
 
 ```
-m3 = fit(NuSVC(), PTr, yTr; w=:b, kernel=Linear, rescale=())
+m3 = fit(SVM(), PTr, yTr;
+        w=:b, svmType=NuSVC, kernel=Linear, rescale=())
 ```
 
 By default the Fisher metric is used. For changing it see [MDM Pipeline 1. (fit and predict)](@ref).

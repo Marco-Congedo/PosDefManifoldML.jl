@@ -291,7 +291,7 @@ m=fit(SVM(logEuclidean), PTr, yTr, kernel=Linear, svmtype=NuSVC)
 
 # or
 
-m=fit(SVM(logEuclidean, kernel=Linear, svmtype=NuSVC), PTr, yTr)
+m=fit(SVM(logEuclidean; kernel=Linear, svmtype=NuSVC), PTr, yTr)
 
 # N.B. all other keyword arguments must be passed to the fit function
 # and not to the SVM constructor.
@@ -455,11 +455,11 @@ function predict(model   :: SVMmodel,
 
     # prediction
 	verbose && println("Predicting using "*_modelStr(model)*" model...")
-	(labels, values) = svmpredict(model.svmModel, X; nt=nthreads)
+	(labels, π) = svmpredict(model.svmModel, X; nt=nthreads)
 
-	if     what == :functions     || what == :f 🃏=values
+	if     what == :functions     || what == :f 🃏=π[1, :]
     elseif what == :labels 		  || what == :l 🃏=labels
-    elseif what == :probabilities || what == :p 🃏=[softmax(values)] # check this!
+    elseif what == :probabilities || what == :p 🃏=[softmax([π[1, i], 0]) for i=1:size(π, 2)]
     end
 
     verbose && println(defaultFont, "Done in ", now()-⌚,".")

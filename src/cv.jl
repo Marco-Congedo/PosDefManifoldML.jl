@@ -208,6 +208,7 @@ function cvAcc(model   :: MLmodel,
     # get indeces for all CVs (separated for each class)
     @threads for i=1:z indTr[i], indTe[i] = cvSetup(length(𝐐[i]), nFolds; shuffle=shuffle) end
 
+    fitArgs✔=()
     # make sure the user doesn't pass arguments that skrew up the cv
     if model isa ENLRmodel
         fitArgs✔=_rmArgs((:meanISR, :meanInit, :fitType, :verbose, :⏩,
@@ -239,7 +240,8 @@ function cvAcc(model   :: MLmodel,
     end
 
     # perform cv
-    @threads for f=1:nFolds  # use for f=1:nFolds instead for debugging
+    @threads for f=1:nFolds
+    #for f=1:nFolds
         print(defaultFont, rand(dice), " ") # print a random dice in the REPL
 
         # get testing data for current cross-validation (CV)

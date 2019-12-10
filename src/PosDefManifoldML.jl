@@ -16,7 +16,7 @@
 
 module PosDefManifoldML
 
-using LinearAlgebra, Base.Threads, Random, Statistics, PosDefManifold
+using LinearAlgebra, Base.Threads, Random, StatsBase, Statistics, PosDefManifold
 using Dates:now
 using GLMNet:GLMNet, glmnet, glmnetcv, GLMNetPath, GLMNetCrossValidation
 using Distributions:Distributions, Binomial
@@ -36,11 +36,11 @@ const greyFont      = "\x1b[90m"
 const dice = ("⚀", "⚁", "⚂", "⚃", "⚄", "⚅")
 
 # shortcut to LIBSVM kernels enum type
-const Linear 		= LIBSVM.Kernel.KERNEL(0)
-const Polynomial 	= LIBSVM.Kernel.KERNEL(1)
-const RadialBasis 	= LIBSVM.Kernel.KERNEL(2)
-const Sigmoid 		= LIBSVM.Kernel.KERNEL(3)
-const Precomputed 	= LIBSVM.Kernel.KERNEL(4)
+const Linear 		= Kernel.KERNEL(0)
+const Polynomial 	= Kernel.KERNEL(1)
+const RadialBasis 	= Kernel.KERNEL(2)
+const Sigmoid 		= Kernel.KERNEL(3)
+const Precomputed 	= Kernel.KERNEL(4)
 
 
 # types #
@@ -51,9 +51,10 @@ abstract type TSmodel<:MLmodel end # tangent space models
 IntVector=Vector{Int}
 
 import Base:show
-import GLMNet.predict
-import Distributions.fit
-# import StatsBase:fit, predict
+#import GLMNet.predict
+#import Distributions.fit
+# import LIBSVM.predict
+import StatsBase:fit, predict
 
 export
 
@@ -62,11 +63,11 @@ export
     PDmodel,
     TSmodel,
     IntVector,
-	linear,
-	polynomial,
-	radialBasis,
-	sigmoid,
-	precomputed,
+	Linear,
+	Polynomial,
+	RadialBasis,
+	Sigmoid,
+	Precomputed,
 
     # from mdm.jl
     MDMmodel,
@@ -83,7 +84,14 @@ export
 	# from libSVM.jl
 	SVMmodel,
 	SVM,
-	SVC, NuSVC, OneClassSVM, NuSVR, EpsilonSVR, LinearSVC, Linearsolver, Kernel,
+	SVC,
+	NuSVC,
+	OneClassSVM,
+	NuSVR,
+	EpsilonSVR,
+	LinearSVC,
+	Linearsolver,
+	Kernel,
 
     # from cv.jl
     CVacc,
