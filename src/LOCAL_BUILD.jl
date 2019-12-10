@@ -30,8 +30,9 @@ begin
   docsDir      = juliaCodeDir*"PosDefManifoldML\\docs\\"
 
   push!(LOAD_PATH, scrDir)
-  using LinearAlgebra, Base.Threads, Statistics, PosDefManifold,
-        Documenter, Revise, PosDefManifoldML
+  using LinearAlgebra,
+        #Base.Threads, Random, Dates, Distributions, GLMNet, LIBSVM,
+        Documenter, Statistics, PosDefManifold, Revise, PosDefManifoldML
 
   cd(docsDir)
   clipboard("""makedocs(sitename="PosDefManifoldML", modules=[PosDefManifoldML])""")
