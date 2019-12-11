@@ -1,6 +1,5 @@
 #   Unit "cv.jl" of the PosDefManifoldML Package for Julia language
-#   v 0.3.0 - last update 8th of December 2019
-#
+
 #   MIT License
 #   Copyright (c) 2019,
 #   Marco Congedo, CNRS, Grenoble, France:
@@ -242,7 +241,7 @@ function cvAcc(model   :: MLmodel,
     # perform cv
     @threads for f=1:nFolds
     #for f=1:nFolds
-        print(defaultFont, rand(dice), " ") # print a random dice in the REPL
+        @static if VERSION >= v"1.3" print(defaultFont, rand(dice), " ") end # print a random dice in the REPL
 
         # get testing data for current cross-validation (CV)
         for i=1:z @inbounds 𝐐Te[f][i] = [𝐐[i][j] for j ∈ indTe[i][f]] end
