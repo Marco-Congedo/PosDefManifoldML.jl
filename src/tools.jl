@@ -1,6 +1,5 @@
 #   Unit "tools.jl" of the PosDefManifoldML Package for Julia language
-#   v 0.3.0 - last update 8th of December 2019
-#
+
 #   MIT License
 #   Copyright (c) 2019,
 #   Marco Congedo, CNRS, Grenoble, France:
