@@ -138,12 +138,6 @@ version = "0.9.10"
 deps = ["Dates", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "REPL", "Random", "SHA", "UUIDs"]
 uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 
-[[PosDefManifold]]
-deps = ["LinearAlgebra", "Statistics"]
-git-tree-sha1 = "47f85dc940da29316cfa3c5e79fa182e7727f179"
-uuid = "f45a3650-5c51-11e9-1e9a-133aa5e309cf"
-version = "0.4.1"
-
 [[Printf]]
 deps = ["Unicode"]
 uuid = "de0858da-6303-5e67-8744-51eddeeeb8d7"
