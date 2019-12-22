@@ -21,7 +21,7 @@ Execute the following command in Julia's REPL:
 ## Reviewers & Contributors
 
 Independent reviewers are welcome.
-To contribute, please check the secion [how to contribute](https://marco-congedo.github.io/PosDefManifoldML.jl/dev/contribute/)
+To contribute, please check the secion [how to contribute](https://marco-congedo.github.io/PosDefManifoldML.jl/dev/contribute/).
 
 ## Examples
 
