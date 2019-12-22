@@ -2,7 +2,7 @@
 
 ## Requirements & Installation
 
-**Julia**: version ≥ 1.1.1
+**Julia**: version ≥ 1.3
 
 **Packages**: see the [dependencies](@ref) of the main module.
 
@@ -10,7 +10,7 @@ To install the package,
 execute the following command in Julia's REPL:
 
 ```
-    ]add PodSefManifoldML
+    ]add PoSDefManifoldML
 ```
 
 ### Reviewers & Contributors
