@@ -6,14 +6,17 @@
 
 **Packages**: see the [dependencies](@ref) of the main module.
 
-The package is still not registered. To install it,
+To install the package,
 execute the following command in Julia's REPL:
 
-    ]add https://github.com/Marco-Congedo/PosDefManifoldML.jl
+```
+    ]add PodSefManifoldML
+```
 
-### Reviewers
+### Reviewers & Contributors
 
 Independent reviewers for both the code and the documentation are welcome.
+To contribute, please check the secion [How to Contribute](@ref).
 
 ### TroubleShoothing
 | Problem   | Solution |

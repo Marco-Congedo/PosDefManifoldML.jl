@@ -12,7 +12,7 @@ This is the main unit containing the **PosDefManifoldML** *module*.
 | [Dates](https://github.com/JuliaStdlibs/Dates.jl)| [LIBSVM](https://github.com/mpastell/LIBSVM.jl)|
 | [StatsBase](https://github.com/JuliaStats/StatsBase.jl) |  |
 
-The main module does not contains functions.
+The main module does not contain functions.
 
 ## types
 
@@ -20,17 +20,23 @@ The main module does not contains functions.
 
 As typical in machine learning packages, a type is created (a `struct` in Julia) to specify a ML model. *Supertype*
 
-```abstract type MLmodel end```
+```
+abstract type MLmodel end
+```
 
 is the abstract type for all machine learning
 models. *Supertype*
 
-```abstract type PDmodel<:MLmodel end```
+```
+abstract type PDmodel<:MLmodel end
+```
 
 is the abstract type for all machine learning
 models acting on the positive definite (PD) **manifold** (for example, see [`MDM`](@ref)). *Supertype*
 
-```abstract type TSmodel<:MLmodel end```
+```
+abstract type TSmodel<:MLmodel end
+```
 
 is the abstract type for all machine learning
 models acting on the **tangent space** (for example, see [`ENLR`](@ref)).
@@ -40,7 +46,9 @@ models acting on the **tangent space** (for example, see [`ENLR`](@ref)).
 In all concerned functions *class labels* are given as a vector of integers,
 of type
 
-```IntVector=Vector{Int}```.
+```
+IntVector=Vector{Int}
+```
 
 Class labels are natural numbers in ``[1,...,z]``, where ``z`` is the number
 of classes.
