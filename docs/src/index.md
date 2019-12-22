@@ -10,7 +10,7 @@ To install the package,
 execute the following command in Julia's REPL:
 
 ```
-    ]add PodSefManifoldML
+    ]add PoSDefManifoldML
 ```
 
 ### Reviewers & Contributors
