@@ -240,16 +240,15 @@ function cvAcc(model   :: MLmodel,
 
     # perform cv
     @threads for f=1:nFolds
-    #for f=1:nFolds
         @static if VERSION >= v"1.3" print(defaultFont, rand(dice), " ") end # print a random dice in the REPL
 
-        # get testing data for current cross-validation (CV)
+        # get testing data for current fold
         for i=1:z @inbounds 𝐐Te[f][i] = [𝐐[i][j] for j ∈ indTe[i][f]] end
 
-        # get training labels for current cross-validation (CV)
+        # get training labels for current fold
         for i=1:z, j ∈ indTr[i][f] @inbounds push!(zTr[f], Int64(i)) end
 
-        # get training data for current cross-validation (CV)
+        # get training data for current fold
         for i=1:z, j ∈ indTr[i][f] @inbounds push!(𝐐Tr[f], 𝐐[i][j]) end
 
         # fit machine learning model
@@ -280,6 +279,7 @@ function cvAcc(model   :: MLmodel,
     std=stdm(s, avg);
     scoStr = scoring == :b ? "balanced accuracy" : "accuracy"
 
+    # create cv struct
     cv=CVacc("$nFolds-fold", scoStr, _modelStr(model), CM, mean(CM), s, avg, std)
     return outModels ? (cv, ℳ) : cv
 end
