@@ -14,14 +14,14 @@ For the moment being, **PosDefManifoldML** implements the Riemannian **Minimum D
 
 ## Installation
 
-The package is still not registered. To install it,
-execute the following command in Julia's REPL:
+Execute the following command in Julia's REPL:
 
-    ]add https://github.com/Marco-Congedo/PosDefManifoldML.jl
+    ]add PosDefManifoldML
 
-## Reviewers
+## Reviewers & Contributors
 
 Independent reviewers are welcome.
+To contribute, please check the secion [how to contribute](https://marco-congedo.github.io/PosDefManifoldML.jl/dev/contribute/)
 
 ## Examples
 
