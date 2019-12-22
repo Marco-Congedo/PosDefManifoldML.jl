@@ -8,7 +8,7 @@
     accs      :: Union{Vector{T}, Nothing} where T&lt;:Real
     avgAcc    :: Union{Real, Nothing}
     stdAcc    :: Union{Real, Nothing}
-end</code></pre><p>A call to <a href="#PosDefManifoldML.cvAcc"><code>cvAcc</code></a> results in an instance of this structure. Fields:</p><p><code>.cvTpe</code> is the type of cross-validation technique, given as a string (e.g., &quot;10-kfold&quot;)</p><p><code>.scoring</code> is the type of accuracy that is computed, given as a string. This has been passed as argument to <a href="#PosDefManifoldML.cvAcc"><code>cvAcc</code></a>. Currently <em>accuracy</em> and <em>balanced accuracy</em> are supported.</p><p><code>.modelType</code> is type of the machine learning used for performing the cross-validation, given as a string.</p><p><code>.cnfs</code> is a vector of matrices holding the <em>confusion matrices</em> obtained at each fold of the cross-validation.</p><p><code>.avgCnf</code> is the <em>average confusion matrix</em> across the folds of the cross-validation.</p><p><code>.accs</code> is a vector of real numbers holding the <em>accuracies</em> obtained at each fold of the cross-validation.</p><p><code>.avgAcc</code> is the <em>average accuracy</em> across the folds of the cross-validation.</p><p><code>.stdAcc</code> is the <em>standard deviation of the accuracy</em> across the folds of the cross-validation.</p></div></div><a class="source-link" target="_blank" href="https://github.com/Marco-Congedo/PosDefManifoldML.jl/blob/7de268d65b8c72f521aa357b08901802b952d3cb/src/cv.jl#L13-L55">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="StatsBase.fit" href="#StatsBase.fit"><code>StatsBase.fit</code></a> — <span class="docstring-category">Function</span>.</div><div><div><pre><code class="language-julia">function fit(model :: MDMmodel,
+end</code></pre><p>A call to <a href="#PosDefManifoldML.cvAcc"><code>cvAcc</code></a> results in an instance of this structure. Fields:</p><p><code>.cvTpe</code> is the type of cross-validation technique, given as a string (e.g., &quot;10-kfold&quot;)</p><p><code>.scoring</code> is the type of accuracy that is computed, given as a string. This has been passed as argument to <a href="#PosDefManifoldML.cvAcc"><code>cvAcc</code></a>. Currently <em>accuracy</em> and <em>balanced accuracy</em> are supported.</p><p><code>.modelType</code> is type of the machine learning used for performing the cross-validation, given as a string.</p><p><code>.cnfs</code> is a vector of matrices holding the <em>confusion matrices</em> obtained at each fold of the cross-validation.</p><p><code>.avgCnf</code> is the <em>average confusion matrix</em> across the folds of the cross-validation.</p><p><code>.accs</code> is a vector of real numbers holding the <em>accuracies</em> obtained at each fold of the cross-validation.</p><p><code>.avgAcc</code> is the <em>average accuracy</em> across the folds of the cross-validation.</p><p><code>.stdAcc</code> is the <em>standard deviation of the accuracy</em> across the folds of the cross-validation.</p></div></div><a class="source-link" target="_blank" href="https://github.com/Marco-Congedo/PosDefManifoldML.jl/blob/64563ba5327abda61512d5f3d2da156f977b5fae/src/cv.jl#L13-L55">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="StatsBase.fit" href="#StatsBase.fit"><code>StatsBase.fit</code></a> — <span class="docstring-category">Function</span>.</div><div><div><pre><code class="language-julia">function fit(model :: MDMmodel,
               𝐏Tr   :: ℍVector,
               yTr   :: IntVector;
        w        :: Vector = [],
@@ -22,7 +22,7 @@ end</code></pre><p>A call to <a href="#PosDefManifoldML.cvAcc"><code>cvAcc</code
 PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.25)
 
 # create and fit a model:
-m=fit(MDM(Fisher), PTr, yTr)</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/Marco-Congedo/PosDefManifoldML.jl/blob/7de268d65b8c72f521aa357b08901802b952d3cb/src/mdm.jl#L94-L162">source</a><div><div><pre><code class="language-none">function fit(model	:: ENLRmodel,
+m=fit(MDM(Fisher), PTr, yTr)</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/Marco-Congedo/PosDefManifoldML.jl/blob/64563ba5327abda61512d5f3d2da156f977b5fae/src/mdm.jl#L94-L162">source</a><div><div><pre><code class="language-none">function fit(model	:: ENLRmodel,
                𝐏Tr	 :: Union{ℍVector, Matrix{Float64}},
                yTr	:: IntVector;
 		# parameters for projection onto the tangent space
@@ -84,7 +84,7 @@ m=fit(ENLR(), PTr, yTr; fitType=:path)
 # Fit an ENLR lasso model, its regularization path
 # and the best model found by cv:
 m=fit(ENLR(), PTr, yTr; fitType=:all)
-</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/Marco-Congedo/PosDefManifoldML.jl/blob/7de268d65b8c72f521aa357b08901802b952d3cb/src/enlr.jl#L182-L447">source</a><div><div><pre><code class="language-none">function fit(model     :: SVMmodel,
+</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/Marco-Congedo/PosDefManifoldML.jl/blob/64563ba5327abda61512d5f3d2da156f977b5fae/src/enlr.jl#L182-L447">source</a><div><div><pre><code class="language-none">function fit(model     :: SVMmodel,
                𝐏Tr     :: Union{ℍVector, Matrix{Float64}},
                yTr     :: IntVector=[];
            # parameters for projection onto the tangent space
@@ -141,7 +141,7 @@ m=fit(SVM(logEuclidean; kernel=Linear, svmtype=NuSVC), PTr, yTr)
 # N.B. all other keyword arguments must be passed to the fit function
 # and not to the SVM constructor.
 
-</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/Marco-Congedo/PosDefManifoldML.jl/blob/7de268d65b8c72f521aa357b08901802b952d3cb/src/svm.jl#L147-L294">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="StatsBase.predict" href="#StatsBase.predict"><code>StatsBase.predict</code></a> — <span class="docstring-category">Function</span>.</div><div><div><pre><code class="language-julia">function predict(model  :: MDMmodel,
+</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/Marco-Congedo/PosDefManifoldML.jl/blob/64563ba5327abda61512d5f3d2da156f977b5fae/src/svm.jl#L147-L294">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="StatsBase.predict" href="#StatsBase.predict"><code>StatsBase.predict</code></a> — <span class="docstring-category">Function</span>.</div><div><div><pre><code class="language-julia">function predict(model  :: MDMmodel,
                  𝐏Te    :: ℍVector,
                  what   :: Symbol = :labels;
                verbose :: Bool = true,
@@ -164,7 +164,7 @@ predict(m, PTe, :p)
 
 # output functions
 predict(m, PTe, :f)
-</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/Marco-Congedo/PosDefManifoldML.jl/blob/7de268d65b8c72f521aa357b08901802b952d3cb/src/mdm.jl#L212-L277">source</a><div><div><pre><code class="language-none">function predict(model   :: ENLRmodel,
+</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/Marco-Congedo/PosDefManifoldML.jl/blob/64563ba5327abda61512d5f3d2da156f977b5fae/src/mdm.jl#L212-L277">source</a><div><div><pre><code class="language-none">function predict(model   :: ENLRmodel,
                  𝐏Te     :: Union{ℍVector, Matrix{Float64}},
                  what    :: Symbol = :labels,
                  fitType :: Symbol = :best,
@@ -212,7 +212,7 @@ predict(m, PTe, :f, :path, 3)
 
 # output functions for all models
 predict(m, PTe, :f, :path, 0)
-</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/Marco-Congedo/PosDefManifoldML.jl/blob/7de268d65b8c72f521aa357b08901802b952d3cb/src/enlr.jl#L569-L690">source</a><div><div><pre><code class="language-none">function predict(model	:: SVMmodel,
+</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/Marco-Congedo/PosDefManifoldML.jl/blob/64563ba5327abda61512d5f3d2da156f977b5fae/src/enlr.jl#L569-L690">source</a><div><div><pre><code class="language-none">function predict(model	:: SVMmodel,
                  𝐏Te	 :: Union{ℍVector, Matrix{Float64}},
                  what	:: Symbol = :labels;
 			transfer:: Union{ℍ, Nothing} = nothing,
@@ -234,7 +234,7 @@ predErr=predictErr(yTe, yPred)
 predict(m, PTe, :p)
 
 # output functions
-predict(m, PTe, :f)</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/Marco-Congedo/PosDefManifoldML.jl/blob/7de268d65b8c72f521aa357b08901802b952d3cb/src/svm.jl#L379-L426">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="PosDefManifoldML.cvAcc" href="#PosDefManifoldML.cvAcc"><code>PosDefManifoldML.cvAcc</code></a> — <span class="docstring-category">Function</span>.</div><div><div><pre><code class="language-julia">function cvAcc(model   :: MLmodel,
+predict(m, PTe, :f)</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/Marco-Congedo/PosDefManifoldML.jl/blob/64563ba5327abda61512d5f3d2da156f977b5fae/src/svm.jl#L379-L426">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="PosDefManifoldML.cvAcc" href="#PosDefManifoldML.cvAcc"><code>PosDefManifoldML.cvAcc</code></a> — <span class="docstring-category">Function</span>.</div><div><div><pre><code class="language-julia">function cvAcc(model   :: MLmodel,
                𝐏Tr     :: ℍVector,
                yTr     :: IntVector;
            nFolds    :: Int       = min(10, length(yTr)÷3),
@@ -268,7 +268,7 @@ cv=cvAcc(ENLR(Fisher), PTr, yTr; nFolds=8, w=:b)
 
 # perform another cross-validation shuffling the folds
 cv=cvAcc(ENLR(Fisher), PTr, yTr; shuffle=true, nFolds=8, w=:b)
-</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/Marco-Congedo/PosDefManifoldML.jl/blob/7de268d65b8c72f521aa357b08901802b952d3cb/src/cv.jl#L81-L178">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="PosDefManifoldML.cvSetup" href="#PosDefManifoldML.cvSetup"><code>PosDefManifoldML.cvSetup</code></a> — <span class="docstring-category">Function</span>.</div><div><div><pre><code class="language-julia">function cvSetup(k       :: Int,
+</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/Marco-Congedo/PosDefManifoldML.jl/blob/64563ba5327abda61512d5f3d2da156f977b5fae/src/cv.jl#L81-L178">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="PosDefManifoldML.cvSetup" href="#PosDefManifoldML.cvSetup"><code>PosDefManifoldML.cvSetup</code></a> — <span class="docstring-category">Function</span>.</div><div><div><pre><code class="language-julia">function cvSetup(k       :: Int,
                  nCV     :: Int;
                  shuffle :: Bool = false)</code></pre><p>Given <code>k</code> elements and a parameter <code>nCV</code>, a nCV-fold cross-validation is obtained defining <span>$nCV$</span> permutations of <span>$k$</span> elements in <span>$nTest=k÷nCV$</span> (integer division) elements for the test and <span>$k-nTest$</span> elements for the training, in such a way that each element is represented in only one permutation.</p><p>Said differently, given a length <code>k</code> and the number of desired cross-validations <code>nCV</code>, this function generates indices from the sequence of natural numbers <span>$1,..,k$</span> to obtain all nCV-fold cross-validation sets. Specifically, it generates <span>$nCV$</span> vectors of indices for generating test sets and <span>$nCV$</span> vectors of indices for geerating training sets.</p><p>If optional keyword argument <code>shuffle</code> is true, the sequence of natural numbers <span>$1,..,k$</span> is shuffled before running the function, thus in this case two successive runs of this function will give different cross-validation sets, hence different accuracy scores. By default <code>shuffle</code> is false, so as to allow exactly the same result in successive runs. Note that no random initialization for the shuffling is provided, so as to allow the replication of the same random sequences starting again the random generation from scratch.</p><p>This function is used in <a href="#PosDefManifoldML.cvAcc"><code>cvAcc</code></a>. It constitutes the fundamental basis to implement customized cross-validation procedures.</p><p>Return the 2-tuple with:</p><ul><li>A vector of <code>nCV</code> vectors holding the indices for the training sets,</li><li>A vector of <code>nCV</code> vectors holding the indices for the corresponding test sets.</li></ul><p><strong>Examples</strong></p><pre><code class="language-none">using PosDefManifoldML, PosDefManifold
 
@@ -286,4 +286,4 @@ cvSetup(10, 3)
 # return:
 # (Array{Int64,1}[[4, 5, 6, 7, 8, 9, 10], [1, 2, 3, 7, 8, 9, 10], [1, 2, 3, 4, 5, 6]],
 #  Array{Int64,1}[[1, 2, 3], [4, 5, 6], [7, 8, 9, 10]])
-</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/Marco-Congedo/PosDefManifoldML.jl/blob/7de268d65b8c72f521aa357b08901802b952d3cb/src/cv.jl#L289-L346">source</a></section><footer><hr/><a class="previous" href="../svm/"><span class="direction">Previous</span><span class="title">Support-Vector Machine</span></a><a class="next" href="../contribute/"><span class="direction">Next</span><span class="title">How to contribute</span></a></footer></article></body></html>
+</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/Marco-Congedo/PosDefManifoldML.jl/blob/64563ba5327abda61512d5f3d2da156f977b5fae/src/cv.jl#L289-L346">source</a></section><footer><hr/><a class="previous" href="../svm/"><span class="direction">Previous</span><span class="title">Support-Vector Machine</span></a><a class="next" href="../contribute/"><span class="direction">Next</span><span class="title">How to contribute</span></a></footer></article></body></html>
