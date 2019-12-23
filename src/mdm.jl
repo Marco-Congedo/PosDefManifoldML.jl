@@ -214,8 +214,8 @@ end
 function predict(model  :: MDMmodel,
                  𝐏Te    :: ℍVector,
                  what   :: Symbol = :labels;
-               verbose :: Bool = true,
-               ⏩     :: Bool = true)
+        verbose :: Bool = true,
+        ⏩     :: Bool = true)
 ```
 Given an [`MDM`](@ref) `model` trained (fitted) on ``z`` classes
 and a testing set of ``k`` positive definite matrices `𝐏Te` of type

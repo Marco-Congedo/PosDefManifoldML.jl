@@ -24,17 +24,17 @@ abstract type ENLRmodel<:TSmodel end
 """
 ```
 mutable struct ENLR <: ENLRmodel
-    metric      :: Metric = Fisher;
-    alpha       :: Real = 1.0
-    standardize :: Bool
-    intercept   :: Bool
+	metric      :: Metric = Fisher;
+	alpha       :: Real = 1.0
+	standardize :: Bool
+	intercept   :: Bool
 	meanISR     :: Union{ℍVector, Nothing}
 	vecRange    :: UnitRange
-    featDim     :: Int
+	featDim     :: Int
 	# GLMNet Models
-    path        :: GLMNet.GLMNetPath
-    cvλ         :: GLMNet.GLMNetCrossValidation
-    best        :: GLMNet.GLMNetPath
+	path        :: GLMNet.GLMNetPath
+	cvλ         :: GLMNet.GLMNetCrossValidation
+	best        :: GLMNet.GLMNetPath
 end
 ```
 ENLR machine learning models are incapsulated in this
@@ -570,13 +570,13 @@ end
 """
 ```
 function predict(model   :: ENLRmodel,
-		𝐏Te     :: Union{ℍVector, Matrix{Float64}},
-		what    :: Symbol = :labels,
-		fitType :: Symbol = :best,
-		onWhich :: Int    = Int(fitType==:best);
-		transfer   :: Union{ℍ, Nothing} = nothing,
-		verbose    :: Bool = true,
-		⏩        :: Bool = true)
+		𝐏Te		:: Union{ℍVector, Matrix{Float64}},
+		what		:: Symbol = :labels,
+		fitType		:: Symbol = :best,
+		onWhich		:: Int    = Int(fitType==:best);
+	transfer	:: Union{ℍ, Nothing} = nothing,
+	verbose		:: Bool = true,
+	⏩		:: Bool = true)
 ```
 
 Given an [`ENLR`](@ref) `model` trained (fitted) on 2 classes
