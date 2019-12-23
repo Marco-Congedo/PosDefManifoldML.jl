@@ -14,9 +14,10 @@ For the moment being, **PosDefManifoldML** implements the Riemannian **Minimum D
 
 ## Installation
 
-Execute the following command in Julia's REPL:
+Execute the following commands in Julia's REPL:
 
     ]add PosDefManifoldML
+    add PosDefManifold
 
 ## Reviewers & Contributors
 
