@@ -183,42 +183,42 @@ end
 """
 ```
 function fit(model	:: ENLRmodel,
-               𝐏Tr	 :: Union{ℍVector, Matrix{Float64}},
-               yTr	:: IntVector;
-		# parameters for projection onto the tangent space
-		w		:: Union{Symbol, Tuple, Vector} = [],
-		meanISR	:: Union{ℍ, Nothing} = nothing,
-		meanInit:: Union{ℍ, Nothing} = nothing,
-		vecRange:: UnitRange = 𝐏Tr isa ℍVector ? (1:size(𝐏Tr[1], 2)) : (1:size(𝐏Tr, 2)),
-		fitType	:: Symbol = :best,
-		verbose	:: Bool = true,
-		⏩	   :: Bool = true,
-		# arguments for `GLMNet.glmnet` function
-		alpha			:: Real = model.alpha,
-		weights			:: Vector{Float64} = ones(Float64, length(yTr)),
-		intercept		:: Bool = true,
-		standardize		:: Bool = true,
-		penalty_factor	:: Vector{Float64} = ones(Float64, _getDim(𝐏Tr, vecRange)),
-		constraints		:: Matrix{Float64} = [x for x in (-Inf, Inf), y in 1:_getDim(𝐏Tr, vecRange)],
-		offsets			:: Union{Vector{Float64}, Nothing} = nothing,
-		dfmax			:: Int = _getDim(𝐏Tr, vecRange),
-		pmax			:: Int = min(dfmax*2+20, _getDim(𝐏Tr, vecRange)),
-		nlambda			:: Int = 100,
-		lambda_min_ratio:: Real = (length(yTr) < _getDim(𝐏Tr, vecRange) ? 1e-2 : 1e-4),
-		lambda			:: Vector{Float64} = Float64[],
-		tol				:: Real = 1e-5,
-		maxit			:: Int = 1000000,
-		algorithm		:: Symbol = :newtonraphson,
-		# selection method
-		λSelMeth	:: Symbol = :sd1,
-		# arguments for `GLMNet.glmnetcv` function
-		nfolds		:: Int = min(10, div(size(yTr, 1), 3)),
-		folds		:: Vector{Int} =
-		begin
-			n, r = divrem(size(yTr, 1), nfolds)
-			shuffle!([repeat(1:nfolds, outer=n); 1:r])
-		end,
-		parallel 	:: Bool=true)
+             𝐏Tr	 :: Union{ℍVector, Matrix{Float64}},
+             yTr	:: IntVector;
+	# parameters for projection onto the tangent space
+	w		:: Union{Symbol, Tuple, Vector} = [],
+	meanISR	:: Union{ℍ, Nothing} = nothing,
+	meanInit:: Union{ℍ, Nothing} = nothing,
+	vecRange:: UnitRange = 𝐏Tr isa ℍVector ? (1:size(𝐏Tr[1], 2)) : (1:size(𝐏Tr, 2)),
+	fitType	:: Symbol = :best,
+	verbose	:: Bool = true,
+	⏩	   :: Bool = true,
+	# arguments for `GLMNet.glmnet` function
+	alpha			:: Real = model.alpha,
+	weights			:: Vector{Float64} = ones(Float64, length(yTr)),
+	intercept		:: Bool = true,
+	standardize		:: Bool = true,
+	penalty_factor	:: Vector{Float64} = ones(Float64, _getDim(𝐏Tr, vecRange)),
+	constraints		:: Matrix{Float64} = [x for x in (-Inf, Inf), y in 1:_getDim(𝐏Tr, vecRange)],
+	offsets			:: Union{Vector{Float64}, Nothing} = nothing,
+	dfmax			:: Int = _getDim(𝐏Tr, vecRange),
+	pmax			:: Int = min(dfmax*2+20, _getDim(𝐏Tr, vecRange)),
+	nlambda			:: Int = 100,
+	lambda_min_ratio:: Real = (length(yTr) < _getDim(𝐏Tr, vecRange) ? 1e-2 : 1e-4),
+	lambda			:: Vector{Float64} = Float64[],
+	tol				:: Real = 1e-5,
+	maxit			:: Int = 1000000,
+	algorithm		:: Symbol = :newtonraphson,
+	# selection method
+	λSelMeth	:: Symbol = :sd1,
+	# arguments for `GLMNet.glmnetcv` function
+	nfolds		:: Int = min(10, div(size(yTr, 1), 3)),
+	folds		:: Vector{Int} =
+	begin
+		n, r = divrem(size(yTr, 1), nfolds)
+		shuffle!([repeat(1:nfolds, outer=n); 1:r])
+	end,
+	parallel 	:: Bool=true)
 ```
 
 Create and fit an [`ENLR`](@ref) machine learning model,
@@ -570,13 +570,13 @@ end
 """
 ```
 function predict(model   :: ENLRmodel,
-                 𝐏Te     :: Union{ℍVector, Matrix{Float64}},
-                 what    :: Symbol = :labels,
-                 fitType :: Symbol = :best,
-                 onWhich :: Int    = Int(fitType==:best);
-			transfer   :: Union{ℍ, Nothing} = nothing,
-            verbose    :: Bool = true,
-            ⏩        :: Bool = true)
+		𝐏Te     :: Union{ℍVector, Matrix{Float64}},
+		what    :: Symbol = :labels,
+		fitType :: Symbol = :best,
+		onWhich :: Int    = Int(fitType==:best);
+		transfer   :: Union{ℍ, Nothing} = nothing,
+		verbose    :: Bool = true,
+		⏩        :: Bool = true)
 ```
 
 Given an [`ENLR`](@ref) `model` trained (fitted) on 2 classes
