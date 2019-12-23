@@ -55,6 +55,10 @@ of classes.
 
 ## Tips & Tricks
 
+### working with metrics
+
+In order to work with metrics for the manifold of positive definite matrices, make sure you install the *PosDefManifold* package. 
+
 ### the ℍVector type
 
 Check this documentation on [typecasting matrices](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#typecasting-matrices-1).
