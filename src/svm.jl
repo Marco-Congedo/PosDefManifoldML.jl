@@ -20,14 +20,14 @@ abstract type SVMmodel<:TSmodel end
 """
 ```
 mutable struct SVM <: SVMmodel
-		metric		:: Metric
-		svmType		:: Type
-		kernel		:: Kernel.KERNEL
-		rescale		:: Tuple
-		meanISR		:: Union{ℍVector, Nothing}
-		vecRange	:: UnitRange
-		featDim		:: Int
-		svmModel #store the training model from the SVM library
+	metric		:: Metric
+	svmType		:: Type
+	kernel		:: Kernel.KERNEL
+	rescale		:: Tuple
+	meanISR		:: Union{ℍVector, Nothing}
+	vecRange	:: UnitRange
+	featDim		:: Int
+	svmModel #store the training model from the SVM library
 ```
 SVM machine learning models are incapsulated in this
 mutable structure. Fields:
@@ -379,12 +379,12 @@ end
 
 """
 ```
-function predict(model	:: SVMmodel,
-		𝐏Te	 :: Union{ℍVector, Matrix{Float64}},
-		what	:: Symbol = :labels;
-	transfer:: Union{ℍ, Nothing} = nothing,
-	verbose	:: Bool = true,
-	⏩	   :: Bool = true)
+function predict(model :: SVMmodel,
+				𝐏Te	:: Union{ℍVector, Matrix{Float64}},
+				what	:: Symbol = :labels;
+	transfer :: Union{ℍ, Nothing} = nothing,
+	verbose	 :: Bool = true,
+	⏩		:: Bool = true)
 ```
 
 Given an [`SVM`](@ref) `model` trained (fitted) on 2 classes
