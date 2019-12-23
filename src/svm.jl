@@ -150,30 +150,30 @@ end
 function fit(model     :: SVMmodel,
                𝐏Tr     :: Union{ℍVector, Matrix{Float64}},
                yTr     :: IntVector=[];
-           # parameters for projection onto the tangent space
-	   w :: Union{Symbol, Tuple, Vector} = [],
-	   meanISR :: Union{ℍ, Nothing} = nothing,
-	   meanInit :: Union{ℍ, Nothing} = nothing,
-	   vecRange	:: UnitRange = 𝐏Tr isa ℍVector ? (1:size(𝐏Tr[1], 2)) :
-	   											 (1:size(𝐏Tr, 2)),
-	   # SVM paramters
-	   svmType :: Type = SVC,
-	   kernel :: Kernel.KERNEL = RadialBasis,
-	   epsilon :: Float64 = 0.1,
-	   cost	:: Float64 = 1.0,
-	   gamma :: Float64	= 1/_getDim(𝐏Tr, vecRange),
-	   degree :: Int64	= 3,
-	   coef0 :: Float64	= 0.,
-	   nu :: Float64 = 0.5,
-	   shrinking :: Bool = true,
-	   probability :: Bool = false,
-	   weights :: Union{Dict{Int, Float64}, Nothing} = nothing,
-	   cachesize :: Float64	= 200.0,
-	   # Generic and common parameters
-	   tol :: Real = 1e-5,
-	   rescale :: Tuple	= (-1, 1),
-	   verbose :: Bool = true,
-	   ⏩ :: Bool = true)
+	# parameters for projection onto the tangent space
+	w :: Union{Symbol, Tuple, Vector} = [],
+	meanISR :: Union{ℍ, Nothing} = nothing,
+	meanInit :: Union{ℍ, Nothing} = nothing,
+	vecRange	:: UnitRange = 𝐏Tr isa ℍVector ? (1:size(𝐏Tr[1], 2)) :
+												 (1:size(𝐏Tr, 2)),
+	# SVM parameters
+	svmType :: Type = SVC,
+	kernel :: Kernel.KERNEL = RadialBasis,
+	epsilon :: Float64 = 0.1,
+	cost	:: Float64 = 1.0,
+	gamma :: Float64	= 1/_getDim(𝐏Tr, vecRange),
+	degree :: Int64	= 3,
+	coef0 :: Float64	= 0.,
+	nu :: Float64 = 0.5,
+	shrinking :: Bool = true,
+	probability :: Bool = false,
+	weights :: Union{Dict{Int, Float64}, Nothing} = nothing,
+	cachesize :: Float64	= 200.0,
+	# Generic and common parameters
+	tol :: Real = 1e-5,
+	rescale :: Tuple	= (-1, 1),
+	verbose :: Bool = true,
+	⏩ :: Bool = true)
 ```
 
 Create and fit an [`SVM`](@ref) machine learning model,
@@ -380,11 +380,11 @@ end
 """
 ```
 function predict(model	:: SVMmodel,
-                 𝐏Te	 :: Union{ℍVector, Matrix{Float64}},
-                 what	:: Symbol = :labels;
-			transfer:: Union{ℍ, Nothing} = nothing,
-			verbose	:: Bool = true,
-			⏩	   :: Bool = true)
+		𝐏Te	 :: Union{ℍVector, Matrix{Float64}},
+		what	:: Symbol = :labels;
+	transfer:: Union{ℍ, Nothing} = nothing,
+	verbose	:: Bool = true,
+	⏩	   :: Bool = true)
 ```
 
 Given an [`SVM`](@ref) `model` trained (fitted) on 2 classes
