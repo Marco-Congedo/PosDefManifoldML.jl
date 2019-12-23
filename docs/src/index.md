@@ -10,10 +10,9 @@ To install the package,
 execute the following commands in Julia's REPL:
 
 ```
-    ]add PoSDefManifoldML
-		add PosDefManifold
+]add PoSDefManifoldML
+add PosDefManifold
 ```
-
 
 
 ### Reviewers & Contributors
@@ -24,9 +23,8 @@ To contribute, please check the secion [How to Contribute](@ref).
 ### TroubleShoothing
 | Problem   | Solution |
 |:----------|:----------|
-| In Windows, this error may appear at execution time
-the first time an SVM model is fitted or is passed to the cvAcc function | [Discourse](https://discourse.julialang.org/t/error-could-not-load-library-c-libsvm-dll/32056) |
-| UndefVarErrors like `metric not defined`, `Fisher not defined`, etc. | install the PosDefManifold package |
+| In Windows, an error may appear at execution time the first time an SVM model is fitted or is passed to the `cvAcc` function | [Discourse](https://discourse.julialang.org/t/error-could-not-load-library-c-libsvm-dll/32056) |
+| UndefVarErrors, looking like `metric not defined`, `Fisher not defined`, etc. | install the *PosDefManifold* package |
 
 
 
