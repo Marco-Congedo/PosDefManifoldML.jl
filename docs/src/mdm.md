@@ -28,8 +28,10 @@ Currently supported metrics are:
 Do not use the Von Neumann metric, which is also supported in *PosDefManifold*,
 since it does not allow a definition of mean. See
 [here](https://marco-congedo.github.io/PosDefManifold.jl/dev/introToRiemannianGeometry/) for details on the metrics.
+In order to use these metrics you need to install the
+*PosDefManifold* package.
 
-The **fit**, **predict** and **cvAcc** functions for the MDM model are 
+The **fit**, **predict** and **cvAcc** functions for the MDM model are
 reported in the [cv.jl](@ref) unit, since those are homogeneous across all
 machine learning models.
 Here it is reported the [`MDMmodel`](@ref)

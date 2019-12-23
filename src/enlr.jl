@@ -47,7 +47,8 @@ as base-point for tangent space projection. By default the
 Fisher metric is adopted. See [mdm.jl](@ref)
 for the available metrics. If the data used to train the model
 are not positive definite matrices, but Euclidean feature vectors,
-the `.metric` field has no use.
+the `.metric` field has no use. In order to use metrics you need to install the
+*PosDefManifold* package.
 
 `.alpha` is the hyperparameter in ``[0, 1]`` trading-off
 the **elestic-net model**. ``α=0`` requests a pure **ridge** model and
