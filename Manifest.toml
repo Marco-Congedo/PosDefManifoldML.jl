@@ -52,9 +52,9 @@ uuid = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 
 [[Distributions]]
 deps = ["FillArrays", "LinearAlgebra", "PDMats", "Printf", "QuadGK", "Random", "SpecialFunctions", "Statistics", "StatsBase", "StatsFuns"]
-git-tree-sha1 = "e063d0b5d27180b98edacd2b1cb90ecfbc171385"
+git-tree-sha1 = "6b19601c0e98de3a8964ed33ad73e130c7165b1d"
 uuid = "31c24e10-a181-5473-b8eb-7969acd0382f"
-version = "0.21.12"
+version = "0.22.4"
 
 [[FillArrays]]
 deps = ["LinearAlgebra", "Random", "SparseArrays"]
