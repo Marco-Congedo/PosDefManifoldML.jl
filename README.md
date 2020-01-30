@@ -4,25 +4,25 @@
 |:---------------------------------------:|
 | [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://Marco-Congedo.github.io/PosDefManifoldML.jl/dev) |
 
-**PosDefManifoldML** is a [**Julia**](https://julialang.org/) package for classifying data in the [**Riemannian manifolds**](https://en.wikipedia.org/wiki/Riemannian_manifold) **P** of real or complex [**positive definite matrices**](https://en.wikipedia.org/wiki/Definiteness_of_a_matrix). It is based on the [PosDefManifold.jl](https://github.com/Marco-Congedo/PosDefManifold.jl), [GLMNet.jl](https://github.com/JuliaStats/GLMNet.jl) and [LIBSVM.jl](https://github.com/mpastell/LIBSVM.jl) packages. 
+**PosDefManifoldML** is a [**Julia**](https://julialang.org/) package for classifying data in the [**Riemannian manifolds**](https://en.wikipedia.org/wiki/Riemannian_manifold) **P** of real or complex [**positive definite matrices**](https://en.wikipedia.org/wiki/Definiteness_of_a_matrix). It is based on the [PosDefManifold.jl](https://github.com/Marco-Congedo/PosDefManifold.jl) and [GLMNet.jl](https://github.com/JuliaStats/GLMNet.jl) packages. 
 
 [Machine learning](https://en.wikipedia.org/wiki/Machine_learning) (ML) in **P** can either operate directly on the manifold, which requires dedicated Riemannian methods, or the data can be projected onto the **tangent space**, where standard (Euclidean) machine learning methods apply (e.g., linear discriminant analysis, support-vector machine, logistic regression, random forest, deep neuronal networks, etc). 
 
 ![](/docs/src/assets/Fig1.jpg)
 
-For the moment being, **PosDefManifoldML** implements the Riemannian **Minimum Distance to Mean (MDM)** classifier, which operates directly in **P**, the **elastic net logistic regression** (including the pure **Ridge** and pure **Lasso** logistic regresison model) and several **support-vector machine** classifiers in the tangent space. The models operating in the tangent space can be used also for traditional (Euclidean) feature vectors, making of this package also a nice interface to the binomial family of generalized linear models implemented in *GLMNet.jl* and all SVM models implemented in *LIBSVM.jl*
+For the moment being, **PosDefManifoldML** implements the Riemannian **Minimum Distance to Mean (MDM)** classifier, which operates directly in **P** and the **elastic net logistic regression** classifier in the tangent space, including the pure **Ridge** and pure **Lasso** logistic regresison model. The latter model can be used also for traditional (Euclidean) feature vectors, making of this package also a nice interface to the binomial family of generalized linear models implemented in *GLMNet.jl*.  
 
 ## Installation
 
-Execute the following commands in Julia's REPL:
+The package is still not registered. To install it,
+execute the following command in Julia's REPL:
 
-    ]add PosDefManifoldML
-    add PosDefManifold
+    ]add https://github.com/Marco-Congedo/PosDefManifoldML.jl
 
-## Reviewers & Contributors
+## Disclaimer
 
-Independent reviewers are welcome.
-To contribute, please check the section [how to contribute](https://marco-congedo.github.io/PosDefManifoldML.jl/dev/contribute/).
+This package is still in a pre-release stage.
+Independent reviewers are more then welcome.
 
 ## Examples
 
@@ -82,28 +82,12 @@ model=fit(ENLR(), PTr, yTr; alpha=0.5)
 # average accuracy obtained by 10-fold cross-validation:
 cv = cvAcc(ENLR(), PTr, yTr; alpha=0.5)
 
-# (1)
-# craete and fit (train) an SVM with Radial Basis kernel
-# finding the best model by cross-validation:
-model=fit(SVM(), PTr, yTr)
-#
-# predict labels (classify the testing set) using the 'best' model:
-yPred=predict(model, PTe, :l)
-#
-# prediction error in percent
-predictErr(yTe, yPred)
-
-# (2)
-# average accuracy obtained by 8-fold cross-validation:
-cv = cvAcc(SVM(), PTr, yTr; nFolds=8)
 ```
 
 ## About the Authors
 
 [Marco Congedo](https://sites.google.com/site/marcocongedo), corresponding
-author, is a research scientist of [CNRS](http://www.cnrs.fr/en) (Centre National de la Recherche Scientifique), working at [UGA](https://www.univ-grenoble-alpes.fr/english/) (University of Grenoble Alpes). **contact**: marco *dot* congedo *at* gmail *dot* com
-
-Anton Adreev is a research engineer working at the same institution.
+author, is a research scientist of [CNRS](http://www.cnrs.fr/en) (Centre National de la Recherche Scientifique), working in [UGA](https://www.univ-grenoble-alpes.fr/english/) (University of Grenoble Alpes). **contact**: marco *dot* congedo *at* gmail *dot* com
 
 Saloni Jain is a student at the
 [Indian Institute of Technology, Kharagpur](http://www.iitkgp.ac.in/), India.
