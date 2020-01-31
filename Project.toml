@@ -18,8 +18,8 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 GLMNet = "0.4.2"
 LIBSVM = "0.4.0"
 PosDefManifold = "0.4.6"
-Distributions = "0.22.4"
-StatsBase = "0.32.0"
+Distributions = "0.22"
+StatsBase = "0.32"
 julia = "1"
 
 [extras]
