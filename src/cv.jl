@@ -80,14 +80,15 @@ CVacc(s::String)=CVacc(s, nothing, nothing, nothing, nothing, nothing, nothing, 
 
 """
 ```
-function cvAcc(model   :: MLmodel,
+function cvAcc(model    :: MLmodel,
                𝐏Tr     :: ℍVector,
-               yTr     :: IntVector;
-           nFolds    :: Int       = min(10, length(yTr)÷3),
-           scoring   :: Symbol    = :b,
-           shuffle   :: Bool      = false,
-           verbose   :: Bool      = true,
-           outModels :: Bool      = false,
+               yTr      :: IntVector;
+           nFolds       :: Int      = min(10, length(yTr)÷3),
+           scoring      :: Symbol   = :b,
+           shuffle      :: Bool     = false,
+           verbose      :: Bool     = true,
+           outModels    :: Bool     = false,
+           ⏩           :: Bool     = true,
            fitArgs...)
 ```
 Cross-validation accuracy for a machine learning `model`:
@@ -115,9 +116,13 @@ If `verbose` is true (default), information is printed in the REPL.
 This option is included to allow repeated calls to this function
 without crowding the REPL.
 
-if `outModels` is true return a 2-tuple holding a [`CVacc`](@ref) structure
+If `outModels` is true return a 2-tuple holding a [`CVacc`](@ref) structure
 and a `nFolds`-vector of the model fitted for each fold,
 otherwise (default), return only a [`CVacc`](@ref) structure.
+
+If `⏩` the folds and some other computations are multi-threaded.
+It is true by default. Set it to false if there are problems in running
+this function.
 
 `fitArgs` are optional keyword arguments that are passed to the
 [`fit`](@ref) function called for each fold of the cross-validation.
@@ -176,14 +181,15 @@ cv=cvAcc(ENLR(Fisher), PTr, yTr; shuffle=true, nFolds=8, w=:b)
 
 ```
 """
-function cvAcc(model   :: MLmodel,
+function cvAcc(model    :: MLmodel,
                𝐏Tr     :: ℍVector,
-               yTr     :: IntVector;
-           nFolds    :: Int       = min(10, length(yTr)÷3),
-           scoring   :: Symbol    = :b,
-           shuffle   :: Bool      = false,
-           verbose   :: Bool      = true,
-           outModels :: Bool      = false,
+               yTr      :: IntVector;
+           nFolds       :: Int      = min(10, length(yTr)÷3),
+           scoring      :: Symbol   = :b,
+           shuffle      :: Bool     = false,
+           verbose      :: Bool     = true,
+           outModels    :: Bool     = false,
+           ⏩           :: Bool     = true,
            fitArgs...)
 
     ⌚ = now()
@@ -191,7 +197,7 @@ function cvAcc(model   :: MLmodel,
 
     z  = length(unique(yTr))            # number of classes
     𝐐  = [ℍ[] for i=1:z]               # data arranged by class
-    for j=1:length(𝐏Tr) @inbounds push!(𝐐[yTr[j]], 𝐏Tr[j]) end
+    for j=1:length(𝐏Tr) push!(𝐐[yTr[j]], 𝐏Tr[j]) end
 
     # pre-allocated memory
     𝐐Tr = [ℍ[] for f=1:nFolds]                 # training data in 1 vector per folds
@@ -205,7 +211,11 @@ function cvAcc(model   :: MLmodel,
     ℳ=Vector{MLmodel}(undef, nFolds)            # ML models
 
     # get indeces for all CVs (separated for each class)
-    @threads for i=1:z indTr[i], indTe[i] = cvSetup(length(𝐐[i]), nFolds; shuffle=shuffle) end
+    if ⏩
+       @threads for i=1:z indTr[i], indTe[i] = cvSetup(length(𝐐[i]), nFolds; shuffle=shuffle) end
+    else
+        for i=1:z indTr[i], indTe[i] = cvSetup(length(𝐐[i]), nFolds; shuffle=shuffle) end
+    end
 
     fitArgs✔=()
     # make sure the user doesn't pass arguments that skrew up the cv
@@ -230,16 +240,16 @@ function cvAcc(model   :: MLmodel,
     # This is a quick approximation since the initialization is not critical,
     # but it hastens the computation time since itera. alg. require less iters.
     if      model.metric in (Fisher, logdet0)
-                M0=means(logEuclidean, 𝐐; ⏩=true)
-                if model isa TSmodel M0=mean(logEuclidean, M0; ⏩=true) end
+                M0=means(logEuclidean, 𝐐; ⏩=⏩)
+                if model isa TSmodel M0=mean(logEuclidean, M0; ⏩=⏩) end
     elseif  model.metric == Wasserstein
-                M0=ℍVector([generalizedMean(𝐐[i], 0.5; ⏩=true) for i=1:length(𝐐)])
-                if model isa Tsmodel M0=generalizedMean(M0, 0.5; ⏩=true) end
+                M0=ℍVector([generalizedMean(𝐐[i], 0.5; ⏩=⏩) for i=1:length(𝐐)])
+                if model isa Tsmodel M0=generalizedMean(M0, 0.5; ⏩=⏩) end
     else    M0=nothing;
     end
 
     # perform cv
-    @threads for f=1:nFolds
+    function fold(f::Int)
         @static if VERSION >= v"1.3" print(defaultFont, rand(dice), " ") end # print a random dice in the REPL
 
         # get testing data for current fold
@@ -270,8 +280,9 @@ function cvAcc(model   :: MLmodel,
                         s[f] = 𝚺(CM[f][i, i] for i=1:z)/ sumCM
 
         CM[f]/=sumCM # confusion matrices in proportions
-
     end
+
+    ⏩ ? (@threads for f=1:nFolds fold(f) end) : (for f=1:nFolds fold(f) end)
     verbose && println(greyFont, "\nDone in ", defaultFont, now()-⌚)
 
     # compute mean and sd (balanced) accuracy
