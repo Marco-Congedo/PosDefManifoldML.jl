@@ -1,12 +1,12 @@
 # PosDefManifoldML.jl
 
-| **Documentation**  | 
+| **Documentation**  |
 |:---------------------------------------:|
 | [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://Marco-Congedo.github.io/PosDefManifoldML.jl/dev) |
 
-**PosDefManifoldML** is a [**Julia**](https://julialang.org/) package for classifying data in the [**Riemannian manifolds**](https://en.wikipedia.org/wiki/Riemannian_manifold) **P** of real or complex [**positive definite matrices**](https://en.wikipedia.org/wiki/Definiteness_of_a_matrix). It is based on the [PosDefManifold.jl](https://github.com/Marco-Congedo/PosDefManifold.jl) and [GLMNet.jl](https://github.com/JuliaStats/GLMNet.jl) packages. 
+**PosDefManifoldML** is a [**Julia**](https://julialang.org/) package for classifying data in the [**Riemannian manifolds**](https://en.wikipedia.org/wiki/Riemannian_manifold) **P** of real or complex [**positive definite matrices**](https://en.wikipedia.org/wiki/Definiteness_of_a_matrix). It is based on the [PosDefManifold.jl](https://github.com/Marco-Congedo/PosDefManifold.jl) and [GLMNet.jl](https://github.com/JuliaStats/GLMNet.jl) packages.
 
-[Machine learning](https://en.wikipedia.org/wiki/Machine_learning) (ML) in **P** can either operate directly on the manifold, which requires dedicated Riemannian methods, or the data can be projected onto the **tangent space**, where standard (Euclidean) machine learning methods apply (e.g., linear discriminant analysis, support-vector machine, logistic regression, random forest, deep neuronal networks, etc). 
+[Machine learning](https://en.wikipedia.org/wiki/Machine_learning) (ML) in **P** can either operate directly on the manifold, which requires dedicated Riemannian methods, or the data can be projected onto the **tangent space**, where standard (Euclidean) machine learning methods apply (e.g., linear discriminant analysis, support-vector machine, logistic regression, random forest, deep neuronal networks, etc).
 
 ![](/docs/src/assets/Fig1.jpg)
 
@@ -82,6 +82,24 @@ model=fit(ENLR(), PTr, yTr; alpha=0.5)
 # average accuracy obtained by 10-fold cross-validation:
 cv = cvAcc(ENLR(), PTr, yTr; alpha=0.5)
 
+# (1)
+# craete and fit (train) an SVM model
+# finding the best model by cross-validation:
+model=fit(SVM(), PTr, yTr)
+#
+# predict labels (classify the testing set) using the 'best' model:
+yPred=predict(model, PTe, :l)
+#
+# prediction error in percent
+predictErr(yTe, yPred)
+#
+# ...
+
+# (2)
+# average accuracy obtained by 10-fold cross-validation:
+cv = cvAcc(SVM(), PTr, yTr)
+
+
 ```
 
 ## About the Authors
@@ -92,9 +110,6 @@ author, is a research scientist of [CNRS](http://www.cnrs.fr/en) (Centre Nationa
 Saloni Jain is a student at the
 [Indian Institute of Technology, Kharagpur](http://www.iitkgp.ac.in/), India.
 
-| **Documentation**  | 
+| **Documentation**  |
 |:---------------------------------------:|
 | [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://Marco-Congedo.github.io/PosDefManifoldML.jl/dev) |
-
-
-
