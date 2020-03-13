@@ -114,9 +114,9 @@ function tsMap(metric :: Metric,
 		 meanInit  :: Union{ℍ, Nothing}  = nothing,
 	  	 tol       :: Real               = 0.,
 		 transpose :: Bool   			 = true,
-		 vecRange  :: UnitRange          = 1:size(𝐏[1], 1))
+		 vecRange  :: UnitRange          = 1:size(𝐏[1], 2))
 
-	k, n, getMeanISR = dim(𝐏, 1), dim(𝐏, 2), meanISR==nothing
+	k, n, getMeanISR = dim(𝐏, 1), dim(𝐏, 2), meanISR===nothing
     getMeanISR ? G⁻½ = pow(mean(metric, 𝐏;
 	                            w=w,
 								✓w=✓w,
@@ -632,13 +632,13 @@ end
 # Get the feature matrix for fit functions of ML model in the tangent space:
 # if `𝐏Tr` is a matrix just return the columns in `vecRange` (by default all).
 # if `𝐏Tr` is vector of Hermitian matrices, they are projected onto the
-# tangent space. If the the inversesquare root of a base point `meanISR`
+# tangent space. If the inversesquare root of a base point `meanISR`
 # is provided, the projection is obtained at this base point, otherwise the
 # mean of all points is computed and used as base point.
 # If the mean is to be computed by an iterative algorithm (e.g., if the metric
 # of the model is the Fisher metric), an initialization `meanInit`, weights
 # `w` and a tolerance `tol` are used.
-# Once projected onto the tangent spave, the matrces in `𝐏Tr` are vectorized
+# Once projected onto the tangent space, the matrices in `𝐏Tr` are vectorized
 # using only the rows (or columns) specified by `vecRange`.
 # if `verbose` is true, print "Projecting data onto the tangent space..."
 # if `transpose` the feature vectors are in the rows of `X`, otherwise in the
