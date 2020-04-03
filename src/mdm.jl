@@ -1,7 +1,7 @@
 #   Unit "mdm.jl" of the PosDefManifoldML Package for Julia language
 
 #   MIT License
-#   Copyright (c) 2019,
+#   Copyright (c) 2019-2020
 #   Marco Congedo, CNRS, Grenoble, France:
 #   https://sites.google.com/site/marcocongedo/home
 #   Saloni Jain, Indian Institute of Technology, Kharagpur, India
