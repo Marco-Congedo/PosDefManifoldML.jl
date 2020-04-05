@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>fit, predict, cv · PosDefManifoldML</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="PosDefManifoldML logo"/></a><div class="docs-package-name"><span class="docs-autofit">PosDefManifoldML</span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">PosDefManifoldML Documentation</a></li><li><a class="tocitem" href="../tutorial/">Tutorial</a></li><li><a class="tocitem" href="../MainModule/">Main Module</a></li><li><a class="tocitem" href="../tools/">Tools</a></li><li><span class="tocitem">ML Models: PD Manifold</span><ul><li><a class="tocitem" href="../mdm/">Minimum Distance to Mean</a></li></ul></li><li><span class="tocitem">ML Models: PD Tangent Space</span><ul><li><a class="tocitem" href="../enlr/">Elastic-Net Logistic Regression</a></li><li><a class="tocitem" href="../svm/">Support-Vector Machine</a></li></ul></li><li class="is-active"><a class="tocitem" href>fit, predict, cv</a></li><li><a class="tocitem" href="../contribute/">How to contribute</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>fit, predict, cv</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>fit, predict, cv</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/Marco-Congedo/PosDefManifoldML.jl/blob/master/docs/src/cv.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="cv.jl-1"><a class="docs-heading-anchor" href="#cv.jl-1">cv.jl</a><a class="docs-heading-anchor-permalink" href="#cv.jl-1" title="Permalink"></a></h1><p>This unit implements <strong>cross-validation</strong> procedures for estimating the <strong>accuracy</strong> and <strong>balanced accuracy</strong> of machine learning models. It also reports the documentation of the <strong>fit</strong> and <strong>predict</strong> functions, as they are common to all models.</p><p><strong>Content</strong></p><table><tr><th style="text-align: left">struct</th><th style="text-align: left">description</th></tr><tr><td style="text-align: left"><a href="#PosDefManifoldML.CVacc"><code>CVacc</code></a></td><td style="text-align: left">encapsulate the result of cross-validation procedures for estimating accuracy</td></tr></table><table><tr><th style="text-align: left">function</th><th style="text-align: left">description</th></tr><tr><td style="text-align: left"><a href="#StatsBase.fit"><code>fit</code></a></td><td style="text-align: left">fit a model with training data, or create and fit it</td></tr><tr><td style="text-align: left"><a href="#StatsBase.predict"><code>predict</code></a></td><td style="text-align: left">preidct labels, probabilities or scoring functions on test data</td></tr><tr><td style="text-align: left"><a href="#PosDefManifoldML.cvAcc"><code>cvAcc</code></a></td><td style="text-align: left">estimate accuracy of a model by cross-validation</td></tr><tr><td style="text-align: left"><a href="#PosDefManifoldML.cvSetup"><code>cvSetup</code></a></td><td style="text-align: left">generate indexes for performing cross-validtions</td></tr></table><article class="docstring"><header><a class="docstring-binding" id="PosDefManifoldML.CVacc" href="#PosDefManifoldML.CVacc"><code>PosDefManifoldML.CVacc</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia">struct CVacc
+    cvType    :: String
+    scoring   :: Union{String, Nothing}
+    modelType :: Union{String, Nothing}
+    cnfs      :: Union{Vector{Matrix{T}}, Nothing} where T&lt;:Real
+    avgCnf    :: Union{Matrix{T}, Nothing} where T&lt;:Real
+    accs      :: Union{Vector{T}, Nothing} where T&lt;:Real
+    avgAcc    :: Union{Real, Nothing}
+    stdAcc    :: Union{Real, Nothing}
+end</code></pre><p>A call to <a href="#PosDefManifoldML.cvAcc"><code>cvAcc</code></a> results in an instance of this structure. Fields:</p><p><code>.cvTpe</code> is the type of cross-validation technique, given as a string (e.g., &quot;10-kfold&quot;)</p><p><code>.scoring</code> is the type of accuracy that is computed, given as a string. This has been passed as argument to <a href="#PosDefManifoldML.cvAcc"><code>cvAcc</code></a>. Currently <em>accuracy</em> and <em>balanced accuracy</em> are supported.</p><p><code>.modelType</code> is type of the machine learning used for performing the cross-validation, given as a string.</p><p><code>.cnfs</code> is a vector of matrices holding the <em>confusion matrices</em> obtained at each fold of the cross-validation.</p><p><code>.avgCnf</code> is the <em>average confusion matrix</em> across the folds of the cross-validation.</p><p><code>.accs</code> is a vector of real numbers holding the <em>accuracies</em> obtained at each fold of the cross-validation.</p><p><code>.avgAcc</code> is the <em>average accuracy</em> across the folds of the cross-validation.</p><p><code>.stdAcc</code> is the <em>standard deviation of the accuracy</em> across the folds of the cross-validation.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/Marco-Congedo/PosDefManifoldML.jl/blob/b5f3c7ba4978690fbb5b31f23faa91750d65b038/src/cv.jl#L13-L55">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="StatsBase.fit" href="#StatsBase.fit"><code>StatsBase.fit</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia">function fit(model :: MDMmodel,
+              𝐏Tr   :: ℍVector,
+              yTr   :: IntVector;
+       w        :: Vector = [],
+       ✓w       :: Bool  = true,
+       meanInit :: Union{ℍVector, Nothing} = nothing,
+       tol      :: Real  = 1e-5,
+       verbose  :: Bool  = true,
+       ⏩       :: Bool  = true)</code></pre><p>Fit an <a href="../mdm/#PosDefManifoldML.MDM"><code>MDM</code></a> machine learning model, with training data <code>𝐏Tr</code>, of type <a href="https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1">ℍVector</a>, and corresponding labels <code>yTr</code>, of type <a href="../MainModule/#IntVector-1">IntVector</a>. Return the fitted model.</p><p>Labels must be provided using the natural numbers, i.e., <code>1</code> for the first class, <code>2</code> for the second class, etc.</p><p>Fitting an MDM model involves only computing a mean of all the matrices in each class. Those class means are computed according to the metric specified by the <a href="../mdm/#PosDefManifoldML.MDM"><code>MDM</code></a> constructor.</p><p>Optional keyword argument <code>w</code> is a vector of non-negative weights associated with the matrices in <code>𝐏Tr</code>. This weights are used to compute the mean for each class. See method (3) of the <a href="https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#Statistics.mean">mean</a> function for the meaning of the arguments <code>w</code>, <code>✓w</code> and <code>⏩</code>, to which they are passed. Keep in mind that here the weights should sum up to 1 separatedly for each class, which is what is ensured by this function if <code>✓w</code> is true.</p><p>Optional keyword argument <code>tol</code> is the tolerance required for those algorithms that compute the mean iteratively (they are those adopting the Fisher, logde0 or Wasserstein metric). It defaults to 1e-5. For details on this argument see the functions that are called for computing the means:</p><ul><li>Fisher metric: <a href="https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.geometricMean">gmean</a></li><li>logdet0 metric: <a href="https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.logdet0Mean">ld0mean</a></li><li>Wasserstein metric: <a href="https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.wasMean">Wasmean</a>.</li></ul><p>For those algorithm an initialization can be provided with optional keyword argument <code>meanInit</code>. If provided, this must be a vector of <code>Hermitian</code> matrices of the <a href="https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%F0%9D%95%84Vector-type-1">ℍVector</a> type and must contain as many initializations as classes, in the natural order corresponding to the class labels (see above).</p><p>If <code>verbose</code> is true (default), information is printed in the REPL. This option is included to allow repeated calls to this function without crowding the REPL.</p><p><strong>See</strong>: <a href="../MainModule/#notation-and-nomenclature-1">notation &amp; nomenclature</a>, <a href="../MainModule/#the-ℍVector-type-1">the ℍVector type</a>.</p><p><strong>See also</strong>: <a href="#StatsBase.predict"><code>predict</code></a>, <a href="#PosDefManifoldML.cvAcc"><code>cvAcc</code></a>.</p><p><strong>Examples</strong></p><pre><code class="language-none">using PosDefManifoldML, PosDefManifold
+
+# generate some data
+PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.25)
+
+# create and fit a model:
+m=fit(MDM(Fisher), PTr, yTr)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/Marco-Congedo/PosDefManifoldML.jl/blob/b5f3c7ba4978690fbb5b31f23faa91750d65b038/src/mdm.jl#L94-L162">source</a></section><section><div><pre><code class="language-none">function fit(model	:: ENLRmodel,
+             𝐏Tr	 :: Union{ℍVector, Matrix{Float64}},
+             yTr	:: IntVector;
+	# parameters for projection onto the tangent space
+	w		:: Union{Symbol, Tuple, Vector} = [],
+	meanISR	:: Union{ℍ, Nothing} = nothing,
+	meanInit:: Union{ℍ, Nothing} = nothing,
+	vecRange:: UnitRange = 𝐏Tr isa ℍVector ? (1:size(𝐏Tr[1], 2)) : (1:size(𝐏Tr, 2)),
+	fitType	:: Symbol = :best,
+	verbose	:: Bool = true,
+	⏩	   :: Bool = true,
+	# arguments for `GLMNet.glmnet` function
+	alpha			:: Real = model.alpha,
+	weights			:: Vector{Float64} = ones(Float64, length(yTr)),
+	intercept		:: Bool = true,
+	standardize		:: Bool = true,
+	penalty_factor	:: Vector{Float64} = ones(Float64, _getDim(𝐏Tr, vecRange)),
+	constraints		:: Matrix{Float64} = [x for x in (-Inf, Inf), y in 1:_getDim(𝐏Tr, vecRange)],
+	offsets			:: Union{Vector{Float64}, Nothing} = nothing,
+	dfmax			:: Int = _getDim(𝐏Tr, vecRange),
+	pmax			:: Int = min(dfmax*2+20, _getDim(𝐏Tr, vecRange)),
+	nlambda			:: Int = 100,
+	lambda_min_ratio:: Real = (length(yTr)*2 &lt; _getDim(𝐏Tr, vecRange) ? 1e-2 : 1e-4),
+	lambda			:: Vector{Float64} = Float64[],
+	tol				:: Real = 1e-5,
+	maxit			:: Int = 1000000,
+	algorithm		:: Symbol = :newtonraphson,
+	# selection method
+	λSelMeth	:: Symbol = :sd1,
+	# arguments for `GLMNet.glmnetcv` function
+	nfolds		:: Int = min(10, div(size(yTr, 1), 3)),
+	folds		:: Vector{Int} =
+	begin
+		n, r = divrem(size(yTr, 1), nfolds)
+		shuffle!([repeat(1:nfolds, outer=n); 1:r])
+	end,
+	parallel 	:: Bool=true)</code></pre><p>Create and fit an <a href="../enlr/#PosDefManifoldML.ENLR"><code>ENLR</code></a> machine learning model, with training data <code>𝐏Tr</code>, of type <a href="https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1">ℍVector</a>, and corresponding labels <code>yTr</code>, of type <a href="../MainModule/#IntVector-1">IntVector</a>. Return the fitted model(s) as an instance of the <a href="../enlr/#PosDefManifoldML.ENLR"><code>ENLR</code></a> structure.</p><p>As for all ML models acting in the tangent space, fitting an ENLR model involves computing a mean of all the matrices in <code>𝐏Tr</code>, mapping all matrices onto the tangent space after parallel transporting them at the identity matrix and vectorizing them using the <a href="https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.vecP">vecP</a> operation. Once this is done, the elastic net logistic regression is fitted.</p><p>The mean is computed according to the <code>.metric</code> field of the <code>model</code>, with optional weights <code>w</code>. The <code>.metric</code> field of the <code>model</code> is passed to the <a href="../tools/#PosDefManifoldML.tsMap"><code>tsMap</code></a> function. By default the metric is the Fisher metric. See the examples here below to see how to change metric. See <a href="../mdm/#mdm.jl-1">mdm.jl</a> or check out directly the documentation of <a href="https://marco-congedo.github.io/PosDefManifold.jl/dev/">PosDefManifold.jl</a> for the available metrics.</p><p><strong>Optional keyword arguments</strong></p><p>By default, uniform weights will be given to all observations for computing the mean to pass in the tangent space. This is equivalent to passing as argument <code>w=:uniform</code> (or <code>w=:u</code>). You can also pass as argument:</p><ul><li><code>w=:balanced</code> (or simply <code>w=:b</code>). If the two classes are unbalanced, the weights should be inversely proportional to the number of examples for each class, in such a way that each class contributes equally to the computation of the mean. This is equivalent of passing <code>w=tsWeights(yTr)</code>. See the <a href="../tools/#PosDefManifoldML.tsWeights"><code>tsWeights</code></a> function for details.</li><li><code>w=v</code>, where <code>v</code> is a user defined vector of non-negative weights for the observations, thus, <code>v</code> must contain the same number of elements as <code>yTr</code>. For example, <code>w=[1.0, 1.0, 2.0, 2.0, ...., 1.0]</code></li><li><code>w=t</code>, where <code>t</code> is a 2-tuple of real weights, one weight for each class, for example <code>w=(0.5, 1.5)</code>. This is equivalent to passing <code>w=tsWeights(yTr; classWeights=collect(t))</code>, see the <a href="../tools/#PosDefManifoldML.tsWeights"><code>tsWeights</code></a> function for details.</li></ul><p>If <code>meanISR</code> is passed as argument, the mean is not computed, instead this matrix is the inverse square root (ISR) of the mean used for projecting the matrices in the tangent space (see <a href="../tools/#PosDefManifoldML.tsMap"><code>tsMap</code></a>). Passed or computed, the inverse square root (ISR) of the mean will be written in the <code>.meanISR</code> field of the created <a href="../enlr/#PosDefManifoldML.ENLR"><code>ENLR</code></a> structure. If <code>meanISRis</code> is not provided and the <code>.metric</code> field of the <code>model</code> is Fisher, logdet0 or Wasserstein, the tolerance of the iterative algorithm used to compute the mean is set to the argument passed as <code>tol</code> (default 1e-5). Also, in this case a particular initialization for those iterative algorithms can be provided as an <code>Hermitian</code> matrix with argument <code>meanInit</code>.</p><p>This function also allows to fit a model passing as training data <code>𝐏Tr</code> directly a matrix of feature vectors, where each feature vector is a row of the matrix. In this case the <code>metric</code> of the ENLR model and argument <code>meanISR</code> are not used. Therefore, the <code>.meanISR</code> field of the created <a href="../enlr/#PosDefManifoldML.ENLR"><code>ENLR</code></a> structure will be set to <code>nothing</code>.</p><p>If a <code>UnitRange</code> is passed with optional keyword argument <code>vecRange</code>, then if <code>𝐏Tr</code> is a vector of <code>Hermitian</code> matrices, the vectorization of those matrices once they are projected onto the tangent space concerns only the rows (or columns) given in the specified range, else if <code>𝐏Tr</code> is a matrix with feature vectors arranged in its rows, then only the columns of <code>𝐏Tr</code> given in the specified range will be used.</p><p>If <code>fitType</code> = <code>:best</code> (default), a cross-validation procedure is run to find the best lambda hyperparameter for the given training data. This finds a single model that is written into the <code>.best</code> field of the <a href="../enlr/#PosDefManifoldML.ENLR"><code>ENLR</code></a> structure that will be created.</p><p>If <code>fitType</code> = <code>:path</code>, the regularization path for several values of the lambda hyperparameter is found for the given training data. This creates several models, which are written into the <code>.path</code> field of the <a href="../enlr/#PosDefManifoldML.ENLR"><code>ENLR</code></a> structure that will be created, none of which is optimal, in the cross-validation sense, for the given training data.</p><p>If <code>fitType</code> = <code>:all</code>, both the above fits are performed and all fields of the <a href="../enlr/#PosDefManifoldML.ENLR"><code>ENLR</code></a> structure that will be created will be filled in.</p><p>If <code>verbose</code> is true (default), information is printed in the REPL. This option is included to allow repeated calls to this function without crowding the REPL.</p><p>The <code>⏩</code> argument (true by default) is passed to the <a href="../tools/#PosDefManifoldML.tsMap"><code>tsMap</code></a> function for projecting the matrices in <code>𝐏Tr</code> onto the tangent space and to the <code>GLMNet.glmnetcv</code> function to run inner cross-validation to find the <code>best</code> model using multi-threading.</p><p>The remaining optional keyword arguments, are</p><ul><li><p>the arguments passed to the <code>GLMNet.glmnet</code> function for fitting the models. Those are always used.</p></li><li><p>the <code>λSelMeth</code> argument and the arguments passed to the <code>GLMNet.glmnetcv</code> function for finding the best lambda hyperparamater by cross-validation. Those are used only if <code>fitType</code> = <code>:path</code> or = <code>:all</code>.</p></li></ul><p><strong>Optional keyword arguments for fitting the model(s) using GLMNet</strong></p><p><code>alpha</code>: the hyperparameter in <span>$[0, 1]$</span> to trade-off an elestic-net model. <span>$α=0$</span> requests a pure <em>ridge</em> model and <span>$α=1$</span> a pure <em>lasso</em> model. This defaults to 1.0, which specifies a lasso model, unless the input <a href="../enlr/#PosDefManifoldML.ENLR"><code>ENLR</code></a> <code>model</code> has another value in the <code>alpha</code> field, in which case this value is used. If argument <code>alpha</code> is passed here, it will overwrite the <code>alpha</code> field of the input <code>model</code>.</p><p><code>weights</code>: a vector of weights for each matrix (or feature vectors) of the same size as <code>yTr</code>. It defaults to 1 for all matrices.</p><p><code>intercept</code>: whether to fit an intercept term. The intercept is always unpenalized. Defaults to true.</p><p><code>standardize</code>: if true (default), GLMNet standardize the predictors (presumably this amounts to transform to unit variance) so that they are in the same units. This is a common choice for regularized regression models.</p><p><code>penalty_factor</code>: a vector of length <span>$n(n+1)/2$</span>, where <span>$n$</span> is the dimension of the original PD matrices on which the model is applied, of penalties for each predictor in the tangent vectors. This defaults to all ones, which weights each predictor equally. To specify that a predictor should be unpenalized, set the corresponding entry to zero.</p><p><code>constraints</code>: an <span>$[n(n+1)/2]$</span> x <span>$2$</span> matrix specifying lower bounds (first column) and upper bounds (second column) on each predictor. By default, this is [-Inf Inf] for each predictor (each element of tangent vectors).</p><p><code>offset</code>: see documentation of original GLMNet package <a href="../#-1">🎓</a>.</p><p><code>dfmax</code>: The maximum number of predictors in the largest model.</p><p><code>pmax</code>: The maximum number of predictors in any model.</p><p><code>nlambda</code>: The number of values of <span>$λ$</span> along the path to consider.</p><p><code>lambda_min_ratio</code>: The smallest <span>$λ$</span> value to consider, as a ratio of the value of <span>$λ$</span> that gives the null model (<em>i.e.</em>, the model with only an intercept). If the number of observations exceeds the number of variables, this defaults to 0.0001, otherwise 0.01.</p><p><code>lambda</code>: The <span>$λ$</span> values to consider for fitting. By default, this is determined from <code>nlambda</code> and <code>lambda_min_ratio</code>.</p><p><code>tol</code>: Is the convergence criterion for both the computation of a mean for projecting onto the tangent space (if the metric requires an iterative algorithm) and for the GLMNet fitting algorithm. Defaults to 1e-5. In order to speed up computations, you may try to set a lower <code>tol</code>; The convergence will be faster but more coarse, with a possible drop of classification accuracy, depending on the signal-to-noise ratio of the input features.</p><p><code>maxit</code>: The maximum number of iterations of the cyclic coordinate descent algorithm. If convergence is not achieved, a warning is returned.</p><p><code>algorithm</code>: the algorithm used to find the regularization path. Possible values are <code>:newtonraphson</code> (default) and <code>:modifiednewtonraphson</code>.</p><p>For further informations on those arguments, refer to the resources on the GLMNet package <a href="../#-1">🎓</a>.</p><p><strong>Optional Keyword arguments for finding the best model by cv</strong></p><p><code>λSelMeth</code> = <code>:sd1</code> (default), the best model is defined as the one allowing the highest <code>cvλ.meanloss</code> within one standard deviation of the minimum, otherwise it is defined as the one allowing the minimum <code>cvλ.meanloss</code>. Note that in selecting a model, the model with only the intercept term, if it exists, is ignored. See <a href="../enlr/#PosDefManifoldML.ENLRmodel"><code>ENLRmodel</code></a> for a description of the <code>.cvλ</code> field of the model structure.</p><p>Arguments <code>nfolds</code> and <code>folds</code> are passed to the <code>GLMNet.glmnetcv</code> function along with the <code>⏩</code> argument. Please refer to the resources on GLMNet for details <a href="../#-1">🎓</a>.</p><p><strong>See</strong>: <a href="../MainModule/#notation-and-nomenclature-1">notation &amp; nomenclature</a>, <a href="../MainModule/#the-ℍVector-type-1">the ℍVector type</a>.</p><p><strong>See also</strong>: <a href="#StatsBase.predict"><code>predict</code></a>, <a href="#PosDefManifoldML.cvAcc"><code>cvAcc</code></a>.</p><p><strong>Tutorial</strong>: <a href="../tutorial/#Example-using-the-ENLR-model-1">Example using the ENLR model</a>.</p><p><strong>Examples</strong></p><pre><code class="language-none">using PosDefManifoldML, PosDefManifold
+
+# generate some data
+PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.1)
+
+# Fit an ENLR lasso model and find the best model by cross-validation:
+m=fit(ENLR(), PTr, yTr)
+
+# ... balancing the weights for tangent space mapping
+m=fit(ENLR(), PTr, yTr; w=tsWeights(yTr))
+
+# ... using the log-Eucidean metric for tangent space projection
+m=fit(ENLR(logEuclidean), PTr, yTr)
+
+# Fit an ENLR ridge model and find the best model by cv:
+m=fit(ENLR(Fisher), PTr, yTr; alpha=0)
+
+# Fit an ENLR elastic-net model (α=0.9) and find the best model by cv:
+m=fit(ENLR(Fisher), PTr, yTr; alpha=0.9)
+
+# Fit an ENLR lasso model and its regularization path:
+m=fit(ENLR(), PTr, yTr; fitType=:path)
+
+# Fit an ENLR lasso model, its regularization path
+# and the best model found by cv:
+m=fit(ENLR(), PTr, yTr; fitType=:all)
+</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/Marco-Congedo/PosDefManifoldML.jl/blob/b5f3c7ba4978690fbb5b31f23faa91750d65b038/src/enlr.jl#L183-L448">source</a></section><section><div><pre><code class="language-none">function fit(model     :: SVMmodel,
+               𝐏Tr     :: Union{ℍVector, Matrix{Float64}},
+               yTr     :: IntVector=[];
+	# parameters for projection onto the tangent space
+	w :: Union{Symbol, Tuple, Vector} = [],
+	meanISR :: Union{ℍ, Nothing} = nothing,
+	meanInit :: Union{ℍ, Nothing} = nothing,
+	vecRange	:: UnitRange = 𝐏Tr isa ℍVector ? (1:size(𝐏Tr[1], 2)) :
+												 (1:size(𝐏Tr, 2)),
+	# SVM parameters
+	svmType :: Type = SVC,
+	kernel :: Kernel.KERNEL = RadialBasis,
+	epsilon :: Float64 = 0.1,
+	cost	:: Float64 = 1.0,
+	gamma :: Float64	= 1/_getDim(𝐏Tr, vecRange),
+	degree :: Int64	= 3,
+	coef0 :: Float64	= 0.,
+	nu :: Float64 = 0.5,
+	shrinking :: Bool = true,
+	probability :: Bool = false,
+	weights :: Union{Dict{Int, Float64}, Nothing} = nothing,
+	cachesize :: Float64	= 200.0,
+	# Generic and common parameters
+	tol :: Real = 1e-5,
+	rescale :: Tuple	= (-1, 1),
+	verbose :: Bool = true,
+	⏩ :: Bool = true)</code></pre><p>Create and fit an <a href="../svm/#PosDefManifoldML.SVM"><code>SVM</code></a> machine learning model, with training data <code>𝐏Tr</code>, of type <a href="https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1">ℍVector</a>, and corresponding labels <code>yTr</code>, of type <a href="../MainModule/#IntVector-1">IntVector</a>. The label vector can be omitted if the <code>svmType</code> is <code>OneClassSVM</code> (see <a href="../svm/#PosDefManifoldML.SVM"><code>SVM</code></a>). Return the fitted model as an instance of the <a href="../svm/#PosDefManifoldML.SVM"><code>SVM</code></a> structure.</p><p>As for all ML models acting in the tangent space, fitting an SVM model involves computing a mean of all the matrices in <code>𝐏Tr</code>, mapping all matrices onto the tangent space after parallel transporting them at the identity matrix and vectorizing them using the <a href="https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.vecP">vecP</a> operation. Once this is done, the support-vector machine is fitted.</p><p>Arguments <code>w</code>, <code>meanISR</code>, <code>meanInit</code> and <code>vecRange</code> allow to tune the projection onto the tangent space. See the documentation of the <a href="#StatsBase.fit"><code>fit</code></a> function for the ENLR model here above for their meaning.</p><p><code>svmType</code> and <code>kernel</code> allow to chose among several available SVM models. See the documentation of the <a href="../svm/#PosDefManifoldML.SVM"><code>SVM</code></a> structure.</p><p><code>epsilon</code>, with default 0.1, is the epsilon in loss function of the <code>epsilonSVR</code> SVM model.</p><p><code>cost</code>, with default 1.0, is the cost parameter <span>$C$</span> of <code>SVC</code>, <code>epsilonSVR</code>, and <code>nuSVR</code> SVM models.</p><p><code>gamma</code>, defaulting to 1 divided by the length of the feature vectors, is the <span>$γ$</span> parameter for <code>RadialBasis</code>, <code>Polynomial</code> and <code>Sigmoid</code> kernels.</p><p><code>degree</code>, with default 3, is the degree for <code>Polynomial</code> kernels</p><p><code>coef0</code>, zero by default, is a parameter for the <code>Sigmoid</code> and <code>Polynomial</code> kernel.</p><p><code>nu</code>, with default 0.5, is the parameter <span>$𝜈$</span> of <code>nuSVC</code>, <code>OneClassSVM</code>, and <code>nuSVR</code> SVM models. It should be in the interval (0, 1].</p><p><code>shrinking</code>, true by default, sets whether to use the shrinking heuristics.</p><p><code>probability</code>, false by default sets whether to train a <code>SVC</code> or <code>SVR</code> model allowing probability estimates.</p><p>if a <code>Dict{Int, Float64}</code> is passed as <code>weights</code> argument, it will be used to give weights to the classes. By default it is equal to <code>nothing</code>, implying equal weights to all classes.</p><p><code>cachesize</code> for the kernel, 200.0 by defaut (in MB), can be increased for very large problems.</p><p><code>tol</code> is the convergence criterion for both the computation of a mean for projecting onto the tangent space (if the metric recquires an iterative algorithm) and for the LIBSVM fitting algorithm. Defaults to 1e-5.</p><p><code>rescale</code> is a 2-tuple of the lower and upper limit to rescale the feature vectors within these limits. The default is (-1, 1), since tangent vectors of PD matrices have positive and negative elements. If <code>𝐏Tr</code> is a feature matrix and the features are only positive, use (0, 1) instead. In order not to rescale the feature vectors, use ().</p><p>If <code>verbose</code> is true (default), information is printed in the REPL. This option is included to allow repeated calls to this function without crowding the REPL. It may not work properly in a multithreaded context (see <code>⏩</code> argument here below).</p><p>The <code>⏩</code> argument (true by default) is passed to the <a href="../tools/#PosDefManifoldML.tsMap"><code>tsMap</code></a> function for projecting the matrices in <code>𝐏Tr</code> onto the tangent space and to the LIBSVM function that perform the fit in order to run them in multi-threaded mode.</p><p>For further information on tho LIBSVM arguments, refer to the resources on the LIBSVM package <a href="../#-1">🎓</a>.</p><p><strong>See</strong>: <a href="../MainModule/#notation-and-nomenclature-1">notation &amp; nomenclature</a>, <a href="../MainModule/#the-ℍVector-type-1">the ℍVector type</a>.</p><p><strong>See also</strong>: <a href="#StatsBase.predict"><code>predict</code></a>, <a href="#PosDefManifoldML.cvAcc"><code>cvAcc</code></a>.</p><p><strong>Tutorial</strong>: <a href="../tutorial/#Example-using-SVM-models-1">Example using SVM models</a>.</p><p><strong>Examples</strong></p><pre><code class="language-none">using PosDefManifoldML, PosDefManifold
+
+# generate some data
+PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.1);
+
+# Fit an SVC SVM model and find the best model by cross-validation:
+m=fit(SVM(), PTr, yTr)
+
+# ... balancing the weights for tangent space mapping
+m=fit(SVM(), PTr, yTr; w=:b)
+
+# ... using the log-Eucidean metric for tangent space projection
+m=fit(SVM(logEuclidean), PTr, yTr)
+
+# ... using the linear kernel
+m=fit(SVM(logEuclidean), PTr, yTr, kernel=Linear)
+
+# or
+
+m=fit(SVM(logEuclidean; kernel=Linear), PTr, yTr)
+
+# ... using the Nu-Support Vector Classification
+m=fit(SVM(logEuclidean), PTr, yTr, kernel=Linear, svmtype=NuSVC)
+
+# or
+
+m=fit(SVM(logEuclidean; kernel=Linear, svmtype=NuSVC), PTr, yTr)
+
+# N.B. all other keyword arguments must be passed to the fit function
+# and not to the SVM constructor.
+
+</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/Marco-Congedo/PosDefManifoldML.jl/blob/b5f3c7ba4978690fbb5b31f23faa91750d65b038/src/svm.jl#L148-L295">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="StatsBase.predict" href="#StatsBase.predict"><code>StatsBase.predict</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia">function predict(model  :: MDMmodel,
+                 𝐏Te    :: ℍVector,
+                 what   :: Symbol = :labels;
+        verbose :: Bool = true,
+        ⏩     :: Bool = true)</code></pre><p>Given an <a href="../mdm/#PosDefManifoldML.MDM"><code>MDM</code></a> <code>model</code> trained (fitted) on <span>$z$</span> classes and a testing set of <span>$k$</span> positive definite matrices <code>𝐏Te</code> of type <a href="https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1">ℍVector</a>,</p><p>if <code>what</code> is <code>:labels</code> or <code>:l</code> (default), return the predicted <strong>class labels</strong> for each matrix in <code>𝐏Te</code>, as an <a href="../MainModule/#IntVector-1">IntVector</a>. For MDM models, the predicted class &#39;label&#39; of an unlabeled matrix is the serial number of the class whose mean is the closest to the matrix (minimum distance to mean). The labels are &#39;1&#39; for class 1, &#39;2&#39; for class 2, etc;</p><p>if <code>what</code> is <code>:probabilities</code> or <code>:p</code>, return the predicted <strong>probabilities</strong> for each matrix in <code>𝐏Te</code> to belong to a all classes, as a <span>$k$</span>-vector of <span>$z$</span> vectors holding reals in <span>$[0, 1]$</span> (probabilities). The &#39;probabilities&#39; are obtained passing to a <a href="https://en.wikipedia.org/wiki/Softmax_function">softmax function</a> minus the squared distances of each unlabeled matrix to all class means;</p><p>if <code>what</code> is <code>:f</code> or <code>:functions</code>, return the <strong>output function</strong> of the model. The ratio of the squared distance to all classes to their geometric mean gives the &#39;functions&#39;.</p><p>If <code>verbose</code> is true (default), information is printed in the REPL. This option is included to allow repeated calls to this function without crowding the REPL.</p><p>It f <code>⏩</code> is true (default), the computation of distances is multi-threaded.</p><p><strong>See</strong>: <a href="../MainModule/#notation-and-nomenclature-1">notation &amp; nomenclature</a>, <a href="../MainModule/#the-ℍVector-type-1">the ℍVector type</a>.</p><p><strong>See also</strong>: <a href="#StatsBase.fit"><code>fit</code></a>, <a href="#PosDefManifoldML.cvAcc"><code>cvAcc</code></a>, <a href="../tools/#PosDefManifoldML.predictErr"><code>predictErr</code></a>.</p><p><strong>Examples</strong></p><pre><code class="language-none">using PosDefManifoldML, PosDefManifold
+
+# generate some data
+PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80)
+
+# craete and fit an MDM model
+m=fit(MDM(Fisher), PTr, yTr)
+
+# predict labels
+yPred=predict(m, PTe, :l)
+
+# prediction error
+predErr=predictErr(yTe, yPred)
+
+# predict probabilities
+predict(m, PTe, :p)
+
+# output functions
+predict(m, PTe, :f)
+</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/Marco-Congedo/PosDefManifoldML.jl/blob/b5f3c7ba4978690fbb5b31f23faa91750d65b038/src/mdm.jl#L212-L277">source</a></section><section><div><pre><code class="language-none">function predict(model   :: ENLRmodel,
+		𝐏Te		:: Union{ℍVector, Matrix{Float64}},
+		what		:: Symbol = :labels,
+		fitType		:: Symbol = :best,
+		onWhich		:: Int    = Int(fitType==:best);
+	transfer	:: Union{ℍ, Nothing} = nothing,
+	verbose		:: Bool = true,
+	⏩		:: Bool = true)</code></pre><p>Given an <a href="../enlr/#PosDefManifoldML.ENLR"><code>ENLR</code></a> <code>model</code> trained (fitted) on 2 classes and a testing set of <span>$k$</span> positive definite matrices <code>𝐏Te</code> of type <a href="https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1">ℍVector</a>,</p><p>if <code>what</code> is <code>:labels</code> or <code>:l</code> (default), return the predicted <strong>class labels</strong> for each matrix in <code>𝐏Te</code>, as an <a href="../MainModule/#IntVector-1">IntVector</a>. Those labels are &#39;1&#39; for class 1 and &#39;2&#39; for class 2;</p><p>if <code>what</code> is <code>:probabilities</code> or <code>:p</code>, return the predicted <strong>probabilities</strong> for each matrix in <code>𝐏Te</code> to belong to each classe, as a <span>$k$</span>-vector of <span>$z$</span> vectors holding reals in <span>$[0, 1]$</span> (probabilities). The &#39;probabilities&#39; are obtained passing to a <a href="https://en.wikipedia.org/wiki/Softmax_function">softmax function</a> the output of the ENLR model and zero;</p><p>if <code>what</code> is <code>:f</code> or <code>:functions</code>, return the <strong>output function</strong> of the model, which is the raw output of the ENLR model.</p><p>If <code>fitType</code> = <code>:best</code> (default), the best model that has been found by cross-validation is used for prediction.</p><p>If <code>fitType</code> = <code>:path</code>,</p><ul><li>if <code>onWhich</code> is a valid serial number for a model in the <code>model.path</code>,</li></ul><p>then this model is used for prediction,</p><ul><li>if <code>onWhich</code> is zero, all model in the <code>model.path</code> will be used for</li></ul><p>predictions, thus the output will be multiplied by the number of models in <code>model.path</code>.</p><p>Argumet <code>onWhich</code> has no effect if <code>fitType</code> = <code>:best</code>.</p><div class="admonition is-info"><header class="admonition-header">Nota Bene</header><div class="admonition-body"><p>By default, the <a href="#StatsBase.fit"><code>fit</code></a> function fits only the <code>best</code> model. If you want to use the <code>fitType</code> = <code>:path</code> option you need to invoke the fit function with optional keyword argument <code>fitType</code>=<code>:path</code> or <code>fitType</code>=<code>:all</code>. See the <a href="#StatsBase.fit"><code>fit</code></a> function for details.</p></div></div><p>Optional keyword argument <code>transfer</code> can be used to specify the principal inverse square root (ISR) of a new mean to be used as base point for projecting the matrices in <code>𝐏Te</code> onto the tangent space. By default <code>transfer</code> is equal to nothing, implying that the base point will be the mean used to fit the model. Passing a new mean ISR allows the <em>adaptation</em> first described in Barachant et <em>al.</em>(2013). Typically <code>transfer</code> is the ISR of the mean of the matrices in <code>𝐏Te</code> or of a subset of them. Notice that this actually performs <em>transfer learning</em> by parallel transporting both the training and test data to the identity matrix as defined in Zanini et <em>al.</em>(2018) and later taken up in Rodrigues et <em>al.</em>(2019)<a href="../#-1">🎓</a>.</p><p>If <code>verbose</code> is true (default), information is printed in the REPL. This option is included to allow repeated calls to this function without crowding the REPL.</p><p>If ⏩ = true (default) and <code>𝐏Te</code> is an ℍVector type, the projection onto the tangent space is multi-threaded.</p><p><strong>See</strong>: <a href="../MainModule/#notation-and-nomenclature-1">notation &amp; nomenclature</a>, <a href="../MainModule/#the-ℍVector-type-1">the ℍVector type</a>.</p><p><strong>See also</strong>: <a href="#StatsBase.fit"><code>fit</code></a>, <a href="#PosDefManifoldML.cvAcc"><code>cvAcc</code></a>, <a href="../tools/#PosDefManifoldML.predictErr"><code>predictErr</code></a>.</p><p><strong>Examples</strong></p><pre><code class="language-none">using PosDefManifoldML, PosDefManifold
+
+# generate some data
+PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80)
+
+# fit an ENLR lasso model and find the best model by cv
+m=fit(ENLR(Fisher), PTr, yTr)
+
+# predict labels from the best model
+yPred=predict(m, PTe, :l)
+# prediction error
+predErr=predictErr(yTe, yPred)
+
+# predict probabilities from the best model
+predict(m, PTe, :p)
+
+# output functions from the best model
+predict(m, PTe, :f)
+
+# fit a regularization path for an ENLR lasso model
+m=fit(ENLR(Fisher), PTr, yTr; fitType=:path)
+
+# predict labels using a specific model
+yPred=predict(m, PTe, :l, :path, 10)
+
+# predict labels for all models
+yPred=predict(m, PTe, :l, :path, 0)
+# prediction error for all models
+predErr=[predictErr(yTe, yPred[:, i]) for i=1:size(yPred, 2)]
+
+# predict probabilities from a specific model
+predict(m, PTe, :p, :path, 12)
+
+# predict probabilities from all models
+predict(m, PTe, :p, :path, 0)
+
+# output functions from specific model
+predict(m, PTe, :f, :path, 3)
+
+# output functions for all models
+predict(m, PTe, :f, :path, 0)
+</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/Marco-Congedo/PosDefManifoldML.jl/blob/b5f3c7ba4978690fbb5b31f23faa91750d65b038/src/enlr.jl#L570-L691">source</a></section><section><div><pre><code class="language-none">function predict(model :: SVMmodel,
+				𝐏Te	:: Union{ℍVector, Matrix{Float64}},
+				what	:: Symbol = :labels;
+	transfer :: Union{ℍ, Nothing} = nothing,
+	verbose	 :: Bool = true,
+	⏩		:: Bool = true)</code></pre><p>Given an <a href="../svm/#PosDefManifoldML.SVM"><code>SVM</code></a> <code>model</code> trained (fitted) on 2 classes and a testing set of <span>$k$</span> positive definite matrices <code>𝐏Te</code> of type <a href="https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1">ℍVector</a>,</p><p>For the meaning of arguments <code>what</code>, <code>transfer</code> and <code>verbose</code>, see the documentation of the <a href="#StatsBase.predict"><code>predict</code></a> function for the ENLR model.</p><p>If ⏩ = true (default) and <code>𝐏Te</code> is an ℍVector type, the projection onto the tangent space will be multi-threaded. Also, the prediction of the LIBSVM function will be multi-threaded.</p><p><strong>See</strong>: <a href="../MainModule/#notation-and-nomenclature-1">notation &amp; nomenclature</a>, <a href="../MainModule/#the-ℍVector-type-1">the ℍVector type</a>.</p><p><strong>See also</strong>: <a href="#StatsBase.fit"><code>fit</code></a>, <a href="#PosDefManifoldML.cvAcc"><code>cvAcc</code></a>, <a href="../tools/#PosDefManifoldML.predictErr"><code>predictErr</code></a>.</p><p><strong>Examples</strong></p><pre><code class="language-none">using PosDefManifoldML, PosDefManifold
+
+# generate some data
+PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80)
+
+# fit an SVM model
+m=fit(SVM(Fisher), PTr, yTr)
+
+# predict labels
+yPred=predict(m, PTe, :l)
+# prediction error
+predErr=predictErr(yTe, yPred)
+
+# predict probabilities
+predict(m, PTe, :p)
+
+# output functions
+predict(m, PTe, :f)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/Marco-Congedo/PosDefManifoldML.jl/blob/b5f3c7ba4978690fbb5b31f23faa91750d65b038/src/svm.jl#L380-L427">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PosDefManifoldML.cvAcc" href="#PosDefManifoldML.cvAcc"><code>PosDefManifoldML.cvAcc</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia">function cvAcc(model    :: MLmodel,
+               𝐏Tr     :: ℍVector,
+               yTr      :: IntVector;
+           nFolds       :: Int      = min(10, length(yTr)÷3),
+           scoring      :: Symbol   = :b,
+           shuffle      :: Bool     = false,
+           verbose      :: Bool     = true,
+           outModels    :: Bool     = false,
+           ⏩           :: Bool     = true,
+           fitArgs...)</code></pre><p>Cross-validation accuracy for a machine learning <code>model</code>: given an ℍVector <code>𝐏Tr</code> holding <span>$k$</span> Hermitian matrices, an <a href="../MainModule/#IntVector-1">IntVector</a> <code>yTr</code> holding the <span>$k$</span> labels for these matrices and the number of folds <code>nFolds</code>, return a <a href="#PosDefManifoldML.CVacc"><code>CVacc</code></a> structure.</p><p><strong>optional keyword arguments</strong></p><p><code>nFolds</code> by default is set to the minimum between 10 and the number of observation ÷ 3 (integer division).</p><p>If <code>scoring</code>=:b (default) the <strong>balanced accuracy</strong> is computed. Any other value will make the function returning the regular <strong>accuracy</strong>. Balanced accuracy is to be preferred for unbalanced classes. For balanced classes the balanced accuracy reduces to the regular accuracy, therefore there is no point in using regular accuracy if not to avoid a few unnecessary computations when the class are balanced.</p><p>For the meaning of the <code>shuffle</code> argument (false by default), see function <a href="#PosDefManifoldML.cvSetup"><code>cvSetup</code></a>, to which this argument is passed.</p><p>If <code>verbose</code> is true (default), information is printed in the REPL. This option is included to allow repeated calls to this function without crowding the REPL.</p><p>If <code>outModels</code> is true return a 2-tuple holding a <a href="#PosDefManifoldML.CVacc"><code>CVacc</code></a> structure and a <code>nFolds</code>-vector of the model fitted for each fold, otherwise (default), return only a <a href="#PosDefManifoldML.CVacc"><code>CVacc</code></a> structure.</p><p>If <code>⏩</code> the folds and some other computations are multi-threaded. It is true by default. Set it to false if there are problems in running this function.</p><p><code>fitArgs</code> are optional keyword arguments that are passed to the <a href="#StatsBase.fit"><code>fit</code></a> function called for each fold of the cross-validation. For each machine learning model, all optional keyword arguments of their fit method are elegible to be passed here, however, the arguments listed in the following table for each model should not be passed. Note that if they are passed, they will be disabled:</p><table><tr><th style="text-align: center">MDM/MDMF</th><th style="text-align: center">ENLR</th><th style="text-align: center">SVM</th></tr><tr><td style="text-align: center"><code>verbose</code></td><td style="text-align: center"><code>verbose</code></td><td style="text-align: center"><code>verbose</code></td></tr><tr><td style="text-align: center"><code>⏩</code></td><td style="text-align: center"><code>⏩</code></td><td style="text-align: center"><code>⏩</code></td></tr><tr><td style="text-align: center"></td><td style="text-align: center"><code>meanISR</code></td><td style="text-align: center"><code>meanISR</code></td></tr><tr><td style="text-align: center"></td><td style="text-align: center"><code>meanInit</code></td><td style="text-align: center"><code>meanInit</code></td></tr><tr><td style="text-align: center"></td><td style="text-align: center"><code>fitType</code></td><td style="text-align: center"></td></tr><tr><td style="text-align: center"></td><td style="text-align: center"><code>offsets</code></td><td style="text-align: center"></td></tr><tr><td style="text-align: center"></td><td style="text-align: center"><code>lambda</code></td><td style="text-align: center"></td></tr><tr><td style="text-align: center"></td><td style="text-align: center"><code>folds</code></td><td style="text-align: center"></td></tr></table><p>Also, if you pass a <code>w</code> (weights for tangent space projection) argument, do not pass a vector of weights, just pass a symbol, e.g., <code>w=:b</code> for balancing weights.</p><p><strong>See</strong>: <a href="../MainModule/#notation-and-nomenclature-1">notation &amp; nomenclature</a>, <a href="../MainModule/#the-ℍVector-type-1">the ℍVector type</a>.</p><p><strong>See also</strong>: <a href="#StatsBase.fit"><code>fit</code></a>, <a href="#StatsBase.predict"><code>predict</code></a>.</p><p><strong>Examples</strong></p><pre><code class="language-none">using PosDefManifoldML, PosDefManifold
+
+# generate some data
+PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80)
+
+# perform 10-fold cross-validation using the minimum distance to mean classifier
+cv=cvAcc(MDM(Fisher), PTr, yTr)
+
+# ...using the lasso logistic regression classifier
+cv=cvAcc(ENLR(Fisher), PTr, yTr)
+
+# ...using the support-vector machine classifier
+cv=cvAcc(SVM(Fisher), PTr, yTr)
+
+# ...With a Polynomial kernel of order 3 (default)
+cv=cvAcc(SVM(Fisher), PTr, yTr; kernel=kernel.Polynomial)
+
+# perform 8-fold cross-validation instead
+# (and see that you can go pretty fast if your PC has 8 threads)
+cv=cvAcc(SVM(Fisher), PTr, yTr; nFolds=8)
+
+# ...balance the weights for tangent space projection
+cv=cvAcc(ENLR(Fisher), PTr, yTr; nFolds=8, w=:b)
+
+# perform another cross-validation shuffling the folds
+cv=cvAcc(ENLR(Fisher), PTr, yTr; shuffle=true, nFolds=8, w=:b)
+</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/Marco-Congedo/PosDefManifoldML.jl/blob/b5f3c7ba4978690fbb5b31f23faa91750d65b038/src/cv.jl#L81-L183">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PosDefManifoldML.cvSetup" href="#PosDefManifoldML.cvSetup"><code>PosDefManifoldML.cvSetup</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia">function cvSetup(k       :: Int,
+                 nCV     :: Int;
+                 shuffle :: Bool = false)</code></pre><p>Given <code>k</code> elements and a parameter <code>nCV</code>, a nCV-fold cross-validation is obtained defining <span>$nCV$</span> permutations of <span>$k$</span> elements in <span>$nTest=k÷nCV$</span> (integer division) elements for the test and <span>$k-nTest$</span> elements for the training, in such a way that each element is represented in only one permutation.</p><p>Said differently, given a length <code>k</code> and the number of desired cross-validations <code>nCV</code>, this function generates indices from the sequence of natural numbers <span>$1,..,k$</span> to obtain all nCV-fold cross-validation sets. Specifically, it generates <span>$nCV$</span> vectors of indices for generating test sets and <span>$nCV$</span> vectors of indices for geerating training sets.</p><p>If optional keyword argument <code>shuffle</code> is true, the sequence of natural numbers <span>$1,..,k$</span> is shuffled before running the function, thus in this case two successive runs of this function will give different cross-validation sets, hence different accuracy scores. By default <code>shuffle</code> is false, so as to allow exactly the same result in successive runs. Note that no random initialization for the shuffling is provided, so as to allow the replication of the same random sequences starting again the random generation from scratch.</p><p>This function is used in <a href="#PosDefManifoldML.cvAcc"><code>cvAcc</code></a>. It constitutes the fundamental basis to implement customized cross-validation procedures.</p><p>Return the 2-tuple with:</p><ul><li>A vector of <code>nCV</code> vectors holding the indices for the training sets,</li><li>A vector of <code>nCV</code> vectors holding the indices for the corresponding test sets.</li></ul><p><strong>Examples</strong></p><pre><code class="language-none">using PosDefManifoldML, PosDefManifold
+
+cvSetup(10, 2)
+# return:
+# (Array{Int64,1}[[6, 7, 8, 9, 10], [1, 2, 3, 4, 5]],
+#  Array{Int64,1}[[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]])
+
+cvSetup(10, 2, shuffle=true)
+# return:
+# (Array{Int64,1}[[5, 4, 6, 1, 9], [3, 7, 8, 2, 10]],
+#  Array{Int64,1}[[3, 7, 8, 2, 10], [5, 4, 6, 1, 9]])
+
+cvSetup(10, 3)
+# return:
+# (Array{Int64,1}[[4, 5, 6, 7, 8, 9, 10], [1, 2, 3, 7, 8, 9, 10], [1, 2, 3, 4, 5, 6]],
+#  Array{Int64,1}[[1, 2, 3], [4, 5, 6], [7, 8, 9, 10]])
+</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/Marco-Congedo/PosDefManifoldML.jl/blob/b5f3c7ba4978690fbb5b31f23faa91750d65b038/src/cv.jl#L302-L359">source</a></section></article></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../svm/">« Support-Vector Machine</a><a class="docs-footer-nextpage" href="../contribute/">How to contribute »</a></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Sunday 5 April 2020 20:06">Sunday 5 April 2020</span>. Using Julia version 1.4.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
