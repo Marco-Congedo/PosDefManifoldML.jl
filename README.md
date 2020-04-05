@@ -10,7 +10,13 @@
 
 ![](/docs/src/assets/Fig1.jpg)
 
-For the moment being, **PosDefManifoldML** implements the Riemannian **Minimum Distance to Mean (MDM)** classifier, which operates directly in **P** and the **elastic net logistic regression** classifier in the tangent space, including the pure **Ridge** and pure **Lasso** logistic regresison model. The latter model can be used also for traditional (Euclidean) feature vectors, making of this package also a nice interface to the binomial family of generalized linear models implemented in *GLMNet.jl*.  
+For the moment being, **PosDefManifoldML** implements the Riemannian **Minimum Distance to Mean (MDM)** 
+classifier, which operates directly in **P**, the **elastic net logistic regression** 
+(including the pure **Ridge** and pure **Lasso** logistic regression model) and several 
+**support-vector machine** classifiers in the tangent space. 
+The models operating in the tangent space can be used also for traditional (Euclidean) feature vectors, 
+making of this package also a nice interface to the binomial family of generalized linear models implemented 
+in *GLMNet.jl* and all SVM models implemented in *LIBSVM.jl*
 
 ## Installation
 
@@ -26,7 +32,7 @@ Independent reviewers are more then welcome.
 
 ## Examples
 
-```
+```julia
 using PosDefManifoldML
 
 # simulate symmetric positive definite (SDP) matrices data for a 2-class problem.
@@ -39,7 +45,7 @@ PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80)
 # # # MACHINE LEARNING IN THE PD MANIFOLD # # #
 
 # (1)
-# craete and fit (train) a Riemannian Minimum Distance to Mean (MDM) model:
+# create and fit (train) a Riemannian Minimum Distance to Mean (MDM) model:
 model=fit(MDM(), PTr, yTr)
 #
 # predict labels (classify the testing set):
@@ -58,7 +64,7 @@ cv = cvAcc(MDM(), PTr, yTr)
 # # # MACHINE LEARNING IN THE TANGENT SPACE # # #
 
 # (1)
-# craete and fit (train) LASSO Logistic Regression models
+# create and fit (train) LASSO Logistic Regression models
 # finding the best model by cross-validation:
 model=fit(ENLR(), PTr, yTr)
 #
@@ -83,7 +89,8 @@ model=fit(ENLR(), PTr, yTr; alpha=0.5)
 cv = cvAcc(ENLR(), PTr, yTr; alpha=0.5)
 
 # (1)
-# craete and fit (train) an SVM model
+# create and fit (train) an SVM with Radial Basis kernel
+
 # finding the best model by cross-validation:
 model=fit(SVM(), PTr, yTr)
 #
@@ -109,6 +116,7 @@ author, is a research scientist of [CNRS](http://www.cnrs.fr/en) (Centre Nationa
 
 Saloni Jain is a student at the
 [Indian Institute of Technology, Kharagpur](http://www.iitkgp.ac.in/), India.
+
 
 | **Documentation**  |
 |:---------------------------------------:|
