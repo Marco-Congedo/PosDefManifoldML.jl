@@ -1,7 +1,7 @@
 #   Unit "tools.jl" of the PosDefManifoldML Package for Julia language
 
 #   MIT License
-#   Copyright (c) 2019,
+#   Copyright (c) 2019-2020
 #   Marco Congedo, CNRS, Grenoble, France:
 #   https://sites.google.com/site/marcocongedo/home
 
@@ -114,9 +114,9 @@ function tsMap(metric :: Metric,
 		 meanInit  :: Union{ℍ, Nothing}  = nothing,
 	  	 tol       :: Real               = 0.,
 		 transpose :: Bool   			 = true,
-		 vecRange  :: UnitRange          = 1:size(𝐏[1], 1))
+		 vecRange  :: UnitRange          = 1:size(𝐏[1], 2))
 
-	k, n, getMeanISR = dim(𝐏, 1), dim(𝐏, 2), meanISR==nothing
+	k, n, getMeanISR = dim(𝐏, 1), dim(𝐏, 2), meanISR===nothing
     getMeanISR ? G⁻½ = pow(mean(metric, 𝐏;
 	                            w=w,
 								✓w=✓w,
@@ -356,41 +356,134 @@ end
 
 """
 ```
-function predictErr(yTrue::IntVector, yPred::IntVector;
-	          		digits::Int=3))
+function confusionMat(yTrue::IntVector, yPred::IntVector)
 ```
 
-Return the percent prediction error given a vector of true labels and a vector
-of predicted labels.
+Return the *confusion matrix* given integer vectors of true label `yTrue`
+and predicted labels `yPred`.
 
-The order of arguments does not matter.
+The length of `yTrue` and `yPred` must be equal. Furthermore,
+the `yTrue` vector must comprise all natural numbers
+in between 1 and *z*, where *z* is the number of classes.
 
-The error is rounded to the number of optional keyword argument
-`digits`, 3 by default.
+The confusion matrix will have size *z*x*z*. It is computed
+starting from a matrix filled everywhere with zeros and
+adding, for each label, 1 at entry [i, j] of the matrix, where
+i is the true label and j the predicted label, and finally
+dividing the matrix by the sum of all its elements.
+Therefore, the entries of the confusion matrix sum up to 1.0.
 
-**See** [`predict`](@ref)
+**See** [`predict`](@ref), [`predictAcc`](@ref), [`predictErr`](@ref).
 
 **Examples**
 
 ```
 using PosDefManifoldML
-predictErr([1, 1, 2, 2], [1, 1, 1, 2])
-# return: 25.0
+julia> confusionMat([1, 1, 1, 2, 2], [1, 1, 1, 1, 2])
+# return: [0.6 0.0; 0.2 0.2]
 ```
 """
-function predictErr(yTrue::IntVector, yPred::IntVector;
-	          digits::Int=3)
+function confusionMat(yTrue::IntVector, yPred::IntVector)
+
+	n1=length(yTrue)
+	n2=length(yPred)
+	if n1≠n2
+		@error 📌*", function ConfusionMat: the length of the two argument vectors must be equal." n1 n2
+		return
+	end
+
+	cTrue=sort(unique(yTrue))
+	z = length(cTrue)
+	if cTrue≠[i for i∈1:z]
+		@error 📌*", function ConfusionMat: the `yTrue` vector must contains all natural numbers from 1 to the number of classes. It contains instead: " cTrue
+		return
+	end
+
+	CM = zeros(Float64, z, z)
+	for i=1:n1 CM[yTrue[i], yPred[i]]+=1. end
+	return CM/=sum(CM)
+end
+
+"""
+```
+function predictAcc(yTrue::IntVector, yPred::IntVector;
+					scoring:: Symbol = :b,
+					digits::Int=3)
+```
+
+Return the prediction accuracy as a proportion, that is, ∈[0, 1],
+given a vector of true labels `yTrue` and a vector of
+predicted labels `yPred`.
+
+If `scoring`=:b (default) the **balanced accuracy** is computed.
+Any other value will make the function returning the regular **accuracy**.
+Balanced accuracy is to be preferred for unbalanced classes.
+For balanced classes the balanced accuracy reduces to the
+regular accuracy, therefore there is no point in using regular accuracy
+if not to avoid a few unnecessary computations when the class are balanced.
+
+The error is rounded to the number of optional keyword argument
+`digits`, 3 by default.
+
+**Maths**
+
+The regular *accuracy* is given by sum of the diagonal elements
+of the confusion matrix.
+
+For the *balanced accuracy*, the diagonal elements
+of the confusion matrix are divided by the respective row sums
+and their mean is taken.
+
+**See** [`predict`](@ref), [`predictErr`](@ref), [`confusionMat`](@ref)
+
+**Examples**
+
+```
+using PosDefManifoldML
+julia> predictAcc([1, 1, 1, 2, 2], [1, 1, 1, 1, 2]; scoring=:a)
+# regular accuracy, return: 0.8
+julia> predictAcc([1, 1, 1, 2, 2], [1, 1, 1, 1, 2])
+# balanced accuracy, return: 0.75
+```
+"""
+function predictAcc(yTrue::IntVector, yPred::IntVector;
+					scoring:: Symbol = :b,
+	          		digits::Int=3)
+
 	n1=length(yTrue)
 	n2=length(yPred)
 	if n1≠n2
 		@error 📌*", function predictErr: the length of the two argument vectors must be equal." n1 n2
 		return
-	else
-		round(sum(y1≠y2 for (y1, y2) ∈ zip(yTrue, yPred))/n1*100; digits=digits)
 	end
+
+	if scoring≠:b # regular accuracy
+		return round(sum(y1==y2 for (y1, y2) ∈ zip(yTrue, yPred))/n1; digits=digits)
+	else # balanced accuracy
+		CM=confusionMat(yTrue, yPred)
+		z=size(CM, 1)
+		return round(sum(CM[i, i]/sum(CM[i, :]) for i=1:z) / z; digits=digits)
+	end
+
 end
 
+"""
+```
+function predictErr(yTrue::IntVector, yPred::IntVector;
+					scoring:: Symbol = :b,
+					digits::Int=3)
+```
 
+Return the complement of the predicted accuracy, that is, 1.0 minus
+the result of [`predictAcc`](@ref).
+
+**See** [`predictAcc`](@ref).
+"""
+predictErr(yTrue::IntVector, yPred::IntVector;
+			scoring::Symbol = :b,
+	        digits::Int=3) =
+	round(1.0 - predictAcc(yTrue, yPred; scoring=scoring, digits=8);
+		  digits=digits)
 
 """
 ```
@@ -632,13 +725,13 @@ end
 # Get the feature matrix for fit functions of ML model in the tangent space:
 # if `𝐏Tr` is a matrix just return the columns in `vecRange` (by default all).
 # if `𝐏Tr` is vector of Hermitian matrices, they are projected onto the
-# tangent space. If the the inversesquare root of a base point `meanISR`
+# tangent space. If the inversesquare root of a base point `meanISR`
 # is provided, the projection is obtained at this base point, otherwise the
 # mean of all points is computed and used as base point.
 # If the mean is to be computed by an iterative algorithm (e.g., if the metric
 # of the model is the Fisher metric), an initialization `meanInit`, weights
 # `w` and a tolerance `tol` are used.
-# Once projected onto the tangent spave, the matrces in `𝐏Tr` are vectorized
+# Once projected onto the tangent space, the matrices in `𝐏Tr` are vectorized
 # using only the rows (or columns) specified by `vecRange`.
 # if `verbose` is true, print "Projecting data onto the tangent space..."
 # if `transpose` the feature vectors are in the rows of `X`, otherwise in the

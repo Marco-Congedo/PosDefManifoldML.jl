@@ -1,25 +1,25 @@
 name = "PosDefManifoldML"
 uuid = "a07f4532-e2c9-11e9-2ea2-6d98fe4a1f21"
 authors = ["Marco-Congedo <marco.congedo@gmail.com>"]
-version = "0.3.1"
+version = "0.4.0"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
-Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
-Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
-LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 GLMNet = "8d5ece8b-de18-5317-b113-243142960cc6"
 LIBSVM = "b1bec4e5-fd48-53fe-b0cb-9723c09d164b"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 PosDefManifold = "f45a3650-5c51-11e9-1e9a-133aa5e309cf"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
-Distributions = "0.21.11"
+Distributions = "0.22"
 LIBSVM = "0.4.0"
-GLMNet = "0.4.2"
-StatsBase = "0.32.0"
-PosDefManifold = "0.4.2"
+PosDefManifold = "0.4.7"
+StatsBase = "0.32"
+GLMNet = "0.5.1"
 julia = "1"
 
 [extras]

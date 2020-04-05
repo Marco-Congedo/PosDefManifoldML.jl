@@ -1,8 +1,8 @@
 #   Unit "simulations.jl" of the PosDefManifoldML Package for Julia language
-#   v 0.3.1 - last update 22th of December 2019
+#   v 0.4.0 - last update April 5 2020
 #
 #   MIT License
-#   Copyright (c) 2019,
+#   Copyright (c) 2019-2020,
 #   Marco Congedo, CNRS, Grenobe, France:
 #   https://sites.google.com/site/marcocongedo/home
 
@@ -102,6 +102,8 @@ export
     tsMap,
     tsWeights,
     gen2ClassData,
+	confusionMat,
+	predictAcc,
     predictErr,
 	rescale!
 
@@ -112,7 +114,7 @@ include("tools.jl")
 include("svm.jl")
 
 
-println("\n⭐ "," Welcome to the", titleFont," ",📌," ",defaultFont,"package", " ⭐\n")
+println("\n⭐ "," Welcome to the", titleFont," ",📌,".jl ",defaultFont,"package", " ⭐\n")
 @info " "
 println(" Your Machine `",gethostname(),"` (",Sys.MACHINE, ")")
 println(" runs on kernel ",Sys.KERNEL," with word size ",Sys.WORD_SIZE,".")
