@@ -239,6 +239,7 @@ function cvAcc(model    :: MLmodel,
     # for the TSmodels it is the mean of such means.
     # This is a quick approximation since the initialization is not critical,
     # but it hastens the computation time since itera. alg. require less iters.
+    #=
     if      model.metric in (Fisher, logdet0)
                 M0=means(logEuclidean, 𝐐; ⏩=⏩)
                 if model isa TSmodel M0=mean(logEuclidean, M0; ⏩=⏩) end
@@ -247,32 +248,33 @@ function cvAcc(model    :: MLmodel,
                 if model isa Tsmodel M0=generalizedMean(M0, 0.5; ⏩=⏩) end
     else    M0=nothing;
     end
+    =#
 
     # perform cv
     function fold(f::Int)
         @static if VERSION >= v"1.3" print(defaultFont, rand(dice), " ") end # print a random dice in the REPL
 
         # get testing data for current fold
-        for i=1:z @inbounds 𝐐Te[f][i] = [𝐐[i][j] for j ∈ indTe[i][f]] end
+        for i=1:z 𝐐Te[f][i] = [𝐐[i][j] for j ∈ indTe[i][f]] end
 
         # get training labels for current fold
-        for i=1:z, j ∈ indTr[i][f] @inbounds push!(zTr[f], Int64(i)) end
+        for i=1:z, j ∈ indTr[i][f] push!(zTr[f], Int64(i)) end
 
         # get training data for current fold
-        for i=1:z, j ∈ indTr[i][f] @inbounds push!(𝐐Tr[f], 𝐐[i][j]) end
+        for i=1:z, j ∈ indTr[i][f] push!(𝐐Tr[f], 𝐐[i][j]) end
 
         # fit machine learning model
         ℳ[f]=fit(model, 𝐐Tr[f], zTr[f];
-                  meanInit=M0,
+                  #meanInit=M0,
                   verbose=false,
                   fitArgs✔...)
 
 
         # predict labels for current fold
-        @inbounds for i=1:z pl[f][i]=predict(ℳ[f], 𝐐Te[f][i], :l; verbose=false) end
+        for i=1:z pl[f][i]=predict(ℳ[f], 𝐐Te[f][i], :l; verbose=false) end
 
         # compute confusion matrix for current fold
-        @inbounds for i=1:z, s=1:length(pl[f][i]) CM[f][i, pl[f][i][s]]+=1. end
+        for i=1:z, s=1:length(pl[f][i]) CM[f][i, pl[f][i][s]]+=1. end
 
         # compute balanced accuracy or accuracy for current CV
         sumCM=sum(CM[f])
