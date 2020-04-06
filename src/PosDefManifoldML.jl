@@ -96,6 +96,7 @@ export
     # from cv.jl
     CVacc,
     cvAcc,
+	cvAcc2,
     cvSetup,
 
     # from tools.jl

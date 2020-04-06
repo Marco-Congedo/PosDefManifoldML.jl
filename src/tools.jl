@@ -406,14 +406,22 @@ end
 
 """
 ```
+(1)
 function predictAcc(yTrue::IntVector, yPred::IntVector;
-					scoring:: Symbol = :b,
-					digits::Int=3)
+		scoring:: Symbol = :b,
+		digits::Int=3)
+
+(2)
+function predictAcc(CM:: Matrix{R};
+		scoring:: Symbol = :b,
+		digits::Int=3) where R<:Real
 ```
 
 Return the prediction accuracy as a proportion, that is, ∈[0, 1],
-given a vector of true labels `yTrue` and a vector of
-predicted labels `yPred`.
+given
+
+- (1) the integer vectors of true labels `yTrue` and of predicted labels `yPred`,
+- (2) a confusion matrix.
 
 If `scoring`=:b (default) the **balanced accuracy** is computed.
 Any other value will make the function returning the regular **accuracy**.
@@ -467,15 +475,45 @@ function predictAcc(yTrue::IntVector, yPred::IntVector;
 
 end
 
+function predictAcc(CM:: Matrix{R};
+					scoring:: Symbol = :b,
+					digits::Int=3) where R<:Real
+	nRows, nCols = size(CM)
+	if size(CM, 1)≠size(CM, 2)
+		@error 📌*", function predictAcc or predictErr: the `CM` argument must be square as this must be a confusion matrix." nRows nCols
+		return
+	end
+
+	sumEl=sum(CM)
+	if sumEl≉  1.0
+		@error 📌*", function predictAcc or predictErr: the elements of `CM` matrix argument must be sum up to 1.0 as this must be a confusion matrix." sumEl
+		return
+	end
+
+	return scoring==:b ? round(sum(CM[i, i]/sum(CM[i, :]) for i=1:nRows) / nRows;
+								digits=digits) :
+						 round(tr(CM);
+						 		digits=digits)
+end
+
+
 """
 ```
+(1)
 function predictErr(yTrue::IntVector, yPred::IntVector;
-					scoring:: Symbol = :b,
-					digits::Int=3)
+		scoring:: Symbol = :b,
+		digits::Int=3)
+(2)
+function predictErr(CM:: Matrix{R};
+		scoring:: Symbol = :b,
+		digits::Int=3) where R<:Real
 ```
 
 Return the complement of the predicted accuracy, that is, 1.0 minus
-the result of [`predictAcc`](@ref).
+the result of [`predictAcc`](@ref), given
+
+- (1) the integer vectors of true labels `yTrue` and of predicted labels `yPred`,
+- (2) a confusion matrix.
 
 **See** [`predictAcc`](@ref).
 """
@@ -485,11 +523,16 @@ predictErr(yTrue::IntVector, yPred::IntVector;
 	round(1.0 - predictAcc(yTrue, yPred; scoring=scoring, digits=8);
 		  digits=digits)
 
+predictErr(CM:: Matrix{R};
+			scoring:: Symbol = :b,
+			digits::Int=3) where R<:Real =
+	round(1.0 - predictAcc(CM; scoring=scoring, digits=8);
+		  digits=digits)
+
 """
 ```
-function rescale!(	X::Matrix{T},
-					bounds::Tuple=(-1, 1);
-					dims::Int=1) where T<:Real
+function rescale!(X::Matrix{T},	bounds::Tuple=(-1, 1);
+		dims::Int=1) where T<:Real
 ```
 Rescale the columns or the rows of real matrix `X` to be in range [a, b],
 where a and b are the first and seconf elements of tuple `bounds`.
