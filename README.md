@@ -20,20 +20,14 @@ in *GLMNet.jl* and all SVM models implemented in *LIBSVM.jl*
 
 ## Installation
 
-The package is still not registered. To install it,
-execute the following command in Julia's REPL:
+Run this line in Julia's REPL:
 
-    ]add https://github.com/Marco-Congedo/PosDefManifoldML.jl
-
-## Disclaimer
-
-This package is still in a pre-release stage.
-Independent reviewers are more then welcome.
+    ]add PosDefManifold PosDefManifoldML
 
 ## Examples
 
 ```julia
-using PosDefManifoldML
+using PosDefManifold, PosDefManifoldML
 
 # simulate symmetric positive definite (SDP) matrices data for a 2-class problem.
 # P is a vector of SPD matrices, y a vector of labels. Tr=training, Te=testing.
@@ -51,7 +45,7 @@ model=fit(MDM(), PTr, yTr)
 # predict labels (classify the testing set):
 yPred=predict(model, PTe, :l)
 #
-# prediction error in percent
+# prediction error (in proportion)
 predictErr(yTe, yPred)
 #
 # predict probabilities for the matrices in `PTe` of belonging to each class:
@@ -71,7 +65,7 @@ model=fit(ENLR(), PTr, yTr)
 # predict labels (classify the testing set) using the 'best' model:
 yPred=predict(model, PTe, :l)
 #
-# prediction error in percent
+# prediction error (in proportion)
 predictErr(yTe, yPred)
 #
 # ...
@@ -97,7 +91,7 @@ model=fit(SVM(), PTr, yTr)
 # predict labels (classify the testing set) using the 'best' model:
 yPred=predict(model, PTe, :l)
 #
-# prediction error in percent
+# prediction error (in proportion)
 predictErr(yTe, yPred)
 #
 # ...
@@ -116,6 +110,7 @@ author, is a research scientist of [CNRS](http://www.cnrs.fr/en) (Centre Nationa
 
 Saloni Jain is a student at the
 [Indian Institute of Technology, Kharagpur](http://www.iitkgp.ac.in/), India.
+
 
 
 | **Documentation**  |
