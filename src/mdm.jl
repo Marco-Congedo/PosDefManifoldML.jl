@@ -191,13 +191,16 @@ function fit(model :: MDMmodel,
 
     # store the inverse of the means for optimizing distance computations
     # if the metric is Fisher and the matrices are small
-    if ℳ.metric==Fisher && size(𝐏Tr[1], 1)<=100
-        if ⏩
-            ℳ.imeans=ℍVector(undef, length(ℳ.means))
-            @threads for i=1:length(ℳ.means) @inbounds ℳ.imeans[i]=inv(ℳ.means[i]) end
-        else
-            ℳ.imeans=ℍVector([inv(G) for G ∈ ℳ.means])
+    if ℳ.metric==Fisher
+        if size(𝐏Tr[1], 1)<=100
+            if ⏩
+                ℳ.imeans=ℍVector(undef, length(ℳ.means))
+                @threads for i=1:length(ℳ.means) @inbounds ℳ.imeans[i]=inv(ℳ.means[i]) end
+            else
+                ℳ.imeans=ℍVector([inv(G) for G ∈ ℳ.means])
+            end
         end
+    else ℳ.imeans=nothing
     end
 
     ℳ.featDim =_triNum(𝐏Tr[1])
@@ -379,7 +382,7 @@ end
 function getDistances(metric :: Metric,
                       means  :: ℍVector,
                       𝐏      :: ℍVector;
-                imeans  :: Union{ℍVector, Nothing} = false,
+                imeans  :: Union{ℍVector, Nothing} = nothing,
                 scale   :: Bool = false,
                 ⏩      :: Bool = true)
 ```
@@ -399,7 +402,8 @@ for details on the supported distance functions.
 
 The computation of distances is optimized for the Fisher metric
 if an ℍVector holding the inverse of the means in `means` is passed as
-optional keyword argument `imeans`.
+optional keyword argument `imeans`. For other metrics this argument
+is ignored.
 
 If `scale` is true,
 the distances are divided by the size of the matrices in `𝐏`.
@@ -415,7 +419,7 @@ The result is a ``z``x``k`` matrix of squared distances.
 function getDistances(metric :: Metric,
              means  :: ℍVector,
              𝐏      :: ℍVector;
-          imeans :: Union{ℍVector, Nothing} = false,
+          imeans :: Union{ℍVector, Nothing} = nothing,
           scale  :: Bool = false,
           ⏩    :: Bool = true)
 
