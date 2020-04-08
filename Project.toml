@@ -1,7 +1,7 @@
 name = "PosDefManifoldML"
 uuid = "a07f4532-e2c9-11e9-2ea2-6d98fe4a1f21"
 authors = ["Marco-Congedo <marco.congedo@gmail.com>"]
-version = "0.4.0"
+version = "0.4.1"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"

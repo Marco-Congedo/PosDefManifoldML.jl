@@ -457,11 +457,10 @@ julia> predictAcc([1, 1, 1, 2, 2], [1, 1, 1, 1, 2])
 function predictAcc(yTrue::IntVector, yPred::IntVector;
 					scoring:: Symbol = :b,
 	          		digits::Int=3)
-
 	n1=length(yTrue)
 	n2=length(yPred)
 	if n1≠n2
-		@error 📌*", function predictErr: the length of the two argument vectors must be equal." n1 n2
+		@error 📌*", function `predictAcc` or `predictErr`: the length of the two argument vectors must be equal." n1 n2
 		return
 	end
 
@@ -472,25 +471,26 @@ function predictAcc(yTrue::IntVector, yPred::IntVector;
 		z=size(CM, 1)
 		return round(sum(CM[i, i]/sum(CM[i, :]) for i=1:z) / z; digits=digits)
 	end
-
 end
 
 function predictAcc(CM:: Matrix{R};
 					scoring:: Symbol = :b,
 					digits::Int=3) where R<:Real
-	nRows, nCols = size(CM)
-	if size(CM, 1)≠size(CM, 2)
-		@error 📌*", function predictAcc or predictErr: the `CM` argument must be square as this must be a confusion matrix." nRows nCols
+					num_of_rows, num_of_cols = size(CM)
+
+	num_of_rows, num_of_cols = size(CM)
+	if num_of_rows≠num_of_cols
+		@error 📌*", function predictAcc or predictErr: the `CM` argument must be square as this must be a confusion matrix." num_of_rows num_of_cols
 		return
 	end
 
-	sumEl=sum(CM)
-	if sumEl≉  1.0
-		@error 📌*", function predictAcc or predictErr: the elements of `CM` matrix argument must be sum up to 1.0 as this must be a confusion matrix." sumEl
+	sum_of_elements=sum(CM)
+	if sum_of_elements≉  1.0
+		@error 📌*", function predictAcc or predictErr: the elements of `CM` matrix argument must sum up to 1.0 as this must be a confusion matrix." sum_of_elements
 		return
 	end
 
-	return scoring==:b ? round(sum(CM[i, i]/sum(CM[i, :]) for i=1:nRows) / nRows;
+	return scoring==:b ? round(sum(CM[i, i]/sum(CM[i, :]) for i=1:size(CM, 1)) / size(CM, 1);
 								digits=digits) :
 						 round(tr(CM);
 						 		digits=digits)
@@ -520,15 +520,15 @@ the result of [`predictAcc`](@ref), given
 predictErr(yTrue::IntVector, yPred::IntVector;
 			scoring::Symbol = :b,
 	        digits::Int=3) =
-	round(1.0 - predictAcc(yTrue, yPred; scoring=scoring, digits=8);
-		  digits=digits)
-
+	return (acc=predictAcc(yTrue, yPred;
+				scoring=scoring, digits=8))≠nothing ? round(1.0-acc;
+													  digits=digits) : nothing
 predictErr(CM:: Matrix{R};
 			scoring:: Symbol = :b,
 			digits::Int=3) where R<:Real =
-	round(1.0 - predictAcc(CM; scoring=scoring, digits=8);
-		  digits=digits)
-
+	return (acc=predictAcc(CM;
+				scoring=scoring, digits=8))≠nothing ? round(1.0-acc;
+													  digits=digits) : nothing
 """
 ```
 function rescale!(X::Matrix{T},	bounds::Tuple=(-1, 1);
@@ -597,6 +597,7 @@ function _GetThreadsAndLinRanges(n::Int, callingFunction::String)
 	ranges=_partitionLinRange4threads(n, threads)
 	return threads, ranges
 end
+
 
 # checks for `fit function`
 function _check_fit(model       :: MLmodel,
