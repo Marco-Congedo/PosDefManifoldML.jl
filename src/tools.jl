@@ -406,14 +406,22 @@ end
 
 """
 ```
+(1)
 function predictAcc(yTrue::IntVector, yPred::IntVector;
-					scoring:: Symbol = :b,
-					digits::Int=3)
+		scoring:: Symbol = :b,
+		digits::Int=3)
+
+(2)
+function predictAcc(CM:: Matrix{R};
+		scoring:: Symbol = :b,
+		digits::Int=3) where R<:Real
 ```
 
 Return the prediction accuracy as a proportion, that is, ∈[0, 1],
-given a vector of true labels `yTrue` and a vector of
-predicted labels `yPred`.
+given
+
+- (1) the integer vectors of true labels `yTrue` and of predicted labels `yPred`,
+- (2) a confusion matrix.
 
 If `scoring`=:b (default) the **balanced accuracy** is computed.
 Any other value will make the function returning the regular **accuracy**.
@@ -449,11 +457,10 @@ julia> predictAcc([1, 1, 1, 2, 2], [1, 1, 1, 1, 2])
 function predictAcc(yTrue::IntVector, yPred::IntVector;
 					scoring:: Symbol = :b,
 	          		digits::Int=3)
-
 	n1=length(yTrue)
 	n2=length(yPred)
 	if n1≠n2
-		@error 📌*", function predictErr: the length of the two argument vectors must be equal." n1 n2
+		@error 📌*", function `predictAcc` or `predictErr`: the length of the two argument vectors must be equal." n1 n2
 		return
 	end
 
@@ -464,32 +471,68 @@ function predictAcc(yTrue::IntVector, yPred::IntVector;
 		z=size(CM, 1)
 		return round(sum(CM[i, i]/sum(CM[i, :]) for i=1:z) / z; digits=digits)
 	end
-
 end
+
+function predictAcc(CM:: Matrix{R};
+					scoring:: Symbol = :b,
+					digits::Int=3) where R<:Real
+					num_of_rows, num_of_cols = size(CM)
+
+	num_of_rows, num_of_cols = size(CM)
+	if num_of_rows≠num_of_cols
+		@error 📌*", function predictAcc or predictErr: the `CM` argument must be square as this must be a confusion matrix." num_of_rows num_of_cols
+		return
+	end
+
+	sum_of_elements=sum(CM)
+	if sum_of_elements≉  1.0
+		@error 📌*", function predictAcc or predictErr: the elements of `CM` matrix argument must sum up to 1.0 as this must be a confusion matrix." sum_of_elements
+		return
+	end
+
+	return scoring==:b ? round(sum(CM[i, i]/sum(CM[i, :]) for i=1:size(CM, 1)) / size(CM, 1);
+								digits=digits) :
+						 round(tr(CM);
+						 		digits=digits)
+end
+
 
 """
 ```
+(1)
 function predictErr(yTrue::IntVector, yPred::IntVector;
-					scoring:: Symbol = :b,
-					digits::Int=3)
+		scoring:: Symbol = :b,
+		digits::Int=3)
+(2)
+function predictErr(CM:: Matrix{R};
+		scoring:: Symbol = :b,
+		digits::Int=3) where R<:Real
 ```
 
 Return the complement of the predicted accuracy, that is, 1.0 minus
-the result of [`predictAcc`](@ref).
+the result of [`predictAcc`](@ref), given
+
+- (1) the integer vectors of true labels `yTrue` and of predicted labels `yPred`,
+- (2) a confusion matrix.
 
 **See** [`predictAcc`](@ref).
 """
 predictErr(yTrue::IntVector, yPred::IntVector;
 			scoring::Symbol = :b,
 	        digits::Int=3) =
-	round(1.0 - predictAcc(yTrue, yPred; scoring=scoring, digits=8);
-		  digits=digits)
-
+	return (acc=predictAcc(yTrue, yPred;
+				scoring=scoring, digits=8))≠nothing ? round(1.0-acc;
+													  digits=digits) : nothing
+predictErr(CM:: Matrix{R};
+			scoring:: Symbol = :b,
+			digits::Int=3) where R<:Real =
+	return (acc=predictAcc(CM;
+				scoring=scoring, digits=8))≠nothing ? round(1.0-acc;
+													  digits=digits) : nothing
 """
 ```
-function rescale!(	X::Matrix{T},
-					bounds::Tuple=(-1, 1);
-					dims::Int=1) where T<:Real
+function rescale!(X::Matrix{T},	bounds::Tuple=(-1, 1);
+		dims::Int=1) where T<:Real
 ```
 Rescale the columns or the rows of real matrix `X` to be in range [a, b],
 where a and b are the first and seconf elements of tuple `bounds`.
@@ -554,6 +597,7 @@ function _GetThreadsAndLinRanges(n::Int, callingFunction::String)
 	ranges=_partitionLinRange4threads(n, threads)
 	return threads, ranges
 end
+
 
 # checks for `fit function`
 function _check_fit(model       :: MLmodel,

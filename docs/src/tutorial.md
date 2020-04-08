@@ -6,7 +6,7 @@ If you didn't, please read first the [Overview](@ref).
 
 **1)** a machine learning (ML) model is first **fit** (trained), then it can be used to **predict** the *labels* of testing data or the *probability* of the data to belong to each class. The raw prediction function of the models is available as well.
 
-**2)** a **k-fold cross-validation** procedure allows to estimate directly the **accuracy** of ML models and compare them.
+**2)** a **k-fold cross-validation** procedure allows to estimate the **accuracy** of ML models and compare them.
 
 What *PosDefManifoldML* does for you is to allow an homogeneous syntax to run these two pipelines for all implemented ML models,
 it does not matter if they act directly on the manifold of positive definite matrices or on the tangent space.
@@ -32,8 +32,7 @@ All matrices are of size 10x10.
 
 ## Example using the MDM model
 
-The **minimum distance to mean (MDM)** classifier is an example of classifier acting directly on the manifold. It is deterministic and no hyperparameter
-tuning is requested.
+The **minimum distance to mean (MDM)** classifier is an example of classifier acting directly on the manifold. It is deterministic and no hyperparameter tuning is needed.
 
 ### MDM Pipeline 1. (fit and predict)
 
@@ -75,10 +74,16 @@ The prediction error in percent can be retrived with
 predictErr(yTe, yPred)
 ```
 
-or by
+the predicton accuracy as
 
 ```
-predictErr(yPred, yTe)
+predictAcc(yTe, yPred)
+```
+
+and the confusion matrix as
+
+```
+confusionMat(yTe, yPred)
 ```
 
 where in `yTe` we have stored the *true* labels for the
@@ -134,8 +139,7 @@ PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.1);
 
 **Craete and fit ENLR models**
 
-By default, the Fisher metric ic adopted and a lasso model is fitted. The best value
-for the lambda hyperparameter is found by cross-validation:
+By default, the Fisher metric ic adopted and a lasso model is fitted. The best value for the lambda hyperparameter is found by cross-validation:
 
 ```
 m1 = fit(ENLR(), PTr, yTr; w=:balanced)
@@ -156,7 +160,7 @@ m1.best.a0
 m1.best.betas
 ```
 
-The number of non-zero beta coefficients can be found for example by
+The number of non-zero beta coefficients can be found, for example, by
 
 ```
 length(unique(m1.best.betas))-1
@@ -211,14 +215,18 @@ and we request to predict the labels:
 ```
 yPred=predict(m1, PTe)
 
-# prediction error in percent
-predictErr(yPred, yTe)
+# prediction accuracy (in proportion)
+predictAcc(yPred, yTe)
+
+# confusion matrix
+confusionMat(yPred, yTe)
 
 # predict probabilities of matrices in `PTe` to belong to each class
 predict(m1, PTe, :p)
 
 # output function of the model for each class
 predict(m1, PTe, :f)
+
 ```
 
 In order to request the predition of labels for all models
@@ -323,8 +331,11 @@ Just the same as for the other models:
 ```
 yPred=predict(m1, PTe)
 
-# prediction error in percent
-predictErr(yPred, yTe)
+# prediction accuracy (in proportion)
+predictAcc(yPred, yTe)
+
+# confusion matrix
+confusionMat(yPred, yTe)
 
 # predict probabilities of matrices in `PTe` to belong to each class
 predict(m1, PTe, :p)
