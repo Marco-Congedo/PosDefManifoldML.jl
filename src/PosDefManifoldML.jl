@@ -28,11 +28,12 @@ using LIBSVM: svmpredict, svmtrain, SVC, NuSVC, OneClassSVM, NuSVR, EpsilonSVR,
 BLAS.set_num_threads(Sys.CPU_THREADS)
 
 # constants #
-const 📌            = "PosDefManifoldML"
+
 const titleFont     = "\x1b[32m"
 const separatorFont = "\x1b[92m"
 const defaultFont   = "\x1b[0m"
 const greyFont      = "\x1b[90m"
+const 📌            = titleFont*"PosDefManifoldML"*defaultFont
 const dice = ("⚀", "⚁", "⚂", "⚃", "⚄", "⚅")
 
 # shortcut to LIBSVM kernels enum type
@@ -114,7 +115,7 @@ include("tools.jl")
 include("svm.jl")
 
 
-println("\n⭐ "," Welcome to the", titleFont," ",📌,".jl ",defaultFont,"package", " ⭐\n")
+println("\n⭐ "," Welcome to the ", 📌," package", " ⭐\n")
 @info " "
 println(" Your Machine `",gethostname(),"` (",Sys.MACHINE, ")")
 println(" runs on kernel ",Sys.KERNEL," with word size ",Sys.WORD_SIZE,".")
