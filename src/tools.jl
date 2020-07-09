@@ -24,18 +24,18 @@ function tsMap(	metric :: Metric,
 ```
 
 The [tangent space mapping](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.logMap)
-of positive definite matrices ``P_i``, ``i=1...k`` with mean ``G``, once
+of positive definite matrices ``P_i``, *i=1...k* with mean *G*, once
 those points have been parallel transported to the identity matrix,
 is given by:
 
 ``S_i=\\textrm{log}(G^{-1/2} P_i G^{-1/2})``.
 
-Given a vector of ``k`` matrices `𝐏` flagged by julia as `Hermitian`,
-return a matrix ``X`` with such tangent vectors of the matrices in `𝐏`
+Given a vector of *k* matrices `𝐏` flagged by julia as `Hermitian`,
+return a matrix *X* with such tangent vectors of the matrices in `𝐏`
 vectorized as per the [vecP](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.vecP)
 operation.
 
-The mean ``G`` of the matrices in `𝐏` is found according to the
+The mean *G* of the matrices in `𝐏` is found according to the
 specified `metric`, of type
 [Metric](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#Metric::Enumerated-type-1).
 A natural choice is the
@@ -47,8 +47,8 @@ By default `tol` is set by the function
 For those iterative algorithms a particular initialization can be provided
 as an Hermitian matrix by optional keyword argument `meanInit`.
 
-A set of ``k`` optional non-negative weights `w` can be provided
-for computing a weighted mean ``G``, for any metrics.
+A set of *k* optional non-negative weights `w` can be provided
+for computing a weighted mean *G*, for any metrics.
 If `w` is non-empty and optional keyword argument `✓w` is true (default),
 the weights are normalized so as to sum up to 1,
 otherwise they are used as they are passed and should be already normalized.
@@ -56,23 +56,23 @@ This option is provided to allow calling this function
 repeatedly without normalizing the same weights vector each time.
 
 If an Hermitian matrix is provided as optional keyword argument `meanISR`,
-then the mean ``G`` is not computed, intead this matrix is used
+then the mean *G* is not computed, intead this matrix is used
 directly in the formula as the inverse square root (ISR) ``G^{-1/2}``.
 If `meanISR` is provided, arguments `tol` and `meanInit` have no effect
 whatsoever.
 
 If `meanISR` is not provided, return the 2-tuple ``(X, G^{-1/2})``,
-otherwise return only matrix ``X``.
+otherwise return only matrix *X*.
 
 If an `UnitRange` is provided with the optional keyword argument `vecRange`,
 the vectorization concerns only the columns (or rows) of the matrices `𝐏`
 specified by the range.
 
 If optional keyword argument `transpose` is true (default),
-``X`` holds the ``k`` vectorized tangent vectors in its rows,
+*X* holds the *k* vectorized tangent vectors in its rows,
 otherwise they are arranged in its columns.
 The dimension of the rows in the former case and of the columns is the latter
-case is ``n(n+1)÷2`` (integer division), where ``n`` is the size of the
+case is *n(n+1)÷2* (integer division), where *n* is the size of the
 matrices in `𝐏`, unless a `vecRange` spanning a subset of the columns or rows
 of the matrices in `𝐏` has been provided, in which case the dimension will
 be smaller. (see [vecP](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.vecP)
@@ -81,7 +81,7 @@ be smaller. (see [vecP](https://marco-congedo.github.io/PosDefManifold.jl/dev/ri
 if optional keyword argument `⏩` if true (default),
 the computation of the mean and the projection on the tangent space
 are multi-threaded. Multi-threading is automatically disabled if the
-number of threads Julia is instructed to use is ``<2`` or ``<2k``.
+number of threads Julia is instructed to use is *<2* or *<2k*.
 
 **Examples**:
 ```
@@ -156,11 +156,11 @@ For this mapping, giving equal weights to all observations
 actually overweights the larger classes
 and downweight the smaller classes.
 
-Class labels for ``n`` classes must be the first ``n`` natural numbers,
+Class labels for *n* classes must be the first *n* natural numbers,
 that is, `1` for class 1, `2` for class 2, etc.
 The labels in `y` can be provided in any order.
 
-if a vector of ``n`` weights is specified as optional
+if a vector of *n* weights is specified as optional
 keyword argument `classWeights`, the overall weights
 for each class will be first balanced (see here above),
 then weighted by the `classWeights`.
@@ -274,7 +274,7 @@ function gen2ClassData(n        ::  Int,
 Generate a *training set* of `k1train`+`k2train`
 and a *test set* of `k1test`+`k2test`
 symmetric positive definite matrices.
-All matrices have size ``n``x``n``.
+All matrices have size *n*x*n*.
 
 The training and test sets can be used to train and test any [MLmodel](@ref).
 
@@ -288,7 +288,7 @@ Return a 4-tuple with
 - an [ℍVector](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1) holding the `k1train`+`k2train` matrices in the training set,
 - an ℍVector holding the `k1test`+`k2test` matrices in the test set,
 - a vector holding the `k1train`+`k2train` labels (integers) corresponding to the matrices of the training set,
-- a vector holding the `k1test`+`k2test` labels corresponding to the matrices of the test set (``1`` for class 1 and ``2`` for class 2).
+- a vector holding the `k1test`+`k2test` labels corresponding to the matrices of the test set (*1* for class 1 and *2* for class 2).
 
 **Examples**
 

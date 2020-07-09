@@ -154,8 +154,7 @@ function fit(model     :: SVMmodel,
 	w :: Union{Symbol, Tuple, Vector} = [],
 	meanISR :: Union{ℍ, Nothing} = nothing,
 	meanInit :: Union{ℍ, Nothing} = nothing,
-	vecRange	:: UnitRange = 𝐏Tr isa ℍVector ? (1:size(𝐏Tr[1], 2)) :
-												 (1:size(𝐏Tr, 2)),
+	vecRange	:: UnitRange = 𝐏Tr isa ℍVector ? (1:size(𝐏Tr[1], 2)) : (1:size(𝐏Tr, 2)),
 	# SVM parameters
 	svmType :: Type = SVC,
 	kernel :: Kernel.KERNEL = RadialBasis,
@@ -202,17 +201,17 @@ available SVM models. See the documentation of the [`SVM`](@ref) structure.
 `epsilon`, with default 0.1, is the epsilon in loss function
 of the `epsilonSVR` SVM model.
 
-`cost`, with default 1.0, is the cost parameter ``C`` of `SVC`,
+`cost`, with default 1.0, is the cost parameter *C* of `SVC`,
 `epsilonSVR`, and `nuSVR` SVM models.
 
 `gamma`, defaulting to 1 divided by the length of the feature vectors,
-is the ``γ`` parameter for `RadialBasis`, `Polynomial` and `Sigmoid` kernels.
+is the *γ* parameter for `RadialBasis`, `Polynomial` and `Sigmoid` kernels.
 
 `degree`, with default 3, is the degree for `Polynomial` kernels
 
 `coef0`, zero by default, is a parameter for the `Sigmoid` and `Polynomial` kernel.
 
-`nu`, with default 0.5, is the parameter ``𝜈`` of `nuSVC`,
+`nu`, with default 0.5, is the parameter *ν* of `nuSVC`,
 `OneClassSVM`, and `nuSVR` SVM models. It should be in the interval (0, 1].
 
 `shrinking`, true by default, sets whether to use the shrinking heuristics.
@@ -388,7 +387,7 @@ function predict(model :: SVMmodel,
 ```
 
 Given an [`SVM`](@ref) `model` trained (fitted) on 2 classes
-and a testing set of ``k`` positive definite matrices `𝐏Te` of type
+and a testing set of *k* positive definite matrices `𝐏Te` of type
 [ℍVector](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1),
 
 For the meaning of arguments `what`, `transfer` and `verbose`,

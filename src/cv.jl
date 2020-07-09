@@ -92,8 +92,8 @@ function cvAcc(model    :: MLmodel,
            fitArgs...)
 ```
 Cross-validation accuracy for a machine learning `model`:
-given an ℍVector `𝐏Tr` holding ``k`` Hermitian matrices,
-an [IntVector](@ref) `yTr` holding the ``k`` labels for these matrices and
+given an ℍVector `𝐏Tr` holding *k* Hermitian matrices,
+an [IntVector](@ref) `yTr` holding the *k* labels for these matrices and
 the number of folds `nFolds`,
 return a [`CVacc`](@ref) structure.
 
@@ -284,6 +284,7 @@ function cvAcc(model    :: MLmodel,
         CM[f]/=sumCM # confusion matrices in proportions
     end
 
+    # This actually runs the cross-validation
     ⏩ ? (@threads for f=1:nFolds fold(f) end) : (for f=1:nFolds fold(f) end)
     verbose && println(greyFont, "\nDone in ", defaultFont, now()-⌚)
 
@@ -306,19 +307,19 @@ function cvSetup(k       :: Int,
                  shuffle :: Bool = false)
 ```
 Given `k` elements and a parameter `nCV`, a nCV-fold cross-validation
-is obtained defining ``nCV`` permutations of ``k`` elements
-in ``nTest=k÷nCV`` (integer division) elements for the test and
-``k-nTest`` elements for the training,
+is obtained defining `nCV` permutations of *k* elements
+in *nTest=k÷nCV* (integer division) elements for the test and
+*k-nTest* elements for the training,
 in such a way that each element is represented in only one permutation.
 
 Said differently, given a length `k` and the number of desired cross-validations
 `nCV`, this function generates indices from the sequence of natural numbers
-``1,..,k`` to obtain all nCV-fold cross-validation sets.
-Specifically, it generates ``nCV`` vectors of indices for generating test sets
-and ``nCV`` vectors of indices for geerating training sets.
+*1,..,k* to obtain all nCV-fold cross-validation sets.
+Specifically, it generates `nCV` vectors of indices for generating test sets
+and `nCV` vectors of indices for geerating training sets.
 
 If optional keyword argument `shuffle` is true,
-the sequence of natural numbers ``1,..,k`` is shuffled before
+the sequence of natural numbers *1,..,k* is shuffled before
 running the function, thus in this case two successive runs of this function
 will give different cross-validation sets, hence different accuracy scores.
 By default `shuffle` is false, so as to allow exactly the same result

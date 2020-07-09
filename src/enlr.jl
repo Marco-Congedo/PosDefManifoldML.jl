@@ -50,11 +50,11 @@ are not positive definite matrices, but Euclidean feature vectors,
 the `.metric` field has no use. In order to use metrics you need to install the
 *PosDefManifold* package.
 
-`.alpha` is the hyperparameter in ``[0, 1]`` trading-off
-the **elestic-net model**. ``α=0`` requests a pure **ridge** model and
-``α=1`` a pure **lasso** model. By default, ``α=1`` is specified (lasso model).
+`.alpha` is the hyperparameter in *[0, 1]* trading-off
+the **elestic-net model**. *α=0* requests a pure **ridge** model and
+*α=1* a pure **lasso** model. By default, *α=1* is specified (lasso model).
 This argument is usually passed as parameter to
-the [`fit`](@ref) function, defaulting therein to ``α=1`` too.
+the [`fit`](@ref) function, defaulting therein to *α=1* too.
 See the examples here below.
 
 All other fields do not correspond to arguments passed
@@ -67,7 +67,7 @@ please see the documentation of the [`fit`](@ref) function.
 
 if the data used to train the model are positive definite matrices,
 `.featDim` is the length of the vectorized tangent vectors.
-This is given by ``n(n+1)÷2`` (integer division), where ``n``
+This is given by *n(n+1)÷2* (integer division), where *n*
 is the dimension of the original PD matrices on which the model is applied
 once they are mapped onto the tangent space.
 If feature vectors are used to train the model, `.featDim` is the length
@@ -325,9 +325,9 @@ The remaining optional keyword arguments, are
 
 **Optional keyword arguments for fitting the model(s) using GLMNet**
 
-`alpha`: the hyperparameter in ``[0, 1]`` to trade-off
-an elestic-net model. ``α=0`` requests a pure *ridge* model and
-``α=1`` a pure *lasso* model. This defaults to 1.0,
+`alpha`: the hyperparameter in *[0, 1]* to trade-off
+an elestic-net model. *α=0* requests a pure *ridge* model and
+*α=1* a pure *lasso* model. This defaults to 1.0,
 which specifies a lasso model, unless the input [`ENLR`](@ref) `model`
 has another value in the `alpha` field, in which case this value
 is used. If argument `alpha` is passed here, it will overwrite
@@ -345,14 +345,14 @@ The intercept is always unpenalized. Defaults to true.
 in the same units. This is a common choice for regularized
 regression models.
 
-`penalty_factor`: a vector of length ``n(n+1)/2``, where ``n``
+`penalty_factor`: a vector of length *n(n+1)/2*, where *n*
 is the dimension of the original PD matrices on which the model is applied,
 of penalties for each predictor in the tangent vectors.
 This defaults to all ones, which weights each predictor equally.
 To specify that a predictor should be unpenalized,
 set the corresponding entry to zero.
 
-`constraints`: an ``[n(n+1)/2]`` x ``2`` matrix specifying lower bounds
+`constraints`: an *[n(n+1)/2]* x *2* matrix specifying lower bounds
 (first column) and upper bounds (second column) on each predictor.
 By default, this is [-Inf Inf] for each predictor (each element
 of tangent vectors).
@@ -363,15 +363,15 @@ of tangent vectors).
 
 `pmax`: The maximum number of predictors in any model.
 
-`nlambda`: The number of values of ``λ`` along the path to consider.
+`nlambda`: The number of values of *λ* along the path to consider.
 
-`lambda_min_ratio`: The smallest ``λ`` value to consider,
-as a ratio of the value of ``λ`` that gives the null model
+`lambda_min_ratio`: The smallest *λ* value to consider,
+as a ratio of the value of *λ* that gives the null model
 (*i.e.*, the model with only an intercept).
 If the number of observations exceeds the number of variables,
 this defaults to 0.0001, otherwise 0.01.
 
-`lambda`: The ``λ`` values to consider for fitting.
+`lambda`: The *λ* values to consider for fitting.
 By default, this is determined
 from `nlambda` and `lambda_min_ratio`.
 
@@ -580,7 +580,7 @@ function predict(model   :: ENLRmodel,
 ```
 
 Given an [`ENLR`](@ref) `model` trained (fitted) on 2 classes
-and a testing set of ``k`` positive definite matrices `𝐏Te` of type
+and a testing set of *k* positive definite matrices `𝐏Te` of type
 [ℍVector](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1),
 
 if `what` is `:labels` or `:l` (default), return
@@ -589,8 +589,8 @@ as an [IntVector](@ref).
 Those labels are '1' for class 1 and '2' for class 2;
 
 if `what` is `:probabilities` or `:p`, return the predicted **probabilities**
-for each matrix in `𝐏Te` to belong to each classe, as a ``k``-vector
-of ``z`` vectors holding reals in ``[0, 1]`` (probabilities).
+for each matrix in `𝐏Te` to belong to each classe, as a *k*-vector
+of *z* vectors holding reals in *[0, 1]* (probabilities).
 The 'probabilities' are obtained passing to a
 [softmax function](https://en.wikipedia.org/wiki/Softmax_function)
 the output of the ENLR model and zero;
