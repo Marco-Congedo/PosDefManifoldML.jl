@@ -39,7 +39,7 @@ It is the metric that will be adopted to compute the class means
 and the distances to the mean.
 
 The field `featDim` is the dimension of the manifold in which
-the model acts. This is given by ``n(n+1)/2``, where ``n``
+the model acts. This is given by *n(n+1)/2*, where *n*
 is the dimension of the PD matrices.
 This field is not to be specified by the user, instead,
 it is computed when the MDM model is fit using the [`fit`](@ref)
@@ -220,8 +220,8 @@ function predict(model  :: MDMmodel,
         verbose :: Bool = true,
         ⏩     :: Bool = true)
 ```
-Given an [`MDM`](@ref) `model` trained (fitted) on ``z`` classes
-and a testing set of ``k`` positive definite matrices `𝐏Te` of type
+Given an [`MDM`](@ref) `model` trained (fitted) on *z* classes
+and a testing set of *k* positive definite matrices `𝐏Te` of type
 [ℍVector](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1),
 
 if `what` is `:labels` or `:l` (default), return
@@ -233,8 +233,8 @@ serial number of the class whose mean is the closest to the matrix
 The labels are '1' for class 1, '2' for class 2, etc;
 
 if `what` is `:probabilities` or `:p`, return the predicted **probabilities**
-for each matrix in `𝐏Te` to belong to a all classes, as a ``k``-vector
-of ``z`` vectors holding reals in ``[0, 1]`` (probabilities).
+for each matrix in `𝐏Te` to belong to a all classes, as a *k*-vector
+of *z* vectors holding reals in *[0, 1]*m (probabilities).
 The 'probabilities' are obtained passing to a
 [softmax function](https://en.wikipedia.org/wiki/Softmax_function)
 minus the squared distances of each unlabeled matrix to all class means;
@@ -390,8 +390,8 @@ Typically, you will not need this function as it is called by the
 [`predict`](@ref) function.
 
 Given an [ℍVector](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1)
-`𝐏` holding ``k`` Hermitian matrices and
-an ℍVector `means` holding ``z`` matrix means,
+`𝐏` holding *k* Hermitian matrices and
+an ℍVector `means` holding *z* matrix means,
 return the *square of the distance* of each matrix in `𝐏` to the means
 in `means`.
 
@@ -413,7 +413,7 @@ different dimensions.
 If `⏩` is true, the distances are computed using multi-threading,
 unless the number of threads Julia is instructed to use is <2 or <3k.
 
-The result is a ``z``x``k`` matrix of squared distances.
+The result is a *z*x*k* matrix of squared distances.
 
 """
 function getDistances(metric :: Metric,
