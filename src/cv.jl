@@ -211,11 +211,7 @@ function cvAcc(model    :: MLmodel,
     ℳ=Vector{MLmodel}(undef, nFolds)            # ML models
 
     # get indeces for all CVs (separated for each class)
-    if ⏩
-       @threads for i=1:z indTr[i], indTe[i] = cvSetup(length(𝐐[i]), nFolds; shuffle=shuffle) end
-    else
-        for i=1:z indTr[i], indTe[i] = cvSetup(length(𝐐[i]), nFolds; shuffle=shuffle) end
-    end
+    for i=1:z indTr[i], indTe[i] = cvSetup(length(𝐐[i]), nFolds; shuffle=shuffle) end
 
     fitArgs✔=()
     # make sure the user doesn't pass arguments that skrew up the cv
@@ -267,11 +263,12 @@ function cvAcc(model    :: MLmodel,
         ℳ[f]=fit(model, 𝐐Tr[f], zTr[f];
                   #meanInit=M0,
                   verbose=false,
+                  ⏩=false,
                   fitArgs✔...)
 
 
         # predict labels for current fold
-        for i=1:z pl[f][i]=predict(ℳ[f], 𝐐Te[f][i], :l; verbose=false) end
+        for i=1:z pl[f][i]=predict(ℳ[f], 𝐐Te[f][i], :l; verbose=false, ⏩=false) end
 
         # compute confusion matrix for current fold
         for i=1:z, s=1:length(pl[f][i]) CM[f][i, pl[f][i][s]]+=1. end
