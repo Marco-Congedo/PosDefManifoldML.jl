@@ -11,7 +11,7 @@
 #   as specific instances.
 
 """
-```
+```julia
 abstract type ENLRmodel<:TSmodel end
 ```
 
@@ -22,7 +22,7 @@ abstract type ENLRmodel<:TSmodel end
 
 
 """
-```
+```julia
 mutable struct ENLR <: ENLRmodel
 	metric      :: Metric = Fisher;
 	alpha       :: Real = 1.0
@@ -37,6 +37,7 @@ mutable struct ENLR <: ENLRmodel
 	best        :: GLMNet.GLMNetPath
 end
 ```
+
 ENLR machine learning models are incapsulated in this
 mutable structure. Fields:
 
@@ -81,7 +82,7 @@ It holds the regularization path
 that is created when the [`fit`](@ref) function is invoked
 with optional keyword parameter `fitType` = `:path` or = `:all`:
 
-```
+```julia
 struct GLMNetPath{F<:Distribution}
     family::F                        # Binomial()
     a0::Vector{Float64}              # intercept values for each solution
@@ -101,7 +102,7 @@ cross-validation used for estimating the optimal lambda
 hyperparameter by the [`fit`](@ref) function when this is invoked
 with optional keyword parameter `fitType` = `:best` (default) or = `:all`:
 
-```
+```julia
 struct GLMNetCrossValidation
     path::GLMNetPath            # the cv path
     nfolds::Int                 # the number of folds for the cv
@@ -119,7 +120,7 @@ when the [`fit`](@ref) function is invoked.
 
 
 **Examples**:
-```
+```julia
 # Note: creating models with the default creator is possible,
 # but not useful in general.
 
@@ -181,7 +182,7 @@ end
 
 
 """
-```
+```julia
 function fit(model	:: ENLRmodel,
              𝐏Tr	 :: Union{ℍVector, Matrix{Float64}},
              yTr	:: IntVector;
@@ -415,7 +416,7 @@ for details [🎓](@ref).
 **Tutorial**: [Example using the ENLR model](@ref).
 
 **Examples**
-```
+```julia
 using PosDefManifoldML, PosDefManifold
 
 # generate some data
@@ -568,7 +569,7 @@ end
 
 
 """
-```
+```julia
 function predict(model   :: ENLRmodel,
 		𝐏Te		:: Union{ℍVector, Matrix{Float64}},
 		what		:: Symbol = :labels,
@@ -643,7 +644,7 @@ tangent space is multi-threaded.
 **See also**: [`fit`](@ref), [`cvAcc`](@ref), [`predictErr`](@ref).
 
 **Examples**
-```
+```julia
 using PosDefManifoldML, PosDefManifold
 
 # generate some data

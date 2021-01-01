@@ -14,10 +14,10 @@ Furthermore, models acting on the tangent space can take as input Euclidean feat
 
 **get data**
 
-A real data example will be added soon. For now, let us create simulated data for a **2-class example**.
+Let us create simulated data for a **2-class example**.
 First, let us create symmetric positive definite matrices (real positive definite matrices):
 
-```
+```julia
 using PosDefManifoldML, PosDefManifold
 
 PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.1);
@@ -40,7 +40,7 @@ The **minimum distance to mean (MDM)** classifier is an example of classifier ac
 
 An MDM model is created and fit with training data such as
 
-```
+```julia
 m = fit(MDM(Fisher), PTr, yTr)
 ```
 
@@ -50,13 +50,13 @@ as declared in the parent package [PosDefManifold](https://marco-congedo.github.
 Since the Fisher metric is the default (for all ML models),
 the above is equivalent to:
 
-```
+```julia
 m = fit(MDM(), PTr, yTr)
 ```
 
 In order to adopt another metric:
 
-```
+```julia
 m1 = fit(MDM(logEuclidean), PTr, yTr)
 ```
 
@@ -64,25 +64,25 @@ m1 = fit(MDM(logEuclidean), PTr, yTr)
 
 In order to predict the labels of unlabeled data (which we have stored in `PTe`), we invoke
 
-```
+```julia
 yPred=predict(m, PTe, :l)
 ```
 
 The prediction error in percent can be retrived with
 
-```
+```julia
 predictErr(yTe, yPred)
 ```
 
 the predicton accuracy as
 
-```
+```julia
 predictAcc(yTe, yPred)
 ```
 
 and the confusion matrix as
 
-```
+```julia
 confusionMat(yTe, yPred)
 ```
 
@@ -91,13 +91,13 @@ matrices in `PTe`.
 
 If instead we wish to estimate the probabilities for the matrices in `PTe` of belonging to each class:
 
-```
+```julia
 predict(m, PTe, :p)
 ```
 
 Finally, the output functions of the MDM are obtaine by (see [`predict`](@ref))
 
-```
+```julia
 predict(m, PTe, :f)
 ```
 
@@ -105,7 +105,7 @@ predict(m, PTe, :f)
 
 The balanced accuracy estimated by a *k-fold cross-validation* is obtained such as (10-fold by default)
 
-```
+```julia
 cv = cvAcc(MDM(), PTr, yTr)
 ```
 
@@ -113,7 +113,7 @@ Struct `cv` has been created and therein you have access to average accuracy and
 and confusion matrices for all folds. For example,
 print the average confusion matrix:
 
-```
+```julia
 cv.avgCnf
 ```
 
@@ -131,7 +131,7 @@ that the [`fit`](@ref) and [`predict`](@ref) methods for ENLR models accept opti
 
 Let us get some simulated data (see the previous example for explanations).
 
-```
+```julia
 PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.1);
 ```
 
@@ -141,7 +141,7 @@ PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.1);
 
 By default, the Fisher metric ic adopted and a lasso model is fitted. The best value for the lambda hyperparameter is found by cross-validation:
 
-```
+```julia
 m1 = fit(ENLR(), PTr, yTr; w=:balanced)
 ```
 
@@ -150,50 +150,51 @@ argument (we may as well just use `w=:b`) we have requested to compute a balance
 
 The optimal value of lambda for this training data is
 
-```
+```julia
 m1.best.lambda
 ```
 
 As in *GLMNet.jl*, the intercept and beta terms are retrived by
-```
+
+```julia
 m1.best.a0
 m1.best.betas
 ```
 
 The number of non-zero beta coefficients can be found, for example, by
 
-```
+```julia
 length(unique(m1.best.betas))-1
 ```
 
 In order to fit a ridge LR model:
 
-```
+```julia
 m2 = fit(ENLR(), PTr, yTr; w=:b, alpha=0)
 ```
 
 Values of `alpha` in range ``(0, 1)`` fit instead an elastic net LR model. In the following we also request not to standardize predictors:
 
-```
+```julia
 m3 = fit(ENLR(Fisher), PTr, yTr; w=:b, alpha=0.9, standardize=false)
 ```
 
 In order to find the regularization path we use the
 `fitType` keyword argument:
 
-```
+```julia
 m1 = fit(ENLR(Fisher), PTr, yTr; w=:b, fitType=:path)
 ```
 
 The values of lambda along the path are given by
 
-```
+```julia
 m1.path.lambda
 ```
 
 We can also find the best value of the lambda hyperparameter and the regularization path at once, calling:
 
-```
+```julia
 m1 = fit(ENLR(Fisher), PTr, yTr; w=:b, fitType=:all)
 ```
 
@@ -212,7 +213,7 @@ Note that with the last call we have done here above both the `.best` and `.path
 By default, prediction is obtained from the best model
 and we request to predict the labels:
 
-```
+```julia
 yPred=predict(m1, PTe)
 
 # prediction accuracy (in proportion)
@@ -232,13 +233,13 @@ predict(m1, PTe, :f)
 In order to request the predition of labels for all models
 in the regularization path:
 
-```
+```julia
 yPred=predict(m1, PTe, :l, :path, 0)
 ```
 
 while for a specific model in the path (e.g., the 1Oth model):
 
-```
+```julia
 yPred=predict(m1, PTe, :l, :path, 10)
 ```
 
@@ -248,14 +249,14 @@ The balanced accuracy estimated by a *k-fold cross-validation* is obtained with 
 some specific optional keyword arguments for
 models acting in the tangent space, for example:
 
-```
+```julia
 cv = cvAcc(ENLR(), PTr, yTr; w=:b)
 ```
 
 In order to perform another cross-validation
 arranging the training data differently in the folds:
 
-```
+```julia
 cv = cvAcc(ENLR(), PTr, yTr; w=:b, shuffle=true)
 ```
 
@@ -283,7 +284,7 @@ besides the linear one, which has no parameter. Like for ENLR, for SVM models al
 
 Let us get some simulated data as in the previous examples.
 
-```
+```julia
 PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.1);
 ```
 
@@ -293,7 +294,7 @@ PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.1);
 
 By default, a C-Support Vector Classification model is fitted:
 
-```
+```julia
 m1 = fit(SVM(), PTr, yTr; w=:b)
 ```
 
@@ -301,19 +302,19 @@ Notice that as for the example above with for ENLR model, we have requested to c
 
 In order to fit a Nu-Support Vector Classification model:
 
-```
+```julia
 m2 = fit(SVM(), PTr, yTr; w=:b, svmType=NuSVC)
 ```
 
 For using other kernels, e.g.:
 
-```
+```julia
 m3 = fit(SVM(), PTr, yTr; w=:b, svmType=NuSVC, kernel=Linear)
 ```
 
 In the following we also request not to rescale predictors:
 
-```
+```julia
 m3 = fit(SVM(), PTr, yTr;
         w=:b, svmType=NuSVC, kernel=Linear, rescale=())
 ```
@@ -328,7 +329,7 @@ details on all available optional arguments.
 
 Just the same as for the other models:
 
-```
+```julia
 yPred=predict(m1, PTe)
 
 # prediction accuracy (in proportion)
@@ -350,6 +351,6 @@ Again, the balanced accuracy estimated by a *k-fold cross-validation* is obtaine
 some specific optional keyword arguments for
 models acting in the tangent space, for example:
 
-```
+```julia
 cv = cvAcc(SVM(), PTr, yTr; w=:b)
 ```

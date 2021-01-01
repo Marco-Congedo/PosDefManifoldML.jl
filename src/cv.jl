@@ -11,7 +11,7 @@
 #   accuracy of all machine learning models.
 
 """
-```
+```julia
 struct CVacc
     cvType    :: String
     scoring   :: Union{String, Nothing}
@@ -65,7 +65,7 @@ struct CVacc
 end
 
 """
-```
+```julia
 CVacc(s::String) =
      CVacc(s, nothing, nothing, nothing,
            nothing, nothing, nothing, nothing)
@@ -79,7 +79,7 @@ CVacc(s::String)=CVacc(s, nothing, nothing, nothing, nothing, nothing, nothing, 
 
 
 """
-```
+```julia
 function cvAcc(model    :: MLmodel,
                𝐏Tr     :: ℍVector,
                yTr      :: IntVector;
@@ -151,7 +151,7 @@ for balancing weights.
 **See also**: [`fit`](@ref), [`predict`](@ref).
 
 **Examples**
-```
+```julia
 using PosDefManifoldML, PosDefManifold
 
 # generate some data
@@ -298,11 +298,12 @@ end
 
 
 """
-```
+```julia
 function cvSetup(k       :: Int,
                  nCV     :: Int;
                  shuffle :: Bool = false)
 ```
+
 Given `k` elements and a parameter `nCV`, a nCV-fold cross-validation
 is obtained defining `nCV` permutations of *k* elements
 in *nTest=k÷nCV* (integer division) elements for the test and
@@ -334,7 +335,7 @@ Return the 2-tuple with:
 - A vector of `nCV` vectors holding the indices for the corresponding test sets.
 
 **Examples**
-```
+```julia
 using PosDefManifoldML, PosDefManifold
 
 cvSetup(10, 2)

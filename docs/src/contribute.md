@@ -17,13 +17,13 @@ Implementing your `ABC` model entails the following five steps:
 
 if your model acts on the manifold of PSD matrices, this will be
 
-```
+```julia
 abstract type ABCmodel<:PDmodel end
 ```
 
 if your model act on the tangent space, this will be
 
-```
+```julia
 abstract type ABCmodel<:TSmodel end
 ```
 
@@ -31,7 +31,7 @@ abstract type ABCmodel<:TSmodel end
 
 This will look like:
 
-```
+```julia
 mutable struct ABC <: ABCmodel
 		metric        :: Metric
 		defaultkwarg1 :: Type_of_defaultkwarg1
@@ -67,7 +67,7 @@ if the `ABC` model has hyperparameters.
 
 Your `fit` function declaration will look like:
 
-```
+```julia
 function fit(   model :: ABCmodel,
 			    𝐏Tr :: ℍVector,
 				# if the model acts on the tangent space use:
@@ -84,13 +84,13 @@ Here you can use as many `kwarg` arguments as you wish.
 Currently, all ML models have a `verbose` argument.
 Your `fit` function should starts with:
 
-```
+```julia
 ⌚=now() # time in milliseconds
 ℳ=deepcopy(model) # output model
 ```
 and ends with
 
-```
+```julia
 verbose && println(defaultFont, "Done in ", now()-⌚,".")
 return ℳ
 ```
@@ -110,7 +110,7 @@ which should be given as options to the user, as done for these models. See how 
 
 Once you have finished, a call such as
 
-```
+```julia
 m1 = fit(ABC(), PTr, yTr)
 ```
 
@@ -123,7 +123,7 @@ to the `predict` function and return the model.
 
 Your `predict` function declaration will look like:
 
-```
+```julia
 function predict(model   :: ABCmodel,
 				𝐏Te :: Union{ℍVector, Matrix{Float64}},
 				# if the model acts on the tangent space use:
@@ -139,13 +139,13 @@ where in general here you will not need `kwarg` arguments.
 
 Your `predict` function should starts with:
 
-```
+```julia
 ⌚=now() # time in milliseconds
 ```
 
 and ends with
 
-```
+```julia
 verbose && println(defaultFont, "Done in ", now()-⌚,".")
 verbose && println(titleFont, "\nPredicted ",_what2Str(what),":", defaultFont)
 return 🃏
