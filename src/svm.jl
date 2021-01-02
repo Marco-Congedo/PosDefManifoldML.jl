@@ -1,7 +1,7 @@
 #   Unit "libSVM.jl" of the PosDefManifoldML Package for Julia language
 
 #   MIT License
-#   Copyright (c) 2019-2020
+#   Copyright (c) 2019-2021
 #   Anton Andreev, Marco Congedo, CNRS, Grenoble, France:
 
 # ? CONTENTS :
