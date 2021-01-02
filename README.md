@@ -108,9 +108,9 @@ cv = cvAcc(SVM(), PTr, yTr)
 [Marco Congedo](https://sites.google.com/site/marcocongedo), corresponding
 author, is a Research Director of [CNRS](http://www.cnrs.fr/en) (Centre National de la Recherche Scientifique), working in [UGA](https://www.univ-grenoble-alpes.fr/english/) (University of Grenoble Alpes). **contact**: marco *dot* congedo *at* gmail *dot* com
 
-Anton Andreev is a research engineer working at the same institution.
+Anton Andreev is a Research Engineer working at the same institution.
 
-Saloni Jain at the time of writing this package was a student at the
+Saloni Jain at the time of writing this package was a Student at the
 [Indian Institute of Technology, Kharagpur](http://www.iitkgp.ac.in/), India.
 
 
