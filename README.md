@@ -106,9 +106,9 @@ cv = cvAcc(SVM(), PTr, yTr)
 ## About the Authors
 
 [Marco Congedo](https://sites.google.com/site/marcocongedo), corresponding
-author, is a research scientist of [CNRS](http://www.cnrs.fr/en) (Centre National de la Recherche Scientifique), working in [UGA](https://www.univ-grenoble-alpes.fr/english/) (University of Grenoble Alpes). **contact**: marco *dot* congedo *at* gmail *dot* com
+author, is a Research Director of [CNRS](http://www.cnrs.fr/en) (Centre National de la Recherche Scientifique), working in [UGA](https://www.univ-grenoble-alpes.fr/english/) (University of Grenoble Alpes). **contact**: marco *dot* congedo *at* gmail *dot* com
 
-Saloni Jain is a student at the
+Saloni Jain at the time of writing this package was a student at the
 [Indian Institute of Technology, Kharagpur](http://www.iitkgp.ac.in/), India.
 
 
