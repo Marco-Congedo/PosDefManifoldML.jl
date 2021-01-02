@@ -10,7 +10,7 @@
 #   Riemannian and Euclidean machine learning classifiers.
 
 """
-```
+```julia
 function tsMap(	metric :: Metric,
 		𝐏      :: ℍVector;
 		w    	  :: Vector	= [],
@@ -84,7 +84,7 @@ are multi-threaded. Multi-threading is automatically disabled if the
 number of threads Julia is instructed to use is *<2* or *<2k*.
 
 **Examples**:
-```
+```julia
 using PosDefManifoldML
 
 # generate four random symmetric positive definite 3x3 matrices
@@ -142,7 +142,7 @@ end
 
 
 """
-```
+```julia
 function tsWeights(y::Vector{Int}; classWeights=[])
 ```
 
@@ -176,7 +176,7 @@ implicitly passing symbol `:balanced` (or just `:b`) or a tuple
 with the class weights as optional keyword argument `w`.
 
 **Examples**
-```
+```julia
 # generate some data; the classes are unbalanced
 PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.1)
 
@@ -194,8 +194,9 @@ m=fit(ENLR(), PTr, yTr; w=(0.5, 1.5))
 # which is equivalent to
 m=fit(ENLR(), PTr, yTr; w=tsWeights(yTr; classWeights=(0.5, 1.5)))
 
+```
 
-# This is how it works:
+This is how it works:
 
 julia> y=[1, 1, 1, 1, 2, 2]
 6-element Array{Int64,1}:
@@ -235,7 +236,6 @@ julia> tsWeights(y, classWeights=[1, 4])
 
 and, again, all weights sum up to 1
 
-```
 """
 function tsWeights(y::Vector{Int}; classWeights=[])
 
@@ -262,7 +262,7 @@ end
 
 
 """
-```
+```julia
 function gen2ClassData(n        ::  Int,
                        k1train  ::  Int,
                        k2train  ::  Int,
@@ -292,7 +292,7 @@ Return a 4-tuple with
 
 **Examples**
 
-```
+```julia
 using PosDefManifoldML
 
 PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80, 0.25)
@@ -355,7 +355,7 @@ end
 
 
 """
-```
+```julia
 function confusionMat(yTrue::IntVector, yPred::IntVector)
 ```
 
@@ -377,7 +377,7 @@ Therefore, the entries of the confusion matrix sum up to 1.0.
 
 **Examples**
 
-```
+```julia
 using PosDefManifoldML
 julia> confusionMat([1, 1, 1, 2, 2], [1, 1, 1, 1, 2])
 # return: [0.6 0.0; 0.2 0.2]
@@ -405,7 +405,7 @@ function confusionMat(yTrue::IntVector, yPred::IntVector)
 end
 
 """
-```
+```julia
 (1)
 function predictAcc(yTrue::IntVector, yPred::IntVector;
 		scoring:: Symbol = :b,
@@ -446,7 +446,7 @@ and their mean is taken.
 
 **Examples**
 
-```
+```julia
 using PosDefManifoldML
 julia> predictAcc([1, 1, 1, 2, 2], [1, 1, 1, 1, 2]; scoring=:a)
 # regular accuracy, return: 0.8
@@ -498,7 +498,7 @@ end
 
 
 """
-```
+```julia
 (1)
 function predictErr(yTrue::IntVector, yPred::IntVector;
 		scoring:: Symbol = :b,
@@ -530,7 +530,7 @@ predictErr(CM:: Matrix{R};
 				scoring=scoring, digits=8))≠nothing ? round(1.0-acc;
 													  digits=digits) : nothing
 """
-```
+```julia
 function rescale!(X::Matrix{T},	bounds::Tuple=(-1, 1);
 		dims::Int=1) where T<:Real
 ```

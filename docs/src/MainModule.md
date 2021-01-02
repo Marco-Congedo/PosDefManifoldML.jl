@@ -20,21 +20,21 @@ The main module does not contain functions.
 
 As typical in machine learning packages, a type is created (a `struct` in Julia) to specify a ML model. *Supertype*
 
-```
+```julia
 abstract type MLmodel end
 ```
 
 is the abstract type for all machine learning
 models. *Supertype*
 
-```
+```julia
 abstract type PDmodel<:MLmodel end
 ```
 
 is the abstract type for all machine learning
 models acting on the positive definite (PD) **manifold** (for example, see [`MDM`](@ref)). *Supertype*
 
-```
+```julia
 abstract type TSmodel<:MLmodel end
 ```
 
@@ -46,7 +46,7 @@ models acting on the **tangent space** (for example, see [`ENLR`](@ref)).
 In all concerned functions *class labels* are given as a vector of integers,
 of type
 
-```
+```julia
 IntVector=Vector{Int}
 ```
 
@@ -57,7 +57,7 @@ of classes.
 
 ### working with metrics
 
-In order to work with metrics for the manifold of positive definite matrices, make sure you install the *PosDefManifold* package. 
+In order to work with metrics for the manifold of positive definite matrices, make sure you install the *PosDefManifold* package.
 
 ### the ℍVector type
 

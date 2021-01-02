@@ -9,7 +9,7 @@
 #   and it applies SVM classification using Julia's SVM wrapper.
 
 """
-```
+```julia
 abstract type SVMmodel<:TSmodel end
 ```
 Abstract type for **Support-Vector Machine (SVM)**
@@ -18,7 +18,7 @@ learning models. See [MLmodel](@ref).
 abstract type SVMmodel<:TSmodel end
 
 """
-```
+```julia
 mutable struct SVM <: SVMmodel
 	metric		:: Metric
 	svmType		:: Type
@@ -81,7 +81,7 @@ see the documentation of the [`ENLR`](@ref) structure.
 (declared [here](https://github.com/mpastell/LIBSVM.jl/blob/master/src/LibSVMtypes.jl)).
 
 **Examples**:
-```
+```julia
 # Note: creating models with the default creator is possible,
 # but not useful in general.
 
@@ -146,7 +146,7 @@ end
 
 
 """
-```
+```julia
 function fit(model     :: SVMmodel,
                𝐏Tr     :: Union{ℍVector, Matrix{Float64}},
                yTr     :: IntVector=[];
@@ -257,7 +257,7 @@ resources on the LIBSVM package [🎓](@ref).
 **Tutorial**: [Example using SVM models](@ref).
 
 **Examples**
-```
+```julia
 using PosDefManifoldML, PosDefManifold
 
 # generate some data
@@ -377,7 +377,7 @@ end
 
 
 """
-```
+```julia
 function predict(model :: SVMmodel,
 				𝐏Te	:: Union{ℍVector, Matrix{Float64}},
 				what	:: Symbol = :labels;
@@ -403,7 +403,7 @@ will be multi-threaded.
 **See also**: [`fit`](@ref), [`cvAcc`](@ref), [`predictErr`](@ref).
 
 **Examples**
-```
+```julia
 using PosDefManifoldML, PosDefManifold
 
 # generate some data

@@ -19,7 +19,7 @@ abstract type MDMmodel<:PDmodel end
 
 
 """
-```
+```julia
 mutable struct MDM <: MDMmodel
     metric  :: Metric = Fisher;
     featDim :: Int
@@ -59,7 +59,7 @@ It is used to optimize the computation of distances if the
 model is fitted useing the Fisher metric (default).
 
 **Examples**:
-```
+```julia
 using PosDefManifoldML, PosDefManifold
 
 # create an empty model
@@ -92,7 +92,7 @@ end
 
 
 """
-```
+```julia
 function fit(model :: MDMmodel,
               𝐏Tr   :: ℍVector,
               yTr   :: IntVector;
@@ -149,7 +149,7 @@ without crowding the REPL.
 **See also**: [`predict`](@ref), [`cvAcc`](@ref).
 
 **Examples**
-```
+```julia
 using PosDefManifoldML, PosDefManifold
 
 # generate some data
@@ -213,7 +213,7 @@ end
 
 
 """
-```
+```julia
 function predict(model  :: MDMmodel,
                  𝐏Te    :: ℍVector,
                  what   :: Symbol = :labels;
@@ -311,7 +311,7 @@ end
 
 
 """
-```
+```julia
 function getMean(metric :: Metric,
                  𝐏      :: ℍVector;
               w        :: Vector = [],
@@ -378,7 +378,7 @@ end
 
 
 """
-```
+```julia
 function getDistances(metric :: Metric,
                       means  :: ℍVector,
                       𝐏      :: ℍVector;
