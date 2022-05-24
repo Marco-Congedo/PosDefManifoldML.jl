@@ -1,7 +1,7 @@
 name = "PosDefManifoldML"
 uuid = "a07f4532-e2c9-11e9-2ea2-6d98fe4a1f21"
 authors = ["Marco-Congedo <marco.congedo@gmail.com>"]
-version = "0.4.5"
+version = "0.4.6"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
@@ -18,7 +18,7 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 Distributions = "0.22.6"
 GLMNet = "0.5.2"
 LIBSVM = "0.4.0"
-PosDefManifold = "0.4.8"
+PosDefManifold = "0.4.9"
 StatsBase = "0.32.2"
 julia = "1"
 

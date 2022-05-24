@@ -8,7 +8,7 @@
 #   You won't need this script for using the package.
 #
 #   MIT License
-#   Copyright (c) 2019, 2010, Marco Congedo, CNRS, Grenobe, France:
+#   Copyright (c) 2019_2021, Marco Congedo, CNRS, Grenobe, France:
 #   https://sites.google.com/site/marcocongedo/home
 #
 #   DIRECTIONS:
