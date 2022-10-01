@@ -4,30 +4,30 @@
 |:---------------------------------------:|
 | [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://Marco-Congedo.github.io/PosDefManifoldML.jl/dev) |
 
-**PosDefManifoldML** is a [**Julia**](https://julialang.org/) package for classifying data in the [**Riemannian manifolds**](https://en.wikipedia.org/wiki/Riemannian_manifold) **P** of real or complex [**positive definite matrices**](https://en.wikipedia.org/wiki/Definiteness_of_a_matrix). It is based on the [PosDefManifold.jl](https://github.com/Marco-Congedo/PosDefManifold.jl) and [GLMNet.jl](https://github.com/JuliaStats/GLMNet.jl) packages.
+**PosDefManifoldML** is a [**Julia**](https://julialang.org/) package for classifying data in the [**Riemannian manifolds**](https://en.wikipedia.org/wiki/Riemannian_manifold) **P** of real or complex [**positive definite matrices**](https://en.wikipedia.org/wiki/Definiteness_of_a_matrix). It is based on the [PosDefManifold.jl](https://github.com/Marco-Congedo/PosDefManifold.jl), [GLMNet.jl](https://github.com/JuliaStats/GLMNet.jl) and [LIBSVM.jl](https://github.com/mpastell/LIBSVM.jl) packages.
 
 [Machine learning](https://en.wikipedia.org/wiki/Machine_learning) (ML) in **P** can either operate directly on the manifold, which requires dedicated Riemannian methods, or the data can be projected onto the **tangent space**, where standard (Euclidean) machine learning methods apply (e.g., linear discriminant analysis, support-vector machine, logistic regression, random forest, deep neuronal networks, etc).
 
 ![](/docs/src/assets/Fig1.jpg)
 
-For the moment being, **PosDefManifoldML** implements the Riemannian **Minimum Distance to Mean (MDM)** classifier, which operates directly in **P** and the **elastic net logistic regression** classifier in the tangent space, including the pure **Ridge** and pure **Lasso** logistic regresison model. The latter model can be used also for traditional (Euclidean) feature vectors, making of this package also a nice interface to the binomial family of generalized linear models implemented in *GLMNet.jl*.  
+For the moment being, **PosDefManifoldML** implements the Riemannian **Minimum Distance to Mean (MDM)** 
+classifier, which operates directly in **P**, the **elastic net logistic regression** 
+(including the pure **Ridge** and pure **Lasso** logistic regression model) and several 
+**support-vector machine** classifiers in the tangent space. 
+The models operating in the tangent space can be used also for traditional (Euclidean) feature vectors, 
+making of this package also a nice interface to the binomial family of generalized linear models implemented 
+in *GLMNet.jl* and all SVM models implemented in *LIBSVM.jl*
 
 ## Installation
 
-The package is still not registered. To install it,
-execute the following command in Julia's REPL:
+Run this line in Julia's REPL:
 
-    ]add https://github.com/Marco-Congedo/PosDefManifoldML.jl
-
-## Disclaimer
-
-This package is still in a pre-release stage.
-Independent reviewers are more then welcome.
+    ]add PosDefManifold PosDefManifoldML
 
 ## Examples
 
-```
-using PosDefManifoldML
+```julia
+using PosDefManifold, PosDefManifoldML
 
 # simulate symmetric positive definite (SDP) matrices data for a 2-class problem.
 # P is a vector of SPD matrices, y a vector of labels. Tr=training, Te=testing.
@@ -39,13 +39,13 @@ PTr, PTe, yTr, yTe=gen2ClassData(10, 30, 40, 60, 80)
 # # # MACHINE LEARNING IN THE PD MANIFOLD # # #
 
 # (1)
-# craete and fit (train) a Riemannian Minimum Distance to Mean (MDM) model:
+# create and fit (train) a Riemannian Minimum Distance to Mean (MDM) model:
 model=fit(MDM(), PTr, yTr)
 #
 # predict labels (classify the testing set):
 yPred=predict(model, PTe, :l)
 #
-# prediction error in percent
+# prediction error (in proportion)
 predictErr(yTe, yPred)
 #
 # predict probabilities for the matrices in `PTe` of belonging to each class:
@@ -58,14 +58,14 @@ cv = cvAcc(MDM(), PTr, yTr)
 # # # MACHINE LEARNING IN THE TANGENT SPACE # # #
 
 # (1)
-# craete and fit (train) LASSO Logistic Regression models
+# create and fit (train) LASSO Logistic Regression models
 # finding the best model by cross-validation:
 model=fit(ENLR(), PTr, yTr)
 #
 # predict labels (classify the testing set) using the 'best' model:
 yPred=predict(model, PTe, :l)
 #
-# prediction error in percent
+# prediction error (in proportion)
 predictErr(yTe, yPred)
 #
 # ...
@@ -83,14 +83,15 @@ model=fit(ENLR(), PTr, yTr; alpha=0.5)
 cv = cvAcc(ENLR(), PTr, yTr; alpha=0.5)
 
 # (1)
-# craete and fit (train) an SVM model
+# create and fit (train) an SVM with Radial Basis kernel
+
 # finding the best model by cross-validation:
 model=fit(SVM(), PTr, yTr)
 #
 # predict labels (classify the testing set) using the 'best' model:
 yPred=predict(model, PTe, :l)
 #
-# prediction error in percent
+# prediction error (in proportion)
 predictErr(yTe, yPred)
 #
 # ...
@@ -105,10 +106,14 @@ cv = cvAcc(SVM(), PTr, yTr)
 ## About the Authors
 
 [Marco Congedo](https://sites.google.com/site/marcocongedo), corresponding
-author, is a research scientist of [CNRS](http://www.cnrs.fr/en) (Centre National de la Recherche Scientifique), working in [UGA](https://www.univ-grenoble-alpes.fr/english/) (University of Grenoble Alpes). **contact**: marco *dot* congedo *at* gmail *dot* com
+author, is a Research Director of [CNRS](http://www.cnrs.fr/en) (Centre National de la Recherche Scientifique), working in [UGA](https://www.univ-grenoble-alpes.fr/english/) (University of Grenoble Alpes). **contact**: marco *dot* congedo *at* gmail *dot* com
 
-Saloni Jain is a student at the
+Anton Andreev is a Research Engineer working at the same institution.
+
+Saloni Jain at the time of writing this package was a Student at the
 [Indian Institute of Technology, Kharagpur](http://www.iitkgp.ac.in/), India.
+
+
 
 | **Documentation**  |
 |:---------------------------------------:|
