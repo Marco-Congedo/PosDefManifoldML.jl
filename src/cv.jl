@@ -1,7 +1,7 @@
 #   Unit "cv.jl" of the PosDefManifoldML Package for Julia language
 
 #   MIT License
-#   Copyright (c) 2019-2022
+#   Copyright (c) 2019-2023
 #   Marco Congedo, CNRS, Grenoble, France:
 #   https://sites.google.com/site/marcocongedo/home
 #   Saloni Jain, Indian Institute of Technology, Kharagpur, India

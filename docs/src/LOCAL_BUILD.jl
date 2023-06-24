@@ -1,10 +1,7 @@
 #   This script is not part of the PosDefManifoldML package.
-#   It allows to build the PosDefManifoldML package
-#   and its documentation locally from the source code,
+#   It allows to build the PosDefManifoldML documentation
+#   locally from the source code,
 #   without actually installing the package.
-#   It is useful for developing purposes using the Julia
-#   `Revise` package (that you need to have installed on your PC,
-#   together with the `Documenter` package for building the documentation).
 #   You won't need this script for using the package.
 #
 #   MIT License
@@ -12,14 +9,13 @@
 #   https://sites.google.com/site/marcocongedo/home
 #
 #   DIRECTIONS:
-#   1) If you have installed PosDefManifoldML from github or Julia registry,
-#      uninstall it.
+#   1) Set the `docs` folder as julia envoronment
 #   2) Change the `juliaCodeDir` path here below to the path
 #           where the PosDefManifoldML folder is located on your computer.
 #   3) Under Linux, replace all '\\' with `/`
 #   4) Put the cursor in this unit and hit SHIFT+CTRL+ENTER
 #
-#   Nota Bene: all you need for building the package is actually
+#   Nota Bene: all you need for building the documentation is actually
 #   the 'push!' line and the 'using' line.
 #   You can safely delete the rest once
 #   you have identified the 'srcDir' to be used in the push command.
@@ -30,9 +26,9 @@ begin
   docsDir      = juliaCodeDir*"PosDefManifoldML\\docs\\"
 
   push!(LOAD_PATH, scrDir)
-  using LinearAlgebra,
-        Documenter, Statistics, PosDefManifold, Revise, PosDefManifoldML
-
+  using PosDefManifoldML
+  push!(LOAD_PATH, docsDir)
+  using Documenter
   cd(docsDir)
   clipboard("""makedocs(sitename="PosDefManifoldML", modules=[PosDefManifoldML])""")
   @info("\nhit CTRL+V+ENTER on the REPL for building the documentation.");
