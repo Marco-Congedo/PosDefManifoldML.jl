@@ -1,8 +1,8 @@
 #   Unit "simulations.jl" of the PosDefManifoldML Package for Julia language
-#   v 0.4.5 - last update June 26 2021
+#   v 0.4.7 - last update June 2023
 #
 #   MIT License
-#   Copyright (c) 2019-2022,
+#   Copyright (c) 2019-2023,
 #   Marco Congedo, CNRS, Grenobe, France:
 #   https://sites.google.com/site/marcocongedo/home
 
