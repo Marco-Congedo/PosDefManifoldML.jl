@@ -254,8 +254,7 @@ function crval(model    :: MLmodel,
             # Conditioners (Data transformation)
             pipeline        :: Union{Pipeline, Nothing} = nothing,
             # Cross-validation parameters
-            nFolds          :: Int      = min(10, length(y) ÷ 3),
-            stratified      :: Bool     = true,            
+            nFolds          :: Int      = min(10, length(y) ÷ 3),           
             shuffle         :: Bool     = false,
             # Default performance metric and statistical test
             scoring         :: Symbol   = :b,
