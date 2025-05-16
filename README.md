@@ -2,7 +2,8 @@
 
 | **Documentation**  |
 |:---------------------------------------:|
-| [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://Marco-Congedo.github.io/PosDefManifoldML.jl/dev) |
+| [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://Marco-Congedo.github.io/PosDefManifoldML.jl/stable) |
+
 
 **PosDefManifoldML** is a [**Julia**](https://julialang.org/) package for classifying data in the [**Riemannian manifolds**](https://en.wikipedia.org/wiki/Riemannian_manifold) **P** of real or complex [**positive definite matrices**](https://en.wikipedia.org/wiki/Definiteness_of_a_matrix). It is based on the [PosDefManifold.jl](https://github.com/Marco-Congedo/PosDefManifold.jl), [GLMNet.jl](https://github.com/JuliaStats/GLMNet.jl) and [LIBSVM.jl](https://github.com/mpastell/LIBSVM.jl) packages.
 
@@ -116,7 +117,6 @@ Saloni Jain at the time of writing this package was a Student at the
 [Indian Institute of Technology, Kharagpur](http://www.iitkgp.ac.in/), India.
 
 
-
 | **Documentation**  |
 |:---------------------------------------:|
-| [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://Marco-Congedo.github.io/PosDefManifoldML.jl/dev) |
+| [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://Marco-Congedo.github.io/PosDefManifoldML.jl/stable)
