@@ -12,7 +12,7 @@ This is the main unit containing the **PosDefManifoldML** *module*.
 | [Dates](https://github.com/JuliaStdlibs/Dates.jl)| [LIBSVM](https://github.com/mpastell/LIBSVM.jl)|
 | [StatsBase](https://github.com/JuliaStats/StatsBase.jl) | [PermutationTests](https://github.com/Marco-Congedo/PermutationTests.jl) |
 | [Diagonalizations](https://github.com/Marco-Congedo/Diagonalizations.jl) | [Folds](https://github.com/JuliaFolds/Folds.jl) |
-| [Serialization](https://github.com/JuliaLang/julia/blob/master/stdlib/Serialization/src/Serialization.jl) |  |
+| [Serialization](https://github.com/JuliaLang/julia/blob/master/stdlib/Serialization/src/Serialization.jl) |  [DataFrames](https://dataframes.juliadata.org/stable/)|
 
 
 ## types
