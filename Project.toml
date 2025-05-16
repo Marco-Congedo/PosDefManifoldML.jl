@@ -1,9 +1,10 @@
 name = "PosDefManifoldML"
 uuid = "a07f4532-e2c9-11e9-2ea2-6d98fe4a1f21"
 authors = ["Marco-Congedo <marco.congedo@gmail.com>"]
-version = "0.5.00"
+version = "0.5.0"
 
 [deps]
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Diagonalizations = "9cd687f3-b62d-43f3-8fd3-ffcd9e581047"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
@@ -20,6 +21,7 @@ StatsAPI = "82ae8749-77ed-4fe6-ae5f-f523153014b0"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
+DataFrames = "1.7"
 Diagonalizations = "0.2"
 Distributions = "0.22, 0.23, 0.24, 0.25"
 Folds = "0.2.10"

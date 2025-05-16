@@ -65,6 +65,7 @@ import StatsBase: fit, predict
 import StatsAPI.fit!
 import LinearAlgebra.normalize!
 import PosDefManifold.dim
+import DataFrames.transform!
 
 export
 
