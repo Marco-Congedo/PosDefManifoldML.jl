@@ -220,6 +220,7 @@ function fit(model	:: ENLRmodel,
     lambda          :: Vector{Float64} = Float64[],
     maxit           :: Int = 1000000,
     algorithm       :: Symbol = :newtonraphson,
+    checkArgs       :: Bool = true,
 
     # selection method
     λSelMeth        :: Symbol = :sd1,
@@ -310,22 +311,27 @@ used to compute the mean is set to argument `tol` (default 1e-5).
 Also, in this case a particular initialization for those iterative algorithms
 can be provided as an `Hermitian` matrix with argument `meanInit`.
 
-!!! tip "Euclidean ENLR models"
-    ML models acting on the tangent space allows to fit a model passing as
-    training data `𝐏Tr` directly a matrix of feature vectors,
-    where each feature vector is a row of the matrix.
-    In this case the `metric` of the ENLR model and argument `meanISR` are not used.
-    Therefore, the `.meanISR` field of the created [`ENLR`](@ref) structure
-    will be set to `nothing`.
-
 If a `UnitRange` is passed with optional keyword argument `vecRange`,
 then if `𝐏Tr` is a vector of `Hermitian` matrices, the vectorization
 of those matrices once they are projected onto the tangent space
 concerns only the rows (or columns) given in the specified range,
 else if `𝐏Tr` is a matrix with feature vectors arranged in its rows, then
 only the columns of `𝐏Tr` given in the specified range will be used.
+Argument `vecRange` will be ignored if a pre-conditioning pipeline is used 
+and if the pipeline changes the dimension of the input matrices.
+In this case it will be set to its default value using the new dimension.
+You are not allowed to change this behavior.
 
-With `normalize` the tangent vectors can be normalized individually.
+!!! tip "Euclidean ENLR models"
+    ML models acting on the tangent space allows to fit a model passing as
+    training data `𝐏Tr` directly a matrix of feature vectors,
+    where each feature vector is a row of the matrix.
+    In this case none of the above keyword arguments are used.
+
+The following optional keyword arguments act on any kind of input,
+that is, tangent vectors and generic feature vectors.
+
+With `normalize` the tangent (or feature) vectors can be normalized individually.
 Three functions can be passed, namely 
  - [`demean!`](@ref) to remove the mean,
  - [`normalize!`](@ref) to fix the norm (default),
@@ -352,7 +358,7 @@ The remaining optional keyword arguments, are
   function for finding the best lambda hyperparamater by cross-validation.
   Those are used only if `fitType` = `:path` or = `:all`.
 
-**Optional keyword arguments for fitting the model(s) using GLMNet**
+**Optional keyword arguments for fitting the model(s) using GLMNet.jl**
 
 `alpha`: the hyperparameter in *[0, 1]* to trade-off
 an elestic-net model. *α=0* requests a pure *ridge* model and
@@ -423,6 +429,15 @@ Possible values are `:newtonraphson` (default) and
 
 For further informations on those arguments, refer to the
 resources on the GLMNet package [🎓](@ref).
+
+!!! warning "Possible change of dimension"
+    The provided arguments `penalty_factor`, `constraints`, `dfmax`, `pmax` and 
+    `lambda_min_ratio` will be ignored if a pre-conditioning `pipeline` is passed 
+    as argument and if the pipeline	changes the dimension of the input matrices, 
+    thus of the tangent vectors. In this case they will be set to their 
+    default values using the new dimension. To force the use of the provided values 
+    instead, set `checkArgs` to false (true by default). Note however that in this 
+    case you must provide suitable values for all this arguments.
 
 **Optional Keyword arguments for finding the best model by cv**
 
@@ -520,13 +535,17 @@ function fit(model  :: ENLRmodel,
             dfmax           :: Int = _getDim(𝐏Tr, vecRange),
             pmax            :: Int = min(dfmax*2+20, _getDim(𝐏Tr, vecRange)),
             nlambda         :: Int = 100,
+
             #lambda_min_ratio :: Real = (length(yTr)*2 < _getDim(𝐏Tr, vecRange) ? 1e-2 : 1e-4),
             lambda_min_ratio:: Real = (length(yTr) < _getDim(𝐏Tr, vecRange) ? 1e-2 : 1e-4), # May 2025
             lambda          :: Vector{Float64} = Float64[],
             maxit           :: Int = 1000000,
             algorithm       :: Symbol = :newtonraphson,
+            checkArgs       :: Bool = true,
+
             # selection method
             λSelMeth    :: Symbol = :sd1,
+            
             # arguments for `GLMNet.glmnetcv` function
             nfolds      :: Int = min(10, div(size(yTr, 1), 3)),
             folds       :: Vector{Int} =
@@ -554,10 +573,27 @@ function fit(model  :: ENLRmodel,
     𝐏Tr isa ℍVector ? nObs=length(𝐏Tr) : nObs=size(𝐏Tr, 1)
     !_check_fit(ℳ, nObs, length(yTr), length(w), length(weights), "ENLR") && return
 
-    # pipeline (pre-conditioners)
-    if !(pipeline===nothing)
-        verbose && println(greyFont, "Fitting pipeline...")
-        ℳ.pipeline = fit!(𝐏Tr, pipeline)
+    # apply pre-conditioning pipeline and reset some keyword args to fit the model 
+    # if the pipeline change the input matrix dimension
+    if 𝐏Tr isa ℍVector # only for tangent vectors (not if 𝐏Tr is a matrix of tangent vectors)     
+
+        originalDim = size(𝐏Tr[1], 2)
+        # pipeline (pre-conditioners)
+        if !(pipeline===nothing)
+            verbose && println(greyFont, "Fitting pipeline...")
+            ℳ.pipeline = fit!(𝐏Tr, pipeline)
+        end
+
+        newDim = size(𝐏Tr[1], 2) # some pre-conditioners can change the dimension
+        if newDim ≠ originalDim && checkArgs # reset these arguments to the default using the new dimension
+            vecRange = 1:newDim
+            manifoldDim = (newDim * (newDim+1)) ÷ 2
+            penalty_factor  = ones(Float64, manifoldDim)
+            constraints = [x for x in (-Inf, Inf), y in 1:manifoldDim]
+            dfmax = manifoldDim
+            pmax = min(dfmax*2+20, manifoldDim)
+            lambda_min_ratio = (length(yTr) < manifoldDim ? 1e-2 : 1e-4)
+        end
     end
 
 	# project data onto the tangent space or just copy the features if 𝐏Tr is a matrix
