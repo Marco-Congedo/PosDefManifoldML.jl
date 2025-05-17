@@ -795,7 +795,7 @@ transform!(P, @→ Recenter)
 ```
 """
 function transform!(𝐏 :: ℍVector, c :: Tikhonov)
-    c.α≈0.0 && warn("The Tikhonov conditioner passed as argument has the α parameter equal to zero or very close to it")
+    c.α≈0.0 && @warn("The Tikhonov conditioner passed as argument has the α parameter equal to zero or very close to it")
     tikhonov!(𝐏, c.α; transform=true, threaded=c.threaded)
     return 𝐏
 end
