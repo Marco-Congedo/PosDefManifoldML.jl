@@ -173,6 +173,7 @@ function fit(model     :: SVMmodel,
 	probability	:: Bool = false,
 	weights 	:: Union{Dict{Int, Float64}, Nothing} = nothing,
 	cachesize 	:: Float64	= 200.0,
+	checkArgs	:: Bool = true,
 
 	# Generic and common parameters
 	tol		:: Real = 1e-5,
@@ -202,16 +203,20 @@ operation. Once this is done, the support-vector machine is fitted.
 
 **Optional keyword arguments**
 
-If a `pipeline`, of type [`Pipeline`](@ref) is provided, 
-all necessary parameters of the sequence of conditioners are fitted and all matrices 
-are transformed according to the specified pipeline before fitting the
-ML model. The parameters are stored in the output ML model.
-Note that the fitted pipeline is automatically applied by any successive call 
-to function [`predict`](@ref) to which the output ML model is passed as argument.
+For the following keyword arguments see the documentation of the [`fit`](@ref) 
+funtion for the ENLR (Elastic Net Logistic Regression) machine learning model:
 
-Arguments `w`, `meanISR`, `meanInit`, `vecRange` and `normalize` allow to tune
-the projection onto the tangent space. See the documentation
-of the [`fit`](@ref) function for the ENLR model for their meaning.
+- `pipeline` (pre-conditioning),
+- `w`, `meanISR`, `meanInit`, `vecRange` (tangent space projection),
+- `normalize` (tangent or feature vectors normalization).
+
+!!! tip "Euclidean SVM models"
+    ML models acting on the tangent space allows to fit a model passing as
+    training data `𝐏Tr` directly a matrix of feature vectors,
+    where each feature vector is a row of the matrix.
+    In this case none of the above keyword arguments are used.
+
+**Optional keyword arguments for fitting the model(s) using LIBSVM.jl**
 
 `svmType` and `kernel` allow to chose among several
 available SVM models. See the documentation of the [`SVM`](@ref) structure.
@@ -222,8 +227,13 @@ of the `epsilonSVR` SVM model.
 `cost`, with default 1.0, is the cost parameter *C* of `SVC`,
 `epsilonSVR`, and `nuSVR` SVM models.
 
-`gamma`, defaulting to 1 divided by the length of the feature vectors,
+`gamma`, defaulting to 1 divided by the length of the tangent (or feature) vectors,
 is the *γ* parameter for `RadialBasis`, `Polynomial` and `Sigmoid` kernels.
+The provided argument `gamma` will be ignored if a pre-conditioning `pipeline` 
+is passed as argument and if the pipeline changes the dimension of the input matrices, 
+thus of the tangent vectors. In this case it will be set to its default value using 
+the new dimension. To force the use of the provided `gamma` value instead, 
+set	`checkArgs` to false (true by default).
 
 `degree`, with default 3, is the degree for `Polynomial` kernels
 
@@ -308,8 +318,10 @@ m = fit(SVM(logEuclidean; kernel=Linear, svmtype=NuSVC), PTr, yTr)
 function fit(model     :: SVMmodel,
                𝐏Tr     :: Union{ℍVector, Matrix{Float64}},
                yTr     :: IntVector=[];
+
             # pipeline
             pipeline    :: Union{Pipeline, Nothing} = nothing,
+
 			# parameters for projection onto the tangent space
 			w			:: Union{Symbol, Tuple, Vector} = Float64[],
 			meanISR     :: Union{ℍ, Nothing} = nothing,
@@ -330,6 +342,8 @@ function fit(model     :: SVMmodel,
 			probability :: Bool		  		= false,
 			weights     :: Union{Dict{Int, Float64}, Nothing} = nothing,
 			cachesize   :: Float64     		= 200.0,
+			checkArgs	:: Bool 			= true,
+
 			# Generic and common parameters
 			tol         :: Real 		  	= 1e-5,
 			verbose     :: Bool 		  	= true,
@@ -353,11 +367,24 @@ function fit(model     :: SVMmodel,
     𝐏Tr isa ℍVector ? nObs=length(𝐏Tr) : nObs=size(𝐏Tr, 1)
     !_check_fit(ℳ, nObs, length(yTr), length(w), length(yTr), "SVM") && return
 
-    # pipeline (pre-conditioners)
-    if !(pipeline===nothing)
-        verbose && println(greyFont, "Fitting pipeline...")
-        ℳ.pipeline = fit!(𝐏Tr, pipeline)
+    # apply pre-conditioning pipeline and reset the gamma keyword arg to fit the model 
+    # if the pipeline change the input matrix dimension
+    if 𝐏Tr isa ℍVector # only for tangent vectors (not if 𝐏Tr is a matrix of tangent vectors)     
+
+        originalDim = size(𝐏Tr[1], 2)
+        # pipeline (pre-conditioners)
+        if !(pipeline===nothing)
+            verbose && println(greyFont, "Fitting pipeline...")
+            ℳ.pipeline = fit!(𝐏Tr, pipeline)
+        end
+
+        newDim = size(𝐏Tr[1], 2) # some pre-conditioners can change the dimension
+        if newDim ≠ originalDim && checkArgs # reset the vecrange and gamma arg to the default using the new dimension
+			vecRange = 1:newDim
+			gamma = 1/_getDim(𝐏Tr, vecRange)
+        end
     end
+
 
 	# project data onto the tangent space or just copy the features if 𝐏Tr is a matrix
 	verbose && println(greyFont, "Lifting SPD matrices onto the tangent space...")

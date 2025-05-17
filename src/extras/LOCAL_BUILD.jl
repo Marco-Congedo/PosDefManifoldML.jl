@@ -26,8 +26,8 @@
 
 begin
   juliaCodeDir = homedir()*"\\Documents\\Documenti\\Code\\julia\\"
-  scrDir       = juliaCodeDir*"PosDefManifoldML2\\src\\" ### whatch 2
-  docsDir      = juliaCodeDir*"PosDefManifoldML2\\docs\\" ### whatch 2
+  scrDir       = juliaCodeDir*"PosDefManifoldML\\src\\"
+  docsDir      = juliaCodeDir*"PosDefManifoldML\\docs\\" 
 
   push!(LOAD_PATH, scrDir)
   using LinearAlgebra,
