@@ -34,24 +34,24 @@ A call to [`crval`](@ref) results in an instance of this structure.
 **Fields:**
 
 `.cvTpe` is the type of cross-validation technique, given as a string
-(e.g., "10-kfold") or xxx
+(*e.g.*, "10-fold").
 
 `.scoring` is the type of accuracy that is computed, given as a string.
-This has been passed as argument to [`crval`](@ref).
+This is controlled when calling [`crval`](@ref).
 Currently *accuracy* and *balanced accuracy* are supported.
 
-`.modelType` is type of the machine learning used for performing the
+`.modelType` is the type of the machine learning model used for performing the
 cross-validation, given as a string.
 
-`.predLabels` is an f-vector of z integer vectors holding the vectors of 
-predicted labels. There is one vector for each fold (f) and each containes
-as many vector as classes (z), in turn each one containing the predicted labels
+`.predLabels` is an `f`-vector of `z` integer vectors holding the vectors of 
+predicted labels. There is one vector for each fold (`f`) and each containes
+as many vector as classes (`z`), in turn each one containing the predicted labels
 for the trials.
 
-`.losses` is an f-vector holding BitVector types (vectors of booleans), 
+`.losses` is an `f`-vector holding BitVector types (vectors of booleans), 
 each holding the binary loss for a fold. 
 
-`.cnfs` is an f-vector of matrices holding the *confusion matrices*
+`.cnfs` is an `f`-vector of matrices holding the *confusion matrices*
 obtained at each fold of the cross-validation. These matrices holds 
 *frequencies* (counts), that is, the sum of all elements equals
 the number of trials used for each fold.
@@ -60,7 +60,7 @@ the number of trials used for each fold.
 across the folds of the cross-validation. This matrix holds *proportions*,
 that is, the sum of all elements equal 1.0.
 
-`.accs` is an f-vector of real numbers holding the *accuracies* obtained
+`.accs` is an `f`-vector of real numbers holding the *accuracies* obtained
 at each fold of the cross-validation.
 
 `.avgAcc` is the *average accuracy* across the folds of the
@@ -75,7 +75,6 @@ inferior to the specified expected value.
 `.p` is the p-value of the above hypothesis test.
 
 See [`crval`](@ref) for more informations
-
 """
 struct CVres <: CVresult 
     cvType      :: String
@@ -124,10 +123,9 @@ function crval(model    :: MLmodel,
         fitArgs...)
 ```
 Stratified cross-validation accuracy for a machine learning `model`
-given an ℍVector ``𝐏`` holding *k* Hermitian matrices,
-an [IntVector](@ref) `y` holding the *k* labels for these matrices and
-the number of folds `nFolds`,
-return a [`CVres`](@ref) structure.
+given an ℍVector ``𝐏`` holding *k* Hermitian matrices and
+an [IntVector](@ref) `y` holding the *k* labels for these matrices.
+Return a [`CVres`](@ref) structure.
 
 For each fold, a machine learning model is fitted on training data and labels
 are predicted on testing data. Summary classification performance statistics
@@ -148,13 +146,14 @@ For balanced classes the balanced accuracy reduces to the
 regular accuracy, therefore there is no point in using regular accuracy
 if not to avoid a few unnecessary computations when the class are balanced.
 
-!!! info "Don't be surprised"
+!!! info "Error loss"
     Note that this function computes the error loss for each fold (see [`CVres`](@ref)).
-    The average error loss across folds is the complement of accuracy, 
+    The average error loss is the complement of accuracy, 
     not of balanced accuracy. If the classes are balanced and you use `scoring`=:a (accuracy), 
-    the average error loss across folds is equal to 1 minus the average accuracy, 
-    also computed by this function, but this is not true is the classes are unbalanced
-    and you use `scoring`=:b (default).
+    the average error loss within each fold is equal to 1 minus the average accuracy, 
+    which is also computed by this function. However, this is not true if the classes are unbalanced
+    and you use `scoring`=:b (default). In this case the returned error loss and accuracy
+    may appear incoherent.
 
 `hyptest` is a symbol specifying the kind of statistical test to be carried out.
 This function tests that the average observed binary error loss is inferior to what is to be 
@@ -163,7 +162,7 @@ expected by the hypothesis of random chance, which is set to ``1-\\frac{1}{z}``,
 is implemented.
 
 For the meaning of the `shuffle` argument (false by default),
-see function [`cvSetup`](@ref), to which this argument is passed.
+see function [`cvSetup`](@ref), to which this argument is passed internally.
 
 If `verbose` is true (default), information is printed in the REPL.
 
@@ -206,7 +205,7 @@ the points to the tangent space will not be carried out.
 This can be used if a recentering conditioner is passed in the `pipeline`.
 
 Also, if you pass a `w` argument (weights for barycenter estimations),
-do not pass a vector of weights, just pass a symbol, e.g., `w=:b`
+do not pass a vector of weights, just pass a symbol, *e.g.*, `w=:b`
 for balancing weights.
 
 **See**: [notation & nomenclature](@ref), [the ℍVector type](@ref)

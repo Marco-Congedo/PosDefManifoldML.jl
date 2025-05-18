@@ -129,7 +129,7 @@ Return the fitted model.
     Labels must be provided using the natural numbers, *i.e.*,
     `1` for the first class, `2` for the second class, etc.
 
-Fitting an MDM model involves only computing a mean of all the
+Fitting an MDM model involves only computing a mean (barycenter) of all the
 matrices in each class. Those class means are computed according
 to the metric specified by the [`MDM`](@ref) constructor.
 
@@ -153,9 +153,9 @@ separatedly for each class, which is what is ensured by this
 function if `✓w` is true.
 
 `tol` is the tolerance required for those algorithms
-that compute the mean iteratively (they are those adopting the Fisher, logde0
+that compute the mean iteratively (they are those adopting the Fisher, logdet0
 or Wasserstein metric). It defaults to 1e-5. For details on this argument see
-the functions that are called for computing the means:
+the functions that are called for computing the means (from package *PosDefManifold.jl*):
 - Fisher metric: [gmean](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.geometricMean)
 - logdet0 metric: [ld0mean](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.logdet0Mean)
 - Wasserstein metric: [Wasmean](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.wasMean).
@@ -167,7 +167,7 @@ natural order corresponding to the class labels (see above).
 
 If `verbose` is true (default), information is printed in the REPL.
 
-**See**: [notation & nomenclature](@ref), [the ℍVector type](@ref).
+**See**: [notation & nomenclature](@ref), [the ℍVector type](@ref)
 
 **See also**: [`predict`](@ref), [`crval`](@ref)
 
@@ -268,7 +268,7 @@ function predict(model  :: MDMmodel,
 ```
 Given an [`MDM`](@ref) `model` trained (fitted) on *z* classes
 and a testing set of *k* positive definite matrices `𝐏Te` of type
-[ℍVector](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1),
+[ℍVector](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1):
 
 if `what` is `:labels` or `:l` (default), return
 the predicted **class labels** for each matrix in `𝐏Te`,
@@ -279,15 +279,18 @@ serial number of the class whose mean is the closest to the matrix
 The labels are '1' for class 1, '2' for class 2, etc;
 
 if `what` is `:probabilities` or `:p`, return the predicted **probabilities**
-for each matrix in `𝐏Te` to belong to a all classes, as a *k*-vector
-of *z* vectors holding reals in *[0, 1]*m (probabilities).
+for each matrix in `𝐏Te` to belong to all classes, as a *k*-vector
+of *z* vectors holding reals in [0, 1] (probabilities).
 The 'probabilities' are obtained passing to a
 [softmax function](https://en.wikipedia.org/wiki/Softmax_function)
-minus the squared distances of each unlabeled matrix to all class means;
+the squared distances of each unlabeled matrix to all class means
+with inverted sign;
 
-if `what` is `:f` or `:functions`, return the **output function** of the model.
-The ratio of the squared distance to all classes to
-their geometric mean gives the 'functions'.
+if `what` is `:f` or `:functions`, return the **output function** of the model
+as a *k*-vector of *z* vectors holding reals.
+The function of each element in `𝐏Te` is the ratio of the 
+squared distance from each class to the (scalar) geometric mean of the 
+squared distances from all classes.
 
 If `verbose` is true (default), information is printed in the REPL.
 
@@ -357,9 +360,6 @@ predict(m, PTe, :l; pipeline=p)
 # learnable parameter. We would then use this pipeline instead:
 p = deepcopy(m.pipeline)
 p[1].eVar = dim(m.pipeline)
-
-
-
 ```
 """
 function predict(model  :: MDMmodel,

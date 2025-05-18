@@ -24,8 +24,8 @@ in between 1 and *z*, where *z* is the number of classes.
 
 The confusion matrix will have size *z*. It is computed
 starting from a matrix filled everywhere with zeros and
-adding, for each label, 1 at entry [i, j] of the matrix, where
-i is the true label and j the predicted label.
+adding, for each label, 1 at entry [`i`, `j`] of the matrix, where
+`i` is the true label and `j` the predicted label.
 Thus, the first row will report the true labels for class 1, 
 the second row the true labels for class 2, etc.
 
@@ -179,7 +179,7 @@ the result of [`predictAcc`](@ref), given
 - (1) the integer vectors of true labels `yTrue` and of predicted labels `yPred`, or
 - (2) a confusion matrix.
 
-**See** [`predictAcc`](@ref).
+**See** [`predictAcc`](@ref), [`confusionMat`](@ref)
 """
 predictErr(yTrue::IntVector, yPred::IntVector;
 			scoring::Symbol = :b,

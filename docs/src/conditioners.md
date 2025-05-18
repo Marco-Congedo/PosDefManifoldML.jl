@@ -18,6 +18,9 @@ The available conditioners are
 | [`Equalize`](@ref)| Individual scaling (normalization) to reduce the norm |
 | [`Shrink`](@ref)| Move along the geodesic to reduce the norm |
 
+In the table above, as elsewhere in this documentation, by norm of a matrix
+it is meant the distance of the matrix to the identity.
+
 ## Pipelines
 
 Pipelines are stored as a dedicated tuple type - see [`Pipeline`](@ref).

@@ -241,7 +241,7 @@ function fit(model	:: ENLRmodel,
 )
 ```
 
-Create and fit an **2-class** [`ENLR`](@ref) machine learning model,
+Create and fit an **2-class** elastic net logistic regression ([`ENLR`](@ref)) machine learning model,
 with training data `𝐏Tr`, of type
 [ℍVector](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1),
 and corresponding labels `yTr`, of type [IntVector](@ref).
@@ -252,16 +252,16 @@ Return the fitted model(s) as an instance of the [`ENLR`](@ref) structure.
     `1` for the first class, `2` for the second class, etc.
 
 As for all ML models acting in the tangent space,
-fitting an ENLR model involves computing a mean of all the
-matrices in `𝐏Tr`, mapping all matrices onto the tangent space
+fitting an ENLR model involves computing a mean (barycenter) of all the
+matrices in `𝐏Tr`, projecting all matrices onto the tangent space
 after parallel transporting them at the identity matrix
 and vectorizing them using the
 [vecP](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.vecP)
-operation. Once this is done, the elastic net logistic regression is fitted.
+operation. Once this is done, the ENLR is fitted.
 
 The mean is computed according to the `.metric` field
 of the `model`, with optional weights `w`.
-The `.metric` field of the `model` is passed to the [`tsMap`](@ref) function.
+The `.metric` field of the `model` is passed internally to the [`tsMap`](@ref) function.
 By default the metric is the Fisher metric. See the examples
 here below to see how to change metric.
 See [mdm.jl](@ref) or check out directly the documentation
@@ -278,12 +278,12 @@ Note that the fitted pipeline is automatically applied by any successive call
 to function [`predict`](@ref) to which the output ML model is passed as argument.
 
 By default, uniform weights will be given to all observations
-for computing the mean to pass in the tangent space.
+for computing the mean to project the data in the tangent space.
 This is equivalent to passing as argument `w=:uniform` (or `w=:u`).
 You can also pass as argument:
 
 - `w=:balanced` (or simply `w=:b`). If the two classes are unbalanced,
-  the weights should be inversely proportional to the number of examples
+  the weights should better be inversely proportional to the number of examples
   for each class, in such a way that each class contributes equally
   to the computation of the mean.
   This is equivalent of passing `w=tsWeights(yTr)`. See the
@@ -298,9 +298,7 @@ You can also pass as argument:
 
 By default `meanISR=nothing` and the inverse square root (ISR) of the mean
 used for projecting the matrices onto the tangent space (see [`tsMap`](@ref))
-is computed.
-
-An Hermitian matrix can also be passed as argument `meanISR` 
+is computed. An Hermitian matrix can also be passed as argument `meanISR` 
 and in this case this matrix will be used as the ISR of the mean.
 Passed or computed, it will be written in the `.meanISR` field of the 
 model structure created by this function.
@@ -310,6 +308,15 @@ is Fisher, logdet0 or Wasserstein, the tolerance of the iterative algorithm
 used to compute the mean is set to argument `tol` (default 1e-5).
 Also, in this case a particular initialization for those iterative algorithms
 can be provided as an `Hermitian` matrix with argument `meanInit`.
+
+!!! tip "Euclidean ENLR models"
+    ML models acting on the tangent space allows to fit a model passing as
+    training data `𝐏Tr` directly a matrix of feature vectors,
+    where each feature vector is a row of the matrix.
+    In this case none of the above keyword arguments are used.  
+
+**The following optional keyword arguments act on any kind of input,
+that is, tangent vectors and generic feature vectors**
 
 If a `UnitRange` is passed with optional keyword argument `vecRange`,
 then if `𝐏Tr` is a vector of `Hermitian` matrices, the vectorization
@@ -321,15 +328,6 @@ Argument `vecRange` will be ignored if a pre-conditioning pipeline is used
 and if the pipeline changes the dimension of the input matrices.
 In this case it will be set to its default value using the new dimension.
 You are not allowed to change this behavior.
-
-!!! tip "Euclidean ENLR models"
-    ML models acting on the tangent space allows to fit a model passing as
-    training data `𝐏Tr` directly a matrix of feature vectors,
-    where each feature vector is a row of the matrix.
-    In this case none of the above keyword arguments are used.
-
-The following optional keyword arguments act on any kind of input,
-that is, tangent vectors and generic feature vectors.
 
 With `normalize` the tangent (or feature) vectors can be normalized individually.
 Three functions can be passed, namely 
@@ -437,7 +435,7 @@ resources on the GLMNet package [🎓](@ref).
     thus of the tangent vectors. In this case they will be set to their 
     default values using the new dimension. To force the use of the provided values 
     instead, set `checkArgs` to false (true by default). Note however that in this 
-    case you must provide suitable values for all this arguments.
+    case you must provide suitable values for all the abova arguments.
 
 **Optional Keyword arguments for finding the best model by cv**
 
@@ -671,7 +669,6 @@ function fit(model  :: ENLRmodel,
 end
 
 
-
 """
 ```julia
 function predict(model   :: ENLRmodel,
@@ -685,9 +682,9 @@ function predict(model   :: ENLRmodel,
     ⏩          :: Bool = true)
 ```
 
-Given an [`ENLR`](@ref) `model` trained (fitted) on 2 classes
+Given an [`ENLR`](@ref) `model` trained (fitted) on two classes
 and a testing set of *k* positive definite matrices `𝐏Te` of type
-[ℍVector](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1),
+[ℍVector](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1):
 
 if `what` is `:labels` or `:l` (default), return
 the predicted **class labels** for each matrix in `𝐏Te`,
@@ -696,21 +693,20 @@ Those labels are '1' for class 1 and '2' for class 2;
 
 if `what` is `:probabilities` or `:p`, return the predicted **probabilities**
 for each matrix in `𝐏Te` to belong to each classe, as a *k*-vector
-of *z* vectors holding reals in *[0, 1]* (probabilities).
+of *z* vectors holding reals in [0, 1].
 The 'probabilities' are obtained passing to a
 [softmax function](https://en.wikipedia.org/wiki/Softmax_function)
-the output of the ENLR model and zero;
+the output of the ENLR model and zero for each prediction;
 
 if `what` is `:f` or `:functions`, return the **output function** of the model,
-which is the raw output of the ENLR model.
+which is the raw output of the ENLR model in GLMnet.jl.
 
 If `fitType` = `:best` (default), the best model that has been found by
 cross-validation is used for prediction.
 
 If `fitType` = `:path`,
 
-- if `onWhich` is a valid serial number for a model in the `model.path`,
-then this model is used for prediction,
+- if `onWhich` is a valid serial number for a model in the `model.path`, then this model is used for prediction,
 
 - if `onWhich` is zero, all models in the `model.path` will be used for predictions, thus the output will be multiplied by the number of models in `model.path`.
 
