@@ -10,29 +10,28 @@
 
 """
 ```julia
-	function testCV(cv:CVresult, 
+(1) function testCV(cv:CVresult, 
 			expected::Union{Float64, Symbol} = :randomchance)
 
-	function testCV(𝐂::Vector{Vector{Int}}; 
+(2) function testCV(𝐂::Vector{Vector{Int}}; 
 			expected::Union{Float64, Symbol} = :randomchance)
 
 ```
-Given a [`CVres`](@ref) stucture (which is of type `CVresult`)
+(1) Given a [`CVres`](@ref) stucture (which is of type `CVresult`)
 obtained calling the [`crval`](@ref) method, 
-performs Bayles's test (Bayles et *al.*, 2017a[🎓](@ref)) 
+performs Bayles's test (Bayles et *al.*, 2020[🎓](@ref)) 
 on the difference in distribution of the average binary error losses obtained in the 
 cross-validation as compared to a given `expected` average error loss. 
 This can be used to test whether the performance obtained in the cross-validation
 is superior to a specified chance level.
 
-The function also accepts as argument a vector of `f` confusion matrices, 
-denoted ``𝐂`` in the second method declaration here above. 
-The format is the same as the format used to store the confusion matrices in 
-a [`CVres`](@ref) stucture.
+(2) As method (1) but giving as first argument a vector of `f` confusion matrices, 
+The format of the confusion matrices (`Vector{Vector{Int}}`) is the same 
+used to store the confusion matrices in a [`CVres`](@ref) stucture.
 
 The test is always directional. Denoting ``μ`` the average loss and ``E`` the
 expected average, the test if performed according to null hypethesis ``H_0: μ1 = E``
-against alternative ``μ < E``; if the test is significant the error loss
+against alternative ``μ < E``; if the test is significant, the error loss
 is statistically inferior to the specified expected level, which means that the 
 observed accuracy is statistically **superior** to the expected accuracy.
 
@@ -95,17 +94,18 @@ testCV(cv::CVresult; expected = :randomchance) = testCV(cv.cnfs; expected)
 
 """
 ```julia
-function testCV(cv1::CVresult, cv2::CVresult; 
+(1) function testCV(cv1::CVresult, cv2::CVresult; 
                	direction = PermutationTests.Both())
 
-function testCV(𝐞₁::Vector{BitVector}, 𝐞₂::Vector{BitVector}; 
+(2) function testCV(𝐞₁::Vector{BitVector}, 𝐞₂::Vector{BitVector}; 
                	direction = PermutationTests.Both())
 
 ```
 
-Given two [`CVres`](@ref) stuctures obtained calling the [`crval`](@ref) method,
-performs Bayles's test (Bayles et *al.*, 2017a[🎓](@ref)) on the difference in distribution 
-of the average binary error losses obtained in cross-validation 1 and 2. 
+(1) Given two [`CVres`](@ref) stuctures `cv1` and `cv2`, which can be obtaoined 
+calling the [`crval`](@ref) method,
+performs Bayles's test (Bayles et *al.*, 2020[🎓](@ref)) on the difference in distribution 
+of the average binary error losses obtained in cross-validations `cv1` and `cv2`. 
 This can be used to compare the performance
 obtained by different machine learning models and/or different pre-processing,
 processing or pre-conditoning pipelines on the same data. 
@@ -117,11 +117,11 @@ processing or pre-conditoning pipelines on the same data.
 	is you use the `seed` keyword argument, make sure the same seed is employed
 	for the two cross-validations.
 
-The function also accepts as argument the error losses directly, 
-denoted `𝐞₁` and `𝐞₂` in the second method declaration here above. 
+(2) The function also accepts as argument the error losses directly, 
+denoted `𝐞₁` and `𝐞₂` in method (2) here above. 
 In this case 𝐞₁ and 𝐞₂ are vectors holding the 
 vectors of error losses obtained at each fold. 
-The format is the same as the format used to store the error losses in 
+The format is the same used to store the error losses in 
 a [`CVres`](@ref) stucture.
 
 Denoting ``μ_1`` and ``μ_2`` the average loss for `cv1` and `cv2` (or `𝐞₁` and `𝐞₂`), 
@@ -133,7 +133,7 @@ respectively, the `direction` keyword argument determines the test directionalit
 
 In al cases ``H_0: μ_1 = μ_2``.
 
-!!! tip "Direction in terms of accuracy"
+!!! tip "Test direction in terms of accuracy"
 	Note that if the test is significant with `direction=PermutationTests.Right()`,
 	the  error loss of `cv1`(or `𝐞₁`) is statistically superior to the error loss of `cv2`(or `𝐞₂`),
 	which means that the accuracy in `cv1`(or `𝐞₁`) is statistically **inferior** to the accuracy 
@@ -150,7 +150,7 @@ the ``p``-value and the asymptotic standard error.
 ```julia
 using PosDefManifoldML
 
-## test the performance of the same model and pipeline on different data:
+## Test the performance of the same model and pipeline on different data:
 
 # Generate two sets of random data with the same distribution
 P1, _dummyP, y1, _dummyy = gen2ClassData(10, 60, 80, 30, 40, 0.01)

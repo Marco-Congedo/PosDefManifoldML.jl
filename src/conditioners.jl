@@ -55,7 +55,7 @@ mutable struct Tikhonov <: Conditioner
 Mutable structure for the **Tikhonov regularization** conditioner. 
 
 Given a set of points ``𝐏`` in the manifold of positive-definite matrices,
-transforms the set such as 
+transform the set such as 
 
  ``P_j+αI, \\ j=1,...,k``,
 
@@ -63,21 +63,21 @@ where ``I`` is the identity matrix and ``α`` is a non-negative number.
 
 This conditoner structure has only two fields: 
 
-- `α`, which is written in the structure when it is 'fitted' to some data.
+- `α`, which is written in the structure when it is fitted to some data.
 
-- `threaded`, to detrmine if the transformation is done in multi-threading mode (true by default)
+- `threaded`, to detrmine if the transformation is done in multi-threading mode (true by default).
 
-This conditioner is not data-driven: the `α` parameter must be given
-explicitly upon construction (it is zero by default).
+!!! warning "This is not a data-driven conditioner"
+    The `α` parameter must be given explicitly upon construction (it is zero by default).
 
 **Examples**:
 ```julia
 using PosDefManifoldML, PosDefManifold
 
-# create a conditioner
+# Create a conditioner
 T = Tikhonov(0.001)
 ```
-**See also**: [`fit!`](@ref), [`transform!`](@ref), [`crval`](@ref).
+**See also**: [`fit!`](@ref), [`transform!`](@ref), [`crval`](@ref)
 """
 mutable struct Tikhonov <: Conditioner
     α 
@@ -111,25 +111,25 @@ mutable struct Recenter <: Conditioner
 
 Mutable structure for the **recentering** conditioner. 
 
-Given a set of points ``𝐏`` in the manifold of positive-definite matrices,
-transforms the set such as 
+Given a set of `n·n` points ``𝐏`` in the manifold of positive-definite matrices,
+transform the set such as 
 
  ``ZP_jZ^T, \\ j=1,...,k``,
 
 where ``Z`` is the whitening matrix of the barycenter of ``𝐏`` as specified by the conditioner,
-*i.e.*, if ``G`` is the barycenter of `𝐏`, then ``ZGZ^T=I``.
+*i.e.*, if ``G`` is the barycenter of ``𝐏``, then ``ZGZ^T=I``.
 
 After recentering the barycenter becomes the identity matrix and the mean of the eigenvalues of the
 whitened matrices is 1. In the manifold of positive-definite matrices, recentering is equivalent to
-parallel transport of all points to the identity barycenter.
+parallel transport of all points to the identity barycenter, according to a given metric.
 
 Depending on the `eVar` value used to define the [`Recenter`](@ref) conditioner,
 matrices ``Z`` may determine a dimensionality reduction of the input points as well.
-In this case ``Z`` is not square, but a wide matrix.
+In this case ``Z`` is not square, but a wide matrix of dimension ``p·n``, with ``p<n``.
 
-This conditoner may behave in a supervised way; providing the class labels 
+This conditoner may behave in a **supervised** way; providing the class labels 
 when it is fitted (see [`fit!`](@ref)), the classes are equally weighted to compute
-the barycenter ``G``, like [`tsWeights`](@ref)
+the barycenter ``G``, like [`tsWeights`](@ref)``
 does for computing the barycenter used for tangent space mapping.
 If the classes are balanced, the weighting has no effect.
 
@@ -151,31 +151,37 @@ This conditoner structure has the following fields:
 
 When the conditioner is fitted, the following fields are written:
 
-- `.Z`, the whitening matrix of the fitted set ``P_j, \\ j=1:k``, such that ``ZP_jZ^T`` is whitened;
+- `.Z`, the whitening matrix of the fitted set ``P_j, \\ j=1,...,k``, such that ``ZP_jZ^T`` is whitened;
 
 - `.iZ`, the left inverse ``Z^*`` of Z, such that ``Z^*Z=I`` (identity matrix) if no dimensionality reduction is operated.
- If no dimensionality reduction is operated, ``Z^*Z`` will be smaller then ``I`` in the Löwner sense.
+ If dimensionality reduction is operated, ``Z^*Z≠I`` has rank ``p``.
 
 **Examples**:
 ```julia
 using PosDefManifoldML, PosDefManifold
 
-# create a default conditioner
+# Create a default conditioner
 R = Recenter(PosDefManifold.Euclidean)
 
-# since the Euclidean metric is the default metric,
+# Since the Euclidean metric is the default metric,
 # this is equivalent to
 R = Recenter()
 
-# do not perform dimensionality reduction
+# Do not perform dimensionality reduction
 R = Recenter(PosDefManifold.Fisher; eVar=nothing)
 
-# use class labels to balance the weights across classes
-# let `y` be a vector of int holding the class labels
+# Reduce the dimension to 10
+R = Recenter(PosDefManifold.Fisher; eVar=10)
+
+# Determine the dimension so as to explain at least 90% of the variance
+R = Recenter(PosDefManifold.Fisher; eVar=0.9)
+
+# Use class labels to balance the weights across classes
+# (let `y` be a vector of int holding the class labels)
 R = Recenter(PosDefManifold.Fisher; labels=y)
 
 ```
-**See also**: [`fit!`](@ref), [`transform!`](@ref), [`crval`](@ref).
+**See also**: [`fit!`](@ref), [`transform!`](@ref), [`crval`](@ref)
 """
 mutable struct Recenter <: Conditioner
     metric :: PosDefManifold.Metric
@@ -221,7 +227,7 @@ end
 Mutable structure for the **compressing** conditioner.
 
 Given a set of points ``𝐏`` in the manifold of positive-definite matrices,
-transforms the set such as 
+transform the set such as 
 
  ``βP_j, \\ j=1,...,k``,
 
@@ -246,10 +252,10 @@ When the conditioner is fitted, the following field is written:
 ```julia
 using PosDefManifoldML, PosDefManifold
 
-# create the conditioner
+# Create the conditioner
 C = Compress()
 ```
-**See also**: [`fit!`](@ref), [`transform!`](@ref), [`crval`](@ref).
+**See also**: [`fit!`](@ref), [`transform!`](@ref), [`crval`](@ref)
 """
 mutable struct Compress <: Conditioner
     threaded
@@ -273,7 +279,7 @@ end
 Mutable structure for the **equalizing** conditioner.
 
 Given a set of points ``𝐏`` in the manifold of positive-definite matrices,
-transforms the set such as 
+transform the set such as 
 
  ``β_jP_j, \\ j=1,...,k``,
 
@@ -303,10 +309,10 @@ When the conditioner is fitted, the following field is written:
 ```julia
 using PosDefManifoldML, PosDefManifold
 
-# create the conditioner
+# Create the conditioner
 E = Equalize()
 ```
-**See also**: [`fit!`](@ref), [`transform!`](@ref), [`crval`](@ref).
+**See also**: [`fit!`](@ref), [`transform!`](@ref), [`crval`](@ref)
 """
 mutable struct Equalize <: Conditioner
     threaded
@@ -351,22 +357,25 @@ where ``r`` is the `radius` argument, ``n`` is the dimension of ``P``,
 ``δ(P, I)`` is the norm of ``P`` according to the specified `metric` and ``ϵ`` is an optional 
 small positive number given as argument `epsilon`.
 
-The conditioner has the following fields:
+The conditioner has the following fields, which are also keyword arguments
+that can be passed upon construction:
 
 `.metric`, of type
 [Metric](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#Metric::Enumerated-type-1),
-Default: `PosDefManifold.Euclidean`.
+with default `PosDefManifold.Euclidean`.
 
-After shrinking, the set of points ``𝐏`` acquires a sought `.radius` (default: 0.02).
-This is a measure of the distances from the identity (norms), specifically, the maximum distance 
-if `.refpoint`=:max, the mean eccentricity if `.refpoint`=:mean (default). 
-In the first case it defines a ball confining all points, with radius equal
+After shrinking, the set of points ``𝐏`` acquires a sought `.radius`, 
+which is given as optional keyword argument to the constructor (default: 0.02).
+This is a measure of their acquired distances from the identity (norms), 
+specifically, the maximum distance if `.refpoint`=:max or the mean eccentricity 
+if `.refpoint`=:mean (default). 
+In the first case the argument `radius` defines a ball confining all points, with radius equal
 to the maximum distance from the identity of the transformed points + ``ϵ``. 
 In the second case, the actual radius of the ball is equal to 
 
 ``\\sqrt{\\frac{1}{n}\\sum_{j=1}^{k}δ(P_j, I) + ϵ}``.
 
-`.reshape` is a boolean for reshaping the eigenvalues of the set ``𝐏`` after shrinking. 
+`.reshape`, a boolean for reshaping the eigenvalues of the set ``𝐏`` after shrinking. 
 It applies only to the Fisher (affine-invariant) metric. Default: false. See below.
 
 `.epsilon`, a non-negative real number, the ``ϵ`` above. Default: 0.0.
@@ -379,9 +388,9 @@ It applies only to the Fisher (affine-invariant) metric. Default: false. See bel
 
 When the conditioner is fitted, the following fields are written:
 
-`.γ` step-size for geodesic (according to `metric`) from ``I`` to the each matrix in ``𝐏``.
+`.γ`, the step-size for geodesics (according to `metric`) from ``I`` to the each matrix in ``𝐏``.
 
-`.m` and `.sd`, mean and standard deviation of the eigenvalues of the set after shrinking.
+`.m` and `.sd`, the mean and standard deviation of the eigenvalues of the set after shrinking.
 This is used for reshaping, which applies only if the Fisher metric is adopted.
 Reshaping is meaningful only if the input set has been recentered (see [`Recenter`](@ref)).
 It recenters again the eigenvalues of the set after shrinking (mean = 1), 
@@ -391,10 +400,10 @@ and normalize them so as to have standard deviation equal to `.radius`.
 ```julia
 using PosDefManifoldML, PosDefManifold
 
-# create a conditioner adopting the Fisher Metric
+# Create a conditioner adopting the Fisher Metric and use reshaping
 S = Shrink(PosDefManifold.Fisher; reshape = true)
 ```
-**See also**: [`fit!`](@ref), [`transform!`](@ref), [`crval`](@ref).
+**See also**: [`fit!`](@ref), [`transform!`](@ref), [`crval`](@ref)
 """
 mutable struct Shrink <: Conditioner
     metric :: PosDefManifold.Metric
@@ -436,8 +445,9 @@ end
 `Pipeline` is a type for tuples holding conditioners.
 
 A pipeline holds a sequence of conditioners learned
-and optionally applied using [`fit!`](@ref). It can be 
-subsequently applied on other data using the [`transform!`](@ref) function.
+and (optionally) applied using [`fit!`](@ref). It can be 
+subsequently applied on other data as it has been learnt 
+using the [`transform!`](@ref) function.
 All `fit!` methods return a pipeline.
 
 Pipelines comprising a single conditioner are allowed.
@@ -446,11 +456,12 @@ Pipelines can be saved to a file using the [`saveas`](@ref) function
 and loaded from a file using the [`load`](@ref) function.
 
 Note that in Julia tuples are immutable, thus it is not possible to modify
-a pipeline.
+a pipeline. However it is possible to change the fields of the conditioners 
+it holds.
 
 In order to create a pipeline use the [`@pipeline`](@ref) macro.
 
-**See also**: [`fit!`](@ref), [`transform!`](@ref).
+**See also**: [`fit!`](@ref), [`transform!`](@ref)
 """
 struct Pipeline{T<:Tuple}
     pipe::T
@@ -567,7 +578,8 @@ isempty(p::Pipeline) = isempty(p.pipe)
         labels = nothing)
 ```
 
-Fit the given `pipeline` or `Conditioner` to ``𝐏`` and return a fitted [`Pipeline`](@ref) object.
+Fit the given [`Pipeline`](@ref) (or a single `Conditioner`) to ``𝐏`` and return 
+a fitted `Pipeline` object.
 ``𝐏`` must be of [the ℍVector type](@ref).
 
 A single `Conditioner` can be given as argument instead of a pipeline;
@@ -611,11 +623,11 @@ using PosDefManifoldML, PosDefManifold
 
 ## Example 1 (single conditioner): 
 
-# generate some data
+# Generate some data
 P=randP(3, 5) # 5 random 3x3 Hermitian matrices
 Q=copy(P)
 
-# fit the default recentering conditioner (whitening)
+# Fit the default recentering conditioner (whitening)
 pipeline = fit!(P, Recenter) 
 
 # This is equivalent to
@@ -639,19 +651,18 @@ pipeline = fit!(P,
 # or 
 pipeline = fit!(Q, @→ Recenter Compress Shrink(Fisher; radius=0.01))
 
-# the whitening matrices of the the recentering conditioner,
+# The whitening matrices of the the recentering conditioner,
 pipeline[1].Z
 
-# the scaling factors of the compressing conditioner,
+# The scaling factors of the compressing conditioner,
 pipeline[2].β
 
-# and the step-size of the shrinking conditioner,
+# and the step-size of the shrinking conditioner
 pipeline[3]
 
 ## Example 3 (pipeline with a single conditioner):
 P=randP(3, 5)  
 pipeline = fit!(P, @→ Recenter)
-
 ```
 """
 function fit!(𝐏 :: ℍVector, conditioner :: Tikhonov; 
@@ -724,25 +735,26 @@ end
 
 """
 ```julia
-function transform!(𝐐 :: Union{ℍVector, ℍ}, Union{Pipeline, Conditioner})
+function transform!(𝐐 :: Union{ℍVector, ℍ}, pipeline :: Union{Pipeline, Conditioner})
 
 ```
 
-Given a fitted `conditioner` or [`Pipeline`](@ref), transform all matrices 
+Given a fitted [`Pipeline`](@ref) (or a single `Conditioner`), transform all matrices 
 in ``𝐐`` using the parameters learnt during the fitting process. Return ``𝐐``.
 
 In a training-test setting, a fitted conditioner or pipeline is given as argument 
-to these methods to make sure that the parameters learnt during the fitting process 
-(on trained data) are used for transforming the (testing) data.
-More in general, this function can be used to transform the data in ``𝐐``.
+to this function to make sure that the testing data is transformed according to 
+the parameters learnt during the fitting of training data.
+More in general, this function can be used to transform in whatever way the data in ``𝐐``.
 
 If `pipeline` in an empty tuple, return ``𝐐`` without doing anything.
 
 ``𝐐`` can be a single Hermitian matrix or a vector of [the ℍVector type](@ref).
 It is transformed in-place.
 
-The dimension of matrix(ces) in ``𝐐`` must be the same of the dimension of the matrices 
-used to fit the conditioner or pipeline.
+!!! warning "Dimension"
+    The dimension of matrix(ces) in ``𝐐`` must be the same of the dimension of the matrices 
+    used to fit the conditioner or pipeline.
 
 In contrast to the `fit!` function, only instantiated conditioner can be used.
 For general use, this is transparent to the user as the [`fit!`](@ref) function
@@ -756,7 +768,7 @@ using PosDefManifoldML, PosDefManifold
 
 ## Example 1 (single conditioner)
 
-# generate some 'training' and 'testing' data
+# Generate some 'training' and 'testing' data
 PTr=randP(3, 20) # 20 random 3x3 Hermitian matrices
 PTe=randP(3, 5) # 5 random 3x3 Hermitian matrices
 
@@ -789,9 +801,8 @@ transform!(QTe, pipeline)
 P=randP(3, 5)  
 # For the Equalize conditioner there is no need to fit some data
 transform!(P, @→ Equalize)
-# this gives an error as Recenter needs to learn parameters:
+# This gives an error as Recenter needs to learn parameters (use fit! instead):
 transform!(P, @→ Recenter)
-
 ```
 """
 function transform!(𝐏 :: ℍVector, c :: Tikhonov)

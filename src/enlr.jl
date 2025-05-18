@@ -52,7 +52,7 @@ are not positive definite matrices, but Euclidean feature vectors,
 the `.metric` field has no use. In order to use metrics you need to install the
 *PosDefManifold* package.
 
-`.alpha` is the hyperparameter in *[0, 1]* trading-off
+`.alpha` is the hyperparameter in ``[0, 1]`` trading-off
 the **elestic-net model**. *α=0* requests a pure **ridge** model and
 *α=1* a pure **lasso** model. By default, *α=1* is specified (lasso model).
 This argument is usually passed as parameter to
@@ -241,7 +241,7 @@ function fit(model	:: ENLRmodel,
 )
 ```
 
-Create and fit an **2-class** [`ENLR`](@ref) machine learning model,
+Create and fit an **2-class** elastic net logistic regression ([`ENLR`](@ref)) machine learning model,
 with training data `𝐏Tr`, of type
 [ℍVector](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1),
 and corresponding labels `yTr`, of type [IntVector](@ref).
@@ -252,16 +252,16 @@ Return the fitted model(s) as an instance of the [`ENLR`](@ref) structure.
     `1` for the first class, `2` for the second class, etc.
 
 As for all ML models acting in the tangent space,
-fitting an ENLR model involves computing a mean of all the
-matrices in `𝐏Tr`, mapping all matrices onto the tangent space
+fitting an ENLR model involves computing a mean (barycenter) of all the
+matrices in `𝐏Tr`, projecting all matrices onto the tangent space
 after parallel transporting them at the identity matrix
 and vectorizing them using the
 [vecP](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.vecP)
-operation. Once this is done, the elastic net logistic regression is fitted.
+operation. Once this is done, the ENLR is fitted.
 
 The mean is computed according to the `.metric` field
 of the `model`, with optional weights `w`.
-The `.metric` field of the `model` is passed to the [`tsMap`](@ref) function.
+The `.metric` field of the `model` is passed internally to the [`tsMap`](@ref) function.
 By default the metric is the Fisher metric. See the examples
 here below to see how to change metric.
 See [mdm.jl](@ref) or check out directly the documentation
@@ -278,12 +278,12 @@ Note that the fitted pipeline is automatically applied by any successive call
 to function [`predict`](@ref) to which the output ML model is passed as argument.
 
 By default, uniform weights will be given to all observations
-for computing the mean to pass in the tangent space.
+for computing the mean to project the data in the tangent space.
 This is equivalent to passing as argument `w=:uniform` (or `w=:u`).
 You can also pass as argument:
 
 - `w=:balanced` (or simply `w=:b`). If the two classes are unbalanced,
-  the weights should be inversely proportional to the number of examples
+  the weights should better be inversely proportional to the number of examples
   for each class, in such a way that each class contributes equally
   to the computation of the mean.
   This is equivalent of passing `w=tsWeights(yTr)`. See the
@@ -298,9 +298,7 @@ You can also pass as argument:
 
 By default `meanISR=nothing` and the inverse square root (ISR) of the mean
 used for projecting the matrices onto the tangent space (see [`tsMap`](@ref))
-is computed.
-
-An Hermitian matrix can also be passed as argument `meanISR` 
+is computed. An Hermitian matrix can also be passed as argument `meanISR` 
 and in this case this matrix will be used as the ISR of the mean.
 Passed or computed, it will be written in the `.meanISR` field of the 
 model structure created by this function.
@@ -310,6 +308,15 @@ is Fisher, logdet0 or Wasserstein, the tolerance of the iterative algorithm
 used to compute the mean is set to argument `tol` (default 1e-5).
 Also, in this case a particular initialization for those iterative algorithms
 can be provided as an `Hermitian` matrix with argument `meanInit`.
+
+!!! tip "Euclidean ENLR models"
+    ML models acting on the tangent space allows to fit a model passing as
+    training data `𝐏Tr` directly a matrix of feature vectors,
+    where each feature vector is a row of the matrix.
+    In this case none of the above keyword arguments are used.  
+
+**The following optional keyword arguments act on any kind of input,
+that is, tangent vectors and generic feature vectors**
 
 If a `UnitRange` is passed with optional keyword argument `vecRange`,
 then if `𝐏Tr` is a vector of `Hermitian` matrices, the vectorization
@@ -321,15 +328,6 @@ Argument `vecRange` will be ignored if a pre-conditioning pipeline is used
 and if the pipeline changes the dimension of the input matrices.
 In this case it will be set to its default value using the new dimension.
 You are not allowed to change this behavior.
-
-!!! tip "Euclidean ENLR models"
-    ML models acting on the tangent space allows to fit a model passing as
-    training data `𝐏Tr` directly a matrix of feature vectors,
-    where each feature vector is a row of the matrix.
-    In this case none of the above keyword arguments are used.
-
-The following optional keyword arguments act on any kind of input,
-that is, tangent vectors and generic feature vectors.
 
 With `normalize` the tangent (or feature) vectors can be normalized individually.
 Three functions can be passed, namely 
@@ -360,7 +358,7 @@ The remaining optional keyword arguments, are
 
 **Optional keyword arguments for fitting the model(s) using GLMNet.jl**
 
-`alpha`: the hyperparameter in *[0, 1]* to trade-off
+`alpha`: the hyperparameter in ``[0, 1]`` to trade-off
 an elestic-net model. *α=0* requests a pure *ridge* model and
 *α=1* a pure *lasso* model. This defaults to 1.0,
 which specifies a lasso model, unless the input [`ENLR`](@ref) `model`
@@ -437,7 +435,7 @@ resources on the GLMNet package [🎓](@ref).
     thus of the tangent vectors. In this case they will be set to their 
     default values using the new dimension. To force the use of the provided values 
     instead, set `checkArgs` to false (true by default). Note however that in this 
-    case you must provide suitable values for all this arguments.
+    case you must provide suitable values for all the abova arguments.
 
 **Optional Keyword arguments for finding the best model by cv**
 
@@ -671,175 +669,7 @@ function fit(model  :: ENLRmodel,
 end
 
 
-
 """
-```julia
-function predict(model   :: ENLRmodel,
-		𝐏Te         :: Union{ℍVector, Matrix{Float64}},
-		what        :: Symbol = :labels,
-		fitType     :: Symbol = :best,
-		onWhich     :: Int    = Int(fitType==:best);
-    pipeline    :: Union{Pipeline, Nothing} = nothing,
-    meanISR     :: Union{ℍ, Nothing, UniformScaling} = nothing,
-    verbose     :: Bool = true,
-    ⏩          :: Bool = true)
-```
-
-Given an [`ENLR`](@ref) `model` trained (fitted) on 2 classes
-and a testing set of *k* positive definite matrices `𝐏Te` of type
-[ℍVector](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1),
-
-if `what` is `:labels` or `:l` (default), return
-the predicted **class labels** for each matrix in `𝐏Te`,
-as an [IntVector](@ref).
-Those labels are '1' for class 1 and '2' for class 2;
-
-if `what` is `:probabilities` or `:p`, return the predicted **probabilities**
-for each matrix in `𝐏Te` to belong to each classe, as a *k*-vector
-of *z* vectors holding reals in *[0, 1]* (probabilities).
-The 'probabilities' are obtained passing to a
-[softmax function](https://en.wikipedia.org/wiki/Softmax_function)
-the output of the ENLR model and zero;
-
-if `what` is `:f` or `:functions`, return the **output function** of the model,
-which is the raw output of the ENLR model.
-
-If `fitType` = `:best` (default), the best model that has been found by
-cross-validation is used for prediction.
-
-If `fitType` = `:path`,
-
-- if `onWhich` is a valid serial number for a model in the `model.path`,
-then this model is used for prediction,
-
-- if `onWhich` is zero, all models in the `model.path` will be used for predictions, thus the output will be multiplied by the number of models in `model.path`.
-
-Argument `onWhich` has no effect if `fitType` = `:best`.
-
-!!! note "Nota Bene"
-    By default, the [`fit`](@ref) function fits only the `best` model.
-    If you want to use the `fitType` = `:path` option you need to invoke
-    the fit function with optional keyword argument `fitType`=`:path` or
-    `fitType`=`:all`. See the [`fit`](@ref) function for details.
-
-Optional keyword argument `meanISR` can be used to specify the principal
-inverse square root (ISR) of a new mean to be used as base point for
-projecting the matrices in testing set `𝐏Te` onto the tangent space.
-By default `meanISR` is equal to nothing,
-implying that the base point will be the mean used to fit the model.
-This corresponds to the classical 'training-test' mode of operation.
-
-Passing with argument `meanISR` a new mean ISR
-allows the *adaptation* first described in
-Barachant et *al.* (2013)[🎓](@ref). Typically `meanISR` is the ISR
-of the mean of the matrices in `𝐏Te` or of a subset of them.
-Notice that this actually performs *transfer learning* by parallel
-transporting both the training and test data to the identity matrix
-as defined in Zanini et *al.* (2018) and later taken up in
-Rodrigues et *al.* (2019)[🎓](@ref).  
-You can aslo pass `meanISR=I`, in which case the base point
-is taken as the identity matrix. This is possible if the set
-`𝐏Te` is centered to the identity, for instance, if a recentering
-pre-conditioner is included in a pipeline and the pipeline 
-is adapted as well (see the example below).
-
-If `verbose` is true (default), information is printed in the REPL.
-This option is included to allow repeated calls to this function
-without crowding the REPL.
-
-If ⏩ = true (default) and `𝐏Te` is an ℍVector type, the projection onto the
-tangent space is multi-threaded.
-
-Note that if the field `pipeline` of the provided `model` is not `nothing`,
-implying that a pre-conditioning pipeline has been fitted during the
-fitting of the model,
-the pipeline is applied to the data before to carry out the prediction.
-If you wish to **adapt** the pipeline to the testing data, 
-just pass the same pipeline as argument `pipeline` in this function.
-
-!!! warning "Adapting the Pipeline"
-    Be careful when adapting a pipeline; if a [`Recenter`](@ref) conditioner is included in the
-    pipeline and dimensionality reduction was sought (parameter `eVar` different 
-    from `nothing`), then `eVar` must be set to an integer so that the
-    dimension of the training ad testing data is the same after adaptation.
-    See the example here below.
-
-**See**: [notation & nomenclature](@ref), [the ℍVector type](@ref)
-
-**See also**: [`fit`](@ref), [`crval`](@ref), [`predictErr`](@ref)
-
-**Examples**
-```julia
-using PosDefManifoldML, PosDefManifold
-
-# Generate some data
-PTr, PTe, yTr, yTe = gen2ClassData(10, 30, 40, 60, 80)
-
-# Fit an ENLR lasso model and find the best model by cv
-m = fit(ENLR(Fisher), PTr, yTr)
-
-# Predict labels from the best model
-yPred = predict(m, PTe, :l)
-
-# Prediction error
-predErr = predictErr(yTe, yPred)
-
-# Predict probabilities from the best model
-predict(m, PTe, :p)
-
-# Output functions from the best model
-predict(m, PTe, :f)
-
-# Fit a regularization path for an ENLR lasso model
-m = fit(ENLR(Fisher), PTr, yTr; fitType=:path)
-
-# Predict labels using a specific model
-yPred = predict(m, PTe, :l, :path, 10)
-
-# Predict labels for all models
-yPred = predict(m, PTe, :l, :path, 0)
-
-# Prediction error for all models
-predErr = [predictErr(yTe, yPred[:, i]) for i=1:size(yPred, 2)]
-
-# Predict probabilities from a specific model
-predict(m, PTe, :p, :path, 12)
-
-# Predict probabilities from all models
-predict(m, PTe, :p, :path, 0)
-
-# Output functions from specific model
-predict(m, PTe, :f, :path, 3)
-
-# Output functions for all models
-predict(m, PTe, :f, :path, 0)
-
-## Adapting the base point
-PTr, PTe, yTr, yTe = gen2ClassData(10, 30, 40, 60, 80)
-m = fit(ENLR(Fisher), PTr, yTr)
-predict(m, PTe, :l; meanISR=invsqrt(mean(Fisher, PTe)))
-
-# Also using and adapting a pre-conditioning pipeline
-# For adaptation, we need to set `eVar` to an integer or to `nothing`.
-# We will use the dimension determined on training data.
-# Note that the adaptation does not work well if the class proportions
-# of the training data is different from the class proportions of the test data.
-p = @→ Recenter(; eVar=0.999) Compress Shrink(Fisher; radius=0.02)
-
-# Fit the model using the pre-conditioning pipeline
-m = fit(ENLR(), PTr, yTr; pipeline = p)
-
-# Define the same pipeline with fixed dimensionality reduction parameter
-p = @→ Recenter(; eVar=dim(m.pipeline)) Compress Shrink(Fisher; radius=0.02)
-
-# Fit the pipeline to testing data (adapt) and use the identity matrix as base point:
-predict(m, PTe, :l; pipeline=p, meanISR=I) 
-
-# Suppose we want to adapt recentering, but not shrinking, which also has a 
-# learnable parameter. We would then use this pipeline instead:
-p = deepcopy(m.pipeline)
-p[1].eVar = dim(m.pipeline)
-```
 """
 function predict(model   :: ENLRmodel,
                  𝐏Te     :: Union{ℍVector, Matrix{Float64}},

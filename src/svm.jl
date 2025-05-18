@@ -181,7 +181,7 @@ function fit(model     :: SVMmodel,
 	⏩		:: Bool = true)
 ```
 
-Create and fit an  **2-class** [`SVM`](@ref) machine learning model,
+Create and fit a **1-class** or **2-class** support vector machine ([`SVM`](@ref)) machine learning model,
 with training data `𝐏Tr`, of type
 [ℍVector](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#%E2%84%8DVector-type-1),
 and corresponding labels `yTr`, of type [IntVector](@ref).
@@ -194,8 +194,8 @@ Return the fitted model as an instance of the [`SVM`](@ref) structure.
     `1` for the first class, `2` for the second class, etc.
 
 As for all ML models acting in the tangent space,
-fitting an SVM model involves computing a mean of all the
-matrices in `𝐏Tr`, mapping all matrices onto the tangent space
+fitting an SVM model involves computing a mean (barycenter) of all the
+matrices in `𝐏Tr`, projecting all matrices onto the tangent space
 after parallel transporting them at the identity matrix
 and vectorizing them using the
 [vecP](https://marco-congedo.github.io/PosDefManifold.jl/dev/riemannianGeometry/#PosDefManifold.vecP)
@@ -208,13 +208,14 @@ funtion for the ENLR (Elastic Net Logistic Regression) machine learning model:
 
 - `pipeline` (pre-conditioning),
 - `w`, `meanISR`, `meanInit`, `vecRange` (tangent space projection),
-- `normalize` (tangent or feature vectors normalization).
 
 !!! tip "Euclidean SVM models"
     ML models acting on the tangent space allows to fit a model passing as
     training data `𝐏Tr` directly a matrix of feature vectors,
     where each feature vector is a row of the matrix.
     In this case none of the above keyword arguments are used.
+
+- `normalize` (tangent or feature vectors normalization).
 
 **Optional keyword arguments for fitting the model(s) using LIBSVM.jl**
 
@@ -256,7 +257,7 @@ very large problems.
 
 `tol` is the convergence criterion for both the computation
 of a mean for projecting onto the tangent space
-(if the metric recquires an iterative algorithm)
+(if the metric requires an iterative algorithm)
 and for the LIBSVM fitting algorithm. Defaults to 1e-5.
 
 If `verbose` is true (default), information is printed in the REPL.
@@ -448,7 +449,7 @@ see the documentation of the [`predict`](@ref) function
 for the ENLR model.
 
 If ⏩ = true (default) and `𝐏Te` is an ℍVector type, the projection onto the
-tangent space will be multi-threaded. Also, the prediction of the LIBSVM function
+tangent space will be multi-threaded. Also, the prediction of the LIBSVM.jl prediction function
 will be multi-threaded.
 
 **See**: [notation & nomenclature](@ref), [the ℍVector type](@ref)

@@ -302,7 +302,7 @@ The training and test sets can be used to train and test any [MLmodel](@ref).
 
 `separation` is a coefficient determining how well the two classs are
 separable; the higher it is, the more separable the two classes are.
-It must be in [0, 1] and typically a value of 0.5 already
+It must be in ``[0, 1]`` and typically a value of 0.5 already
 determines complete separation.
 
 Return a 4-tuple with
