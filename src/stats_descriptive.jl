@@ -75,7 +75,7 @@ function predictAcc(CM::Union{Matrix{R}, Matrix{S}};
 		digits	:: Int=3) where {R<:Real, S<:Int}
 ```
 
-Return the prediction accuracy as a proportion, that is, ∈[0, 1],
+Return the prediction accuracy as a proportion, that is, ∈``[0, 1]``,
 given
 
 - (1) the integer vectors of true labels `yTrue` and of predicted labels `yPred`, or

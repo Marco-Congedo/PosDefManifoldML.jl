@@ -255,8 +255,6 @@ function fit(model      :: MDMmodel,
 end
 
 
-
-
 """
 ```julia
 function predict(model  :: MDMmodel,
@@ -280,7 +278,7 @@ The labels are '1' for class 1, '2' for class 2, etc;
 
 if `what` is `:probabilities` or `:p`, return the predicted **probabilities**
 for each matrix in `𝐏Te` to belong to all classes, as a *k*-vector
-of *z* vectors holding reals in [0, 1] (probabilities).
+of *z* vectors holding reals in ``[0, 1]``.
 The 'probabilities' are obtained passing to a
 [softmax function](https://en.wikipedia.org/wiki/Softmax_function)
 the squared distances of each unlabeled matrix to all class means
