@@ -116,7 +116,7 @@ function crval(model    :: MLmodel,
         nFolds      :: Int     = min(10, length(y)÷3),
         shuffle     :: Bool    = false,
         scoring     :: Symbol  = :b,
-        hyptest     :: Symbol  = :Bayle,
+        hypTest     :: Union{Symbol, Nothing} = :Bayle,
         verbose     :: Bool    = true,
         outModels   :: Bool    = false,
         ⏩           :: Bool    = true,
@@ -155,11 +155,11 @@ if not to avoid a few unnecessary computations when the class are balanced.
     and you use `scoring`=:b (default). In this case the returned error loss and accuracy
     may appear incoherent.
 
-`hyptest` is a symbol specifying the kind of statistical test to be carried out.
-This function tests that the average observed binary error loss is inferior to what is to be 
+`hypTest` can be `nothing` or a symbol specifying the kind of statistical test to be carried out.
+At the moment, only `:Bayle` is a possible symbol and this test is performed by default.
+Bayle's procedure tests whether the average observed binary error loss is inferior to what is to be 
 expected by the hypothesis of random chance, which is set to ``1-\\frac{1}{z}``, where
-``z`` is the number of classes. At the moment, only Bayle's test (see [`testCV`](@ref))
-is implemented.
+``z`` is the number of classes (see [`testCV`](@ref)).
 
 For the meaning of the `shuffle` argument (false by default),
 see function [`cvSetup`](@ref), to which this argument is passed internally.
@@ -257,7 +257,7 @@ function crval(model    :: MLmodel,
             shuffle         :: Bool     = false,
             # Default performance metric and statistical test
             scoring         :: Symbol   = :b,
-            hyptest         :: Symbol   = :Bayle,
+            hypTest         :: Union{Symbol, Nothing} = :Bayle,
             # arguments for this function
             verbose         :: Bool     = true,
             outModels       :: Bool     = false,
@@ -391,8 +391,9 @@ function crval(model    :: MLmodel,
 
     # compute the mean of the confusion matrices as proportions
     mCM = mean(CM./(sum.(CM)))
-
-    if hyptest === :Bayle 
+    
+    zstat, pvalue = nothing, nothing
+    if hypTest === :Bayle 
         zstat, pvalue, ase = testCV(CM)
     end
 
