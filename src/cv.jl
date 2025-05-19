@@ -164,6 +164,9 @@ expected by the hypothesis of random chance, which is set to ``1-\\frac{1}{z}``,
 For the meaning of the `shuffle` argument (false by default),
 see function [`cvSetup`](@ref), to which this argument is passed internally.
 
+For the meaning of the `seed` argument (1234 by default),
+see function [`cvSetup`](@ref), to which this argument is passed internally.
+
 If `verbose` is true (default), information is printed in the REPL.
 
 If `outModels` is true, return a 2-tuple holding a [`CVres`](@ref) structure
@@ -255,6 +258,7 @@ function crval(model    :: MLmodel,
             # Cross-validation parameters
             nFolds          :: Int      = min(10, length(y) ÷ 3),           
             shuffle         :: Bool     = false,
+            seed            :: Int      = 1234,
             # Default performance metric and statistical test
             scoring         :: Symbol   = :b,
             hypTest         :: Union{Symbol, Nothing} = :Bayle,
@@ -291,14 +295,10 @@ function crval(model    :: MLmodel,
     as      = Vector{Float64}(undef, nFolds)        # accuracy scores per fold
     errls   = Vector{BitVector}(undef, nFolds)      # binary error loss per fold
     predLab = [[Int64[] for i=1:z] for f=1:nFolds]  # predicted labels by classes per fold
-    indTr   = [[Int64[]] for i=1:z]                 # indeces for training sets by fold per class
-    indTe   = [[Int64[]] for i=1:z]                 # indeces for test sets by fold per class
     ℳ = Vector{MLmodel}(undef, nFolds)             # ML models
 
     # get indeces for all CVs (separated for each class)
-    for i=1:z 
-        indTr[i], indTe[i] = cvSetup(length(𝐐[i]), nFolds; shuffle=shuffle) 
-    end
+    indTr, indTe = cvSetup(y, nFolds; shuffle, seed)
 
     fitArgs✔ = ()
     # make sure the user doesn't pass arguments that skrew up the cv
@@ -410,82 +410,135 @@ end
 
 """
 ```julia
-function cvSetup(k       :: Int,
-                 nCV     :: Int;
-                 shuffle :: Bool = false)
+function cvSetup(y            :: Vector{Int64},  
+                 nCV          :: Int64;           
+                 shuffle      :: Bool = false,
+                 seed         :: Int = 1234)
 ```
 
-Given `k` elements and a parameter `nCV`, a nCV-fold cross-validation
-is obtained defining `nCV` permutations of *k* elements
-in *nTest=k÷nCV* (integer division) elements for the test and
-*k-nTest* elements for the training,
-in such a way that each element is represented in only one permutation.
+Given a vector of labels `y` and a parameter `nCV`, this function generates
+indices for nCV-fold cross-validation sets, organized by class.
 
-Said differently, given a length `k` and the number of desired cross-validations
-`nCV`, this function generates indices from the sequence of natural numbers
-*1,..,k* to obtain all nCV-fold cross-validation sets.
-Specifically, it generates `nCV` vectors of indices for generating test sets
-and `nCV` vectors of indices for geerating training sets.
+The function performs a stratified cross-validation by maintaining the same class
+distribution across all folds. This ensures that each fold contains approximately
+the same proportion of samples from each class as in the complete dataset.
 
-If optional keyword argument `shuffle` is true,
-the sequence of natural numbers *1,..,k* is shuffled before
-running the function, thus in this case two successive runs of this function
-will give different cross-validation sets, hence different accuracy scores.
-By default `shuffle` is false, so as to allow exactly the same result
-in successive runs.
-Note that no random initialization for the shuffling is provided, so as to
-allow the replication of the same random sequences starting again
-the random generation from scratch.
+Each element is used exactly once as a test sample across all folds,
+ensuring that the entire dataset is covered.
+
+The `shuffle` parameter controls whether the indices within each class are randomized.
+When `shuffle` is false (default), the original sequence of indices is preserved, ensuring 
+consistent results across multiple executions.
+
+When `shuffle`, is true the indices within each class are randomly permuted before creating 
+the cross-validation folds. 
+Randomization is controlled by the `seed` parameter (default: 1234). 
+Using the same `seed` value generates identical cross-validation sets.
+Using different `seed` values produce different random partitions.
+
+This combination of `shuffle` and `seed` parameters allows you to generate reproducible random 
+splits for consistent experimentation, create different random partitions to assess the robustness 
+of your results and maintain exact reproducibility of your cross-validation experiments.
 
 This function is used in [`crval`](@ref). It constitutes the fundamental
 basis to implement customized cross-validation procedures.
 
-Return the 2-tuple with:
+Return the 2-tuple (indTr, indTe) where:
 
-- A vector of `nCV` vectors holding the indices for the training sets,
-- A vector of `nCV` vectors holding the indices for the corresponding test sets.
+- indTr is an array of arrays where indTr[i][f] contains the training indices
+  for class i in fold f
+- indTe is an array of arrays where indTe[i][f] contains the test indices
+  for class i in fold f
+
+Each array is organized by class and then by fold, ensuring stratified sampling
+across the cross-validation sets.
 
 **Examples**
 ```julia
 using PosDefManifoldML, PosDefManifold
 
-cvSetup(10, 2)
-# return:
-# (Array{Int64,1}[[6, 7, 8, 9, 10], [1, 2, 3, 4, 5]],
-#  Array{Int64,1}[[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]])
+y = [1,1,1,1,2,2,2,2,2,2]
 
-cvSetup(10, 2, shuffle=true)
-# return:
-# (Array{Int64,1}[[5, 4, 6, 1, 9], [3, 7, 8, 2, 10]],
-#  Array{Int64,1}[[3, 7, 8, 2, 10], [5, 4, 6, 1, 9]])
+cvSetup(y, 2)
+# returns:
+# Training Arrays:
+#   Class 1: Array{Int64}[[3, 4], [1, 2]]
+#   Class 2: Array{Int64}[[4, 5, 6], [1, 2, 3]]
+# Testing Arrays:
+#   Class 1: Array{Int64}[[1, 2], [3, 4]]
+#   Class 2: Array{Int64}[[1, 2, 3], [4, 5, 6]]
 
-cvSetup(10, 3)
-# return:
-# (Array{Int64,1}[[4, 5, 6, 7, 8, 9, 10], [1, 2, 3, 7, 8, 9, 10], [1, 2, 3, 4, 5, 6]],
-#  Array{Int64,1}[[1, 2, 3], [4, 5, 6], [7, 8, 9, 10]])
+cvSetup(y, 2; shuffle=true, seed=1)
+# returns:
+# Training Arrays:
+#   Class 1: Array{Int64}[[1, 4], [2, 3]]
+#   Class 2: Array{Int64}[[1, 3, 4], [2, 5, 6]]
+# Testing Arrays:
+#   Class 1: Array{Int64}[[2, 3], [1, 4]]
+#   Class 2: Array{Int64}[[2, 5, 6], [1, 3, 4]]
+
+cvSetup(y, 3)
+# returns:
+# Training Arrays:
+#   Class 1: Array{Int64}[[2, 3], [1, 3, 4], [1, 2, 4]]
+#   Class 2: Array{Int64}[[3, 4, 5, 6], [1, 2, 5, 6], [1, 2, 3, 4]]
+# Testing Arrays:
+#   Class 1: Array{Int64}[[1, 4], [2], [3]]
+#   Class 2: Array{Int64}[[1, 2], [3, 4], [5, 6]]
 ```
 """
-function cvSetup(k       :: Int,
-                 nCV     :: Int;
-                 shuffle :: Bool = false)
+
+function cvSetup(y          :: Vector{Int64},
+                 nCV        :: Int64; 
+                 shuffle    :: Bool = false, 
+                 seed       :: Int = 1234)
 
     if nCV == 1 @error 📌*", cvSetup function: The number of cross-validation must be bigger than one" end
-    nTest = k÷nCV # nTrain = k-nTest
-    #rng = MersenneTwister(1900)
-    shuffle ? (a=shuffle!( Vector(1:k))) : (a=Vector(1:k))
-    indTrain = [IntVector(undef, 0) for i=1:nCV]
-    indTest  = [IntVector(undef, 0) for i=1:nCV]
 
-    # vectors of indices for test and training sets
-    j=1
-    for i=1:nCV-1
-        indTest[i]=a[j:j+nTest-1]
-        for g=j+nTest:length(a) push!(indTrain[i], a[g]) end
-        for l=i+1:nCV, g=j:j+nTest-1 push!(indTrain[l], a[g]) end
-        j+=nTest
+    classes = sort(unique(y))
+    n_classes = length(classes)    
+    class_indices = [findall(x -> x == c, y) for c in classes]
+    shuffle && (Random.seed!(seed); foreach(shuffle!, class_indices))
+
+    base_sizes = [length(a)÷nCV for a in class_indices]
+    remainings = [length(a)%nCV for a in class_indices]
+
+    # Initialize global indices
+    allindTrain = [Int64[] for _ in 1:nCV]
+    allindTest  = [Int64[] for _ in 1:nCV]
+
+    # Distribute base indices
+    for (c, a) in enumerate(class_indices), i in 1:nCV
+        start_idx = (i-1) * base_sizes[c] + 1
+        end_idx = i * base_sizes[c]
+        
+        if end_idx <= length(a)
+            fold_indices = a[start_idx:end_idx]
+            append!(allindTest[i], fold_indices)
+            foreach(j -> j != i && append!(allindTrain[j], fold_indices), 1:nCV)
+        end
     end
-    indTest[nCV]=a[j:end]
-    return indTrain, indTest
+    # Distribute remaining indices
+    all_remaining_indices = vcat([a[nCV*base_sizes[c]+1:end] for (c,a) in enumerate(class_indices) if remainings[c] > 0]...)
+    for (i, idx) in enumerate(all_remaining_indices)
+        fold_idx = (i-1) % nCV + 1
+        push!(allindTest[fold_idx], idx)
+        foreach(j -> j != fold_idx && push!(allindTrain[j], idx), 1:nCV)
+    end
+    
+    # Initialize per-class indices for all folds 
+    # We cannot generate those indices at the beginning of the function or 
+    # Else remaining indices won't be distributed equally among folds
+    indTr = [[Int64[] for f=1:nCV] for i=1:n_classes]
+    indTe = [[Int64[] for f=1:nCV] for i=1:n_classes]
+    
+    # Convert global indices to per-class indices
+    @inbounds for f=1:nCV, i=1:n_classes; 
+        class_indices = findall(x -> x == classes[i], y); 
+        indTr[i][f] = findall(idx -> idx in allindTrain[f], class_indices); 
+        indTe[i][f] = findall(idx -> idx in allindTest[f], class_indices) 
+    end
+    return indTr, indTe
 end
 
 
