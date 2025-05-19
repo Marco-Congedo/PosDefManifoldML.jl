@@ -61,11 +61,13 @@ transform the set such as
 
 where ``I`` is the identity matrix and ``α`` is a non-negative number.
 
-This conditoner structure has only two fields: 
+This conditoner structure has two fields: 
 
-- `α`, which is written in the structure when it is fitted to some data.
+- `.α`, which is written in the structure when it is fitted to some data.
 
-- `threaded`, to detrmine if the transformation is done in multi-threading mode (true by default).
+- `.threaded`, to determine if the transformation is done in multi-threading mode (true by default).
+
+For constructing an instance, `α` is an argument, while `threaded` is a optional keyword argument. 
 
 !!! warning "This is not a data-driven conditioner"
     The `α` parameter must be given explicitly upon construction (it is zero by default).
@@ -76,6 +78,7 @@ using PosDefManifoldML, PosDefManifold
 
 # Create a conditioner
 T = Tikhonov(0.001)
+T = Tikhonov(0.001; threaded=false)
 ```
 **See also**: [`fit!`](@ref), [`transform!`](@ref), [`crval`](@ref)
 """
@@ -146,6 +149,9 @@ This conditoner structure has the following fields:
 - `.forcediag` is a boolean for forcing diagonalization. It is true by default. If false, whitening is carried out only if a dimensionality reduction is needed, as determined by `eVar`.
 
 - If `.threaded` is true (default), all operations are multi-threaded.
+
+For constructing an instance, `metric` is an argument, while `eVar`, `w`, `✓w`, 
+`init`, `tol`, `verbose`, `forcediag` and `threaded` are optional keyword arguments.
 
 **Fitted parameters**
 
@@ -240,7 +246,10 @@ the identity, thus it should be performed after conditioner [`Recenter`](@ref).
 
 The structure has one field only:
 
-- If `threaded` is true (default), all operations are multi-threaded.
+- `.threaded`, determining whether the computations are multi-threaded (true by default).
+
+For constructing an instance, only the `threaded` optional keyword argument
+can be used.
 
 **Fitted parameters**
 
@@ -297,7 +306,11 @@ Also, in contrast to compression, the transformation of the
 matrices in set ``𝐏`` is individual, so fitting equalization does not imply 
 a learning process - see [`fit!`](@ref).
 
-If `threaded` is true (default), all operations are multi-threaded.
+The structure has one field only:
+
+- `.threaded`, determining whether the computations are multi-threaded (true by default).
+
+For constructing an instance, only the `threaded` optional keyword argument can be used.
 
 **Fitted parameters**
 
@@ -383,6 +396,9 @@ It applies only to the Fisher (affine-invariant) metric. Default: false. See bel
 `.verbose`, a boolean. If true, information is printed in the REPL. Default: false
 
 `.threaded`, a boolean for using multi-threading. Default: true
+
+For constructing an instance, `metric` is an argument, while `radius`, `refpoint`, `reshape`, 
+`epsilon`, `verbose` and `threaded` are optional keyword arguments.
 
 **Fitted parameters**
 
