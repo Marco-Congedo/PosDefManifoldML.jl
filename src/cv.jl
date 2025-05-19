@@ -407,7 +407,6 @@ function crval(model    :: MLmodel,
 end
 
 
-
 """
 ```julia
 function cvSetup(y            :: Vector{Int64},  
@@ -487,7 +486,6 @@ cvSetup(y, 3)
 #   Class 2: Array{Int64}[[1, 2], [3, 4], [5, 6]]
 ```
 """
-
 function cvSetup(y          :: Vector{Int64},
                  nCV        :: Int64; 
                  shuffle    :: Bool = false, 
