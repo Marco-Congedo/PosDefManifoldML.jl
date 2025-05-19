@@ -4,8 +4,10 @@ on:
   push:
     branches:
       - master # update to match your development branch (master, main, dev, trunk, ...)
+      - dev
     tags: '*'
   pull_request:
+  workflow_dispatch:
 
 jobs:
   build:
