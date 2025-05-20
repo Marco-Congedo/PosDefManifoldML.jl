@@ -311,7 +311,7 @@ function crval(model    :: MLmodel,
     # make sure the user doesn't pass arguments that skrew up the cv
 
     if model isa MDMmodel
-        fitArgs✔ = _rmArgs((:meanInit, meanISR, :normalize, :verbose, :⏩); fitArgs...)
+        fitArgs✔ = _rmArgs((:meanInit, :meanISR, :normalize, :verbose, :⏩); fitArgs...)
     end
 
     if model isa ENLRmodel
