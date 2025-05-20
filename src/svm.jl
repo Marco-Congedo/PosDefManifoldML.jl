@@ -155,7 +155,7 @@ function fit(model     :: SVMmodel,
 
 	# parameters for projection onto the tangent space
 	w		:: Union{Symbol, Tuple, Vector} = Float64[],
-	meanISR 	:: Union{Hermitian, Nothing} = nothing,
+	meanISR 	:: Union{Hermitian, Nothing, UniformScaling} = nothing,
 	meanInit 	:: Union{Hermitian, Nothing} = nothing,
 	vecRange	:: UnitRange = 𝐏Tr isa HermitianVector ? (1:size(𝐏Tr[1], 2)) : (1:size(𝐏Tr, 2)),
 	normalize	:: Union{Function, Tuple, Nothing} = normalize!,
@@ -285,12 +285,8 @@ using PosDefManifoldML, PosDefManifold
 # Generate some data
 PTr, PTe, yTr, yTe = gen2ClassData(10, 30, 40, 60, 80, 0.1);
 
-# Fit an SVC SVM model and find the best model by cross-validation:
+# Fit a SVC SVM model and find the best model by cross-validation:
 m = fit(SVM(), PTr, yTr)
-
-# The same but using a pre-conditioning pipeline:
-p = @→ Recenter(; eVar=0.999) Compress Shrink(Fisher; radius=0.02)
-m = fit(SVM(), PTr, yTr; pipeline=p)
 
 # ... balancing the weights for tangent space mapping
 m = fit(SVM(), PTr, yTr; w=:b)
@@ -314,6 +310,20 @@ m = fit(SVM(logEuclidean; kernel=Linear, svmtype=NuSVC), PTr, yTr)
 
 # N.B. all other keyword arguments must be passed to the fit function
 # and not to the SVM constructor.
+
+# Fit a SVC SVM model using a pre-conditioning pipeline:
+p = @→ Recenter(; eVar=0.999) Compress Shrink(Fisher; radius=0.02)
+m = fit(SVM(PosDefManifold.Euclidean), PTr, yTr; pipeline=p)
+
+# Use a recentering pipeline and project the data
+# onto the tangent space at the identity matrix.
+# In this case the metric is irrilevant as the barycenter
+# for determining the base point is not computed.
+# Note that the previous call to 'fit' has modified `PTr`,
+# so we generate new data.
+PTr, PTe, yTr, yTe = gen2ClassData(10, 30, 40, 60, 80, 0.1)
+p = @→ Recenter(; eVar=0.999) Compress Shrink(Fisher; radius=0.02)
+m = fit(SVM(), PTr, yTr; pipeline=p, meanISR=I)
 ```
 """
 function fit(model     :: SVMmodel,
@@ -325,7 +335,7 @@ function fit(model     :: SVMmodel,
 
 			# parameters for projection onto the tangent space
 			w			:: Union{Symbol, Tuple, Vector} = Float64[],
-			meanISR     :: Union{ℍ, Nothing} = nothing,
+			meanISR     :: Union{ℍ, Nothing, UniformScaling} = nothing,
 			meanInit    :: Union{ℍ, Nothing} = nothing,
 			vecRange    :: UnitRange = 𝐏Tr isa ℍVector ? (1:size(𝐏Tr[1], 2)) : (1:size(𝐏Tr, 2)),
 			normalize	:: Union{Function, Tuple, Nothing} = normalize!,

@@ -203,9 +203,10 @@ Note that if they are passed, they will be disabled:
 
 If you pass the `meanISR` argument, this must be nothing (default) 
 or I (the identity matrix). If you pass `meanISR=I` for a tangent space model,
-parallel transport of the points to the identity before lifting
-the points to the tangent space will not be carried out.
-This can be used if a recentering conditioner is passed in the `pipeline`.
+parallel transport of the points to the identity before projecting
+the points onto the tangent space will not be carried out.
+This can be used if a recentering conditioner is passed in the `pipeline`
+(see the [`fit`](@ref) method for the ENLR and SVM model).
 
 Also, if you pass a `w` argument (weights for barycenter estimations),
 do not pass a vector of weights, just pass a symbol, *e.g.*, `w=:b`
@@ -228,6 +229,12 @@ cv = crval(MDM(Fisher), P, y)
 # Do the same applying a pre-conditioning pipeline
 p = @→ Recenter(; eVar=0.999) Compress Shrink(Fisher; radius=0.02)
 cv = crval(MDM(Fisher), P, y; pipeline = p)
+
+# Apply a pre-conditioning pipeline and project the data 
+# onto the tangent space at I without recentering the matrices.
+# Note that this makes sense only for tangent space ML models.
+p = @→ Recenter(; eVar=0.999) Compress Shrink(Fisher; radius=0.02)
+cv = crval(ENLR(Fisher), P, y; pipeline = p, meanISR=I)
 
 # Perform 10-fold cross-validation using the lasso logistic regression classifier
 cv = crval(ENLR(Fisher), P, y)
