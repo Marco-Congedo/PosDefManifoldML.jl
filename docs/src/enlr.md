@@ -12,7 +12,7 @@ The ENLR model is implemented using the Julia
 See [🎓](@ref) for resources on GLMNet.jl and learn how to use purposefully
 this model.
 
-The **fit**, **predict** and **crval** functions for the ENRL models are
+The **fit**, **predict** and **crval** functions for the ENLR models are
 reported in the [cv.jl](@ref) unit, since those are homogeneous across all
 machine learning models. Here it is reported the [`ENLRmodel`](@ref)
 abstract type and the [`ENLR`](@ref) structure.

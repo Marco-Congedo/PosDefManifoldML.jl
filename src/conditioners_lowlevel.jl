@@ -411,8 +411,8 @@ function shrink!(metric::PosDefManifold.Metric, 𝐏::PosDefManifold.ℍVector, 
             end
 
             if reshape
-                m=(mean(mean.(𝛌)))
-                sd=0.
+                m=(mean(mean.(𝛌))) # mean
+                sd=0. 
                 for i ∈ eachindex(𝛌)
                     for j ∈ eachindex(𝛌[i])
                         sd += (𝛌[i][j]-m)^2
