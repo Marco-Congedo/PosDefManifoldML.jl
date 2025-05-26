@@ -555,6 +555,9 @@ function Base.show(io::IO, ::MIME{Symbol("text/plain")}, M::MDM)
         println(io, greyFont, " MDM Parametrization", defaultFont)
         println(io, separatorFont," .metric  ", defaultFont, string(M.metric))
         println(io, separatorFont," .means   ", defaultFont, "vector of $(nc) Hermitian matrices")
+        if M.metric==Fisher && M.imeans!==nothing
+            println(io, separatorFont," .imeans  ", defaultFont, "vector of $(nc) inverse Hermitian matrices")
+        end
         println(io, separatorFont," .imeans  ", defaultFont, "vector of $(nc) Hermitian matrices")
     end
 end
