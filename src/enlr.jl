@@ -271,11 +271,13 @@ for the available metrics.
 **Optional keyword arguments**
 
 If a `pipeline`, of type [`Pipeline`](@ref) is provided, 
-all necessary parameters of the sequence of conditioners are fitted and all matrices 
-are transformed according to the specified pipeline before fitting the
-ML model. The parameters are stored in the output ML model.
+all necessary parameters of the sequence of conditioners are fitted 
+and all input matrices `𝐏Tr` are transformed according to the specified pipeline 
+before fitting the ML model. The parameters are stored in the output ML model.
 Note that the fitted pipeline is automatically applied by any successive call 
 to function [`predict`](@ref) to which the output ML model is passed as argument.
+Note that the input matrices `𝐏Tr` are transformed; pass a copy of `𝐏Tr`
+if you wish to mantain the original matrices.
 
 By default, uniform weights will be given to all observations
 for computing the mean to project the data in the tangent space.
@@ -592,7 +594,7 @@ function fit(model  :: ENLRmodel,
         # pipeline (pre-conditioners)
         if !(pipeline===nothing)
             verbose && println(greyFont, "Fitting pipeline...")
-            ℳ.pipeline = fit!(𝐏Tr, pipeline)
+            ℳ.pipeline = fit!(𝐏Tr, pipeline; transform=true)
         end
 
         newDim = size(𝐏Tr[1], 2) # some pre-conditioners can change the dimension

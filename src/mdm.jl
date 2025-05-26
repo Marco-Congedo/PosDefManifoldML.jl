@@ -136,11 +136,13 @@ to the metric specified by the [`MDM`](@ref) constructor.
 **Optional keyword arguments:** 
 
 If a `pipeline`, of type [`Pipeline`](@ref) is provided, 
-all necessary parameters of the sequence of conditioners are fitted and all matrices 
-are transformed according to the specified pipeline before fitting the
-ML model. The parameters are stored in the output ML model.
+all necessary parameters of the sequence of conditioners are fitted 
+and all input matrices `𝐏Tr` are transformed according to the specified pipeline 
+before fitting the ML model. The parameters are stored in the output ML model.
 Note that the fitted pipeline is automatically applied by any successive call 
 to function [`predict`](@ref) to which the output ML model is passed as argument.
+Note that the input matrices `𝐏Tr` are transformed; pass a copy of `𝐏Tr`
+if you wish to mantain the original matrices.
 
 `w` is a vector of non-negative weights
 associated with the matrices in `𝐏Tr`.
@@ -208,7 +210,7 @@ function fit(model      :: MDMmodel,
     # apply conditioning pipeline
     if !(pipeline===nothing)
         verbose && println(greyFont, "Fitting pipeline...")
-        ℳ.pipeline = fit!(𝐏Tr, pipeline)
+        ℳ.pipeline = fit!(𝐏Tr, pipeline; transform=true)
     end
 
     # Weights by class; empty if not provided by argument w
