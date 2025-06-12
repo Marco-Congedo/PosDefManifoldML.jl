@@ -206,7 +206,7 @@ operation. Once this is done, the support-vector machine is fitted.
 For the following keyword arguments see the documentation of the [`fit`](@ref) 
 funtion for the ENLR (Elastic Net Logistic Regression) machine learning model:
 
-- `pipeline` (pre-conditioning),
+- `pipeline`, `transform` (pre-conditioning),
 - `w`, `meanISR`, `meanInit`, `vecRange` (tangent space projection),
 
 !!! tip "Euclidean SVM models"
@@ -386,7 +386,7 @@ function fit(model     :: SVMmodel,
         # pipeline (pre-conditioners)
         if !(pipeline===nothing)
             verbose && println(greyFont, "Fitting pipeline...")
-            ℳ.pipeline = fit!(𝐏Tr, pipeline)
+            ℳ.pipeline = fit!(𝐏Tr, pipeline; transform=true)
         end
 
         newDim = size(𝐏Tr[1], 2) # some pre-conditioners can change the dimension

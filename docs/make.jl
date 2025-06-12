@@ -5,8 +5,9 @@ using Documenter, PosDefManifoldML
 makedocs(
    sitename="PosDefManifoldML",
    authors="Marco Congedo, Saloni Jain, Fahim Doumi, Anton Andreev",
-   format = Documenter.HTML(),
+   format = Documenter.HTML(repolink = "..."),
    modules=[PosDefManifoldML],
+   remotes = nothing,
    pages =
    [
       "index.md",

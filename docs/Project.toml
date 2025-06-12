@@ -1,8 +1,13 @@
 authors = ["Marco Congedo, Fahim Doumi, Saloni Jain, Anton Andreev"]
-version = "0.5.9"
+version = "0.5.10"
 
 [deps]
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+Folds = "41a02a25-b8f0-4f67-bc48-60067656b558"
+GLMNet = "8d5ece8b-de18-5317-b113-243142960cc6"
+LIBSVM = "b1bec4e5-fd48-53fe-b0cb-9723c09d164b"
+StatsAPI = "82ae8749-77ed-4fe6-ae5f-f523153014b0"
 
 [compat]
 Documenter = "~1.11"
