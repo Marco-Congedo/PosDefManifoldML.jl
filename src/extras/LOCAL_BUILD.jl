@@ -31,7 +31,7 @@ begin
 
   push!(LOAD_PATH, scrDir)
   using LinearAlgebra,
-        Documenter, Statistics, PosDefManifold, Revise, PosDefManifoldML, 
+        Statistics, PosDefManifold, PosDefManifoldML, 
         Diagonalizations, Folds, StatsAPI, Serialization,
         PermutationTests 
 

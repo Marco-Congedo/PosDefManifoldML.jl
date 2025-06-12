@@ -26,6 +26,7 @@ struct CVres <: CVresult
     stdAcc      :: Union{Real, Nothing}
     z           :: Union{Real, Nothing}
     p           :: Union{Real, Nothing}
+    ms          :: Union{Int64, Nothing}
 end
 ```
 
@@ -74,6 +75,11 @@ inferior to the specified expected value.
 
 `.p` is the p-value of the above hypothesis test.
 
+`.ms` is the execution time in milliseconds, excluding the time to compute the confusion matrix and p-value.
+If function [`crval`](@ref) has not been compiled yet, the time includes the compilation time.
+In any case the provided estimate is subjected to high variability. To get a better estimate use the median or minimum 
+across several runs or call the function using the [BenchmarkTools.jl](https://github.com/JuliaCI/BenchmarkTools.jl) package.
+
 See [`crval`](@ref) for more informations
 """
 struct CVres <: CVresult 
@@ -89,12 +95,13 @@ struct CVres <: CVresult
     stdAcc      :: Union{Real, Nothing}
     z           :: Union{Real, Nothing}
     p           :: Union{Real, Nothing}
+    ms          :: Union{Int64, Nothing}
 end
 
 """
 ```julia
 CVres(s::String) =
-     CVres(s, nothing, nothing, nothing, nothing, nothing,
+     CVres(s, nothing, nothing, nothing, nothing, nothing, nothing,
            nothing, nothing, nothing, nothing, nothing, nothing)
 ```
 
@@ -102,7 +109,7 @@ Construct an instance of the CVres structure giving only the `.cvtype`
 field. All other fields are filled with `nothing`. This is useful to construct
 manually crval objects.
 """
-CVres(s::String)=CVres(s, nothing, nothing, nothing, nothing, nothing, 
+CVres(s::String)=CVres(s, nothing, nothing, nothing, nothing, nothing, nothing,
                         nothing, nothing, nothing, nothing, nothing, nothing)
 
                        
@@ -389,7 +396,9 @@ function crval(model    :: MLmodel,
             @inbounds fold(f) 
         end
     end
-    verbose && println(greyFont, "\nDone in ", defaultFont, now()-⌚)
+
+    exetime = now()-⌚
+    verbose && println(greyFont, "\nDone in ", defaultFont, exetime)
 
     # compute mean and sd (balanced) accuracy
     avg = mean(as);
@@ -405,7 +414,7 @@ function crval(model    :: MLmodel,
     end
 
     # create cv struct
-    cv = CVres("$nFolds-fold", sStr, _model2Str(model), predLab, errls, CM, mCM, as, avg, std, zstat, pvalue)
+    cv = CVres("$nFolds-fold", sStr, _model2Str(model), predLab, errls, CM, mCM, as, avg, std, zstat, pvalue, Dates.value(exetime))
     
     # restore the number of threads for BLAS as the user had before invoking this function
     ⏩ && (BLAS.set_num_threads(blasThreads))
@@ -568,4 +577,5 @@ function Base.show(io::IO, ::MIME{Symbol("text/plain")}, cv::CVres)
             println(io, separatorFont, ".p        :", defaultFont," $(round(cv.p; digits=4))")
         end
     end
+    cv.ms           ≠ nothing && println(io, separatorFont, ".ms       :", defaultFont," $(cv.ms)")
 end
