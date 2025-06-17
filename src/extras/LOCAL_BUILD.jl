@@ -25,7 +25,7 @@
 #   you have identified the 'srcDir' to be used in the push command.
 
 begin
-  juliaCodeDir = homedir()*"\\Documents\\Documenti\\Code\\julia\\"
+  juliaCodeDir = homedir()*"\\Documents\\Code\\julia\\"
   scrDir       = juliaCodeDir*"PosDefManifoldML\\src\\"
   docsDir      = juliaCodeDir*"PosDefManifoldML\\docs\\" 
 
