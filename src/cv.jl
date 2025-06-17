@@ -44,6 +44,10 @@ Currently *accuracy* and *balanced accuracy* are supported.
 `.modelType` is the type of the machine learning model used for performing the
 cross-validation, given as a string.
 
+`.nTrials` is the total number of trials entering the cross-validation
+
+`.matSize` is the size of the input matrices (trials)
+
 `.predLabels` is an `f`-vector of `z` integer vectors holding the vectors of 
 predicted labels. There is one vector for each fold (`f`) and each containes
 as many vector as classes (`z`), in turn each one containing the predicted labels
@@ -86,6 +90,8 @@ struct CVres <: CVresult
     cvType      :: String
     scoring     :: Union{String, Nothing}
     modelType   :: Union{String, Nothing}
+    nTrials     :: Union{Int, Nothing}
+    matSize     :: Union{Int, Nothing}
     predLabels  :: Union{Vector{Vector{Vector{I}}}, Nothing} where I<:Int
     losses      :: Union{Vector{BitVector}, Nothing}
     cnfs        :: Union{Vector{Matrix{I}}, Nothing} where I<:Int
@@ -101,16 +107,16 @@ end
 """
 ```julia
 CVres(s::String) =
-     CVres(s, nothing, nothing, nothing, nothing, nothing, nothing,
-           nothing, nothing, nothing, nothing, nothing, nothing)
+     CVres(s, nothing, nothing, nothing, nothing, nothing, nothing, nothing,
+           nothing, nothing, nothing, nothing, nothing, nothing, nothing)
 ```
 
 Construct an instance of the CVres structure giving only the `.cvtype`
 field. All other fields are filled with `nothing`. This is useful to construct
 manually crval objects.
 """
-CVres(s::String)=CVres(s, nothing, nothing, nothing, nothing, nothing, nothing,
-                        nothing, nothing, nothing, nothing, nothing, nothing)
+CVres(s::String)=CVres(s, nothing, nothing, nothing, nothing, nothing, nothing, nothing,
+                        nothing, nothing, nothing, nothing, nothing, nothing, nothing)
 
                        
 
@@ -231,17 +237,21 @@ using PosDefManifoldML, PosDefManifold
 P, _dummyP, y, _dummyy = gen2ClassData(10, 60, 80, 30, 40, 0.2)
 
 # Perform 10-fold cross-validation using the minimum distance to mean classifier
-cv = crval(MDM(Fisher), P, y)
+# adopting the Fisher-Rao (affine-invariant) metric (default)
+cv = crval(MDM(), P, y)
 
-# Do the same applying a pre-conditioning pipeline
+# Adopting the log-Euclidean metric
+cv = crval(MDM(logEuclidean), P, y)
+
+# Apply a pre-conditioning pipeline to adopt the pseudo affine-invariant metric
 p = @→ Recenter(; eVar=0.999) Compress Shrink(Fisher; radius=0.02)
-cv = crval(MDM(Fisher), P, y; pipeline = p)
+cv = crval(MDM(Euclidean), P, y; pipeline = p)
 
 # Apply a pre-conditioning pipeline and project the data 
 # onto the tangent space at I without recentering the matrices.
 # Note that this makes sense only for tangent space ML models.
 p = @→ Recenter(; eVar=0.999) Compress Shrink(Fisher; radius=0.02)
-cv = crval(ENLR(Fisher), P, y; pipeline = p, meanISR=I)
+cv = crval(ENLR(), P, y; pipeline = p, meanISR=I)
 
 # Perform 10-fold cross-validation using the lasso logistic regression classifier
 cv = crval(ENLR(Fisher), P, y)
@@ -253,7 +263,6 @@ cv = crval(SVM(Fisher), P, y)
 cv = crval(SVM(Fisher), P, y; kernel=kernel.Polynomial)
 
 # Perform 8-fold cross-validation instead
-# (and see that you can go pretty fast if your PC has 8 threads)
 cv = crval(SVM(Fisher), P, y; nFolds=8)
 
 # ...balance the weights for tangent space projection
@@ -414,7 +423,8 @@ function crval(model    :: MLmodel,
     end
 
     # create cv struct
-    cv = CVres("$nFolds-fold", sStr, _model2Str(model), predLab, errls, CM, mCM, as, avg, std, zstat, pvalue, Dates.value(exetime))
+    cv = CVres("$nFolds-fold", sStr, _model2Str(model), length(𝐏), size(𝐏, 1), predLab, errls, 
+                CM, mCM, as, avg, std, zstat, pvalue, Dates.value(exetime))
     
     # restore the number of threads for BLAS as the user had before invoking this function
     ⏩ && (BLAS.set_num_threads(blasThreads))
@@ -563,6 +573,8 @@ function Base.show(io::IO, ::MIME{Symbol("text/plain")}, cv::CVres)
                             println(io, separatorFont, ".cvType   :", defaultFont," $(cv.cvType)")
     cv.scoring      ≠ nothing && println(io, separatorFont, ".scoring  :", defaultFont," $(cv.scoring)")
     cv.modelType    ≠ nothing && println(io, separatorFont, ".modelType:", defaultFont," $(cv.modelType)")
+    cv.nTrials      ≠ nothing && println(io, separatorFont, ".nTrials  :", defaultFont," $(cv.nTrials)")
+    cv.matSize      ≠ nothing && println(io, separatorFont, ".matSize  :", defaultFont," $(cv.matSize)")
     cv.predLabels   ≠ nothing && println(io, separatorFont, ".predLabels ", defaultFont,"a vector of #classes vectors of predicted labels per fold")
     cv.losses       ≠ nothing && println(io, separatorFont, ".losses     ", defaultFont,"a vector of binary loss per fold")
     cv.cnfs         ≠ nothing && println(io, separatorFont, ".cnfs       ", defaultFont,"a confusion matrix per fold (frequencies)")

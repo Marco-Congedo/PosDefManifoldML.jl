@@ -237,16 +237,14 @@ function fit(model      :: MDMmodel,
                                              w=W[i], ✓w, meanInit=meanInit[i], tol, ⏩) for i=1:z])
 
     # store the inverse of the means for optimizing distance computations
-    # if the metric is Fisher and the matrices are small
-    if ℳ.metric==Fisher
-        if size(𝐏Tr[1], 1)<=100
+    # if the metric is Fisher and the matrices are not too large
+    if ℳ.metric==Fisher && size(𝐏Tr[1], 1)<=100
             if ⏩
                 ℳ.imeans=ℍVector(undef, length(ℳ.means))
                 @threads for i=1:length(ℳ.means) @inbounds ℳ.imeans[i]=inv(ℳ.means[i]) end
             else
                 ℳ.imeans=ℍVector([inv(G) for G ∈ ℳ.means])
             end
-        end
     else ℳ.imeans=nothing
     end
 
