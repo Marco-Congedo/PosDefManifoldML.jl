@@ -41,5 +41,6 @@ deploydocs(
    # deps = Deps.pip("pygments", "mkdocs"),
    devbranch = "dev",
    devurl = "dev",
+   push_preview = true,
    # versions = ["stable" => "v^", "v#.#", devurl => devurl],
 )
