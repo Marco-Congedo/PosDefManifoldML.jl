@@ -473,6 +473,34 @@ across the cross-validation sets.
 ```julia
 using PosDefManifoldML, PosDefManifold
 
+y = [1,1,1,1,2,2,2,2,2,2]
+
+cvSetup(y, 2)
+# returns:
+# Training Arrays:
+#   Class 1: Array{Int64}[[3, 4], [1, 2]]
+#   Class 2: Array{Int64}[[4, 5, 6], [1, 2, 3]]
+# Testing Arrays:
+#   Class 1: Array{Int64}[[1, 2], [3, 4]]
+#   Class 2: Array{Int64}[[1, 2, 3], [4, 5, 6]]
+
+cvSetup(y, 2; seed=1234)
+# returns:
+# Training Arrays:
+#   Class 1: Array{Int64}[[1, 4], [2, 3]]
+#   Class 2: Array{Int64}[[4, 5, 6], [1, 2, 3]]]
+# Testing Arrays:
+#   Class 1: Array{Int64}[[2, 3], [1, 4]]
+#   Class 2: Array{Int64}[[1, 2, 3], [4, 5, 6]]
+
+cvSetup(y, 3)
+# returns:
+# Training Arrays:
+#   Class 1: Array{Int64}[[2, 3], [1, 3, 4], [1, 2, 4]]
+#   Class 2: Array{Int64}[[3, 4, 5, 6], [1, 2, 5, 6], [1, 2, 3, 4]]
+# Testing Arrays:
+#   Class 1: Array{Int64}[[1, 4], [2], [3]]
+#   Class 2: Array{Int64}[[1, 2], [3, 4], [5, 6]]
 
 ```
 """
