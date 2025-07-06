@@ -200,11 +200,11 @@ if the user can request different values for those fields
 using optional keyword arguments passed to the
 [`crval`](@ref) function. For example, consider the *SVM*
 model; suppose the user pass to the [`crval`](@ref) function
-a default SVM model. For such a model the kernel is a radial basis
+a default SVM model. For such a model the kernel is a linear
 kernel. Suppose the user has passed to the [`crval`](@ref) function
-argument `kernel=linear`. If you don't overwrite the kernel into the
-model, the radianl basis kernel will be used instead of the desired
-linear kernel.
+argument `kernel=Polynomial`. If you don't overwrite the kernel into the
+model, the linear kernel will be used instead of the desired
+polynomial kernel.
 
 You can do so easily using the
 `_rmArgs` and `_getArgValue` internal functions

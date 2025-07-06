@@ -125,15 +125,21 @@ CVres(s::String)=CVres(s, nothing, nothing, nothing, nothing, nothing, nothing, 
 function crval(model    :: MLmodel,
                𝐏        :: ℍVector,
                y        :: IntVector;
-        pipeline    :: Union{Pipeline, Nothing} = nothing,
-        nFolds      :: Int     = min(10, length(y)÷3),
-        shuffle     :: Bool    = false,
-        scoring     :: Symbol  = :b,
-        hypTest     :: Union{Symbol, Nothing} = :Bayle,
-        verbose     :: Bool    = true,
-        outModels   :: Bool    = false,
-        ⏩           :: Bool    = true,
-        fitArgs...)
+            # Conditioners (Data transformation)
+            pipeline        :: Union{Pipeline, Nothing} = nothing,
+            # Cross-validation parameters
+            nFolds          :: Int      = 8,           
+            seed            :: Int      = 0,
+            # Default performance metric and statistical test
+            scoring         :: Symbol   = :b,
+            hypTest         :: Union{Symbol, Nothing} = :Bayle,
+            # arguments for this function
+            verbose         :: Bool     = true,
+            outModels       :: Bool     = false,
+            ⏩              :: Bool     = true,
+            BLAS_threads    :: Int = max(1, Threads.nthreads()-nFolds),
+            # Optional arguments for the fit function of the `model`
+            fitArgs...)
 ```
 Stratified cross-validation accuracy for a machine learning `model`
 given an ℍVector ``𝐏`` holding *k* Hermitian matrices and
@@ -149,24 +155,14 @@ are stored in the output structure.
 If a `pipeline`, of type [`Pipeline`](@ref) is provided, 
 the pipeline is fitted on training data and applied for predicting the testing data.
 
-`nFolds` by default is set to the minimum between 10 and the number
-of observation ÷ 3 (integer division).
+`nFolds`, the number of folds, 8 by default.
 
 If `scoring`=:b (default) the **balanced accuracy** is computed.
 Any other value will make the function returning the regular **accuracy**.
 Balanced accuracy is to be preferred for unbalanced classes.
 For balanced classes the balanced accuracy reduces to the
-regular accuracy, therefore there is no point in using regular accuracy
+regular accuracy, therefore there is no point in using regular accuracy,
 if not to avoid a few unnecessary computations when the class are balanced.
-
-!!! info "Error loss"
-    Note that this function computes the error loss for each fold (see [`CVres`](@ref)).
-    The average error loss is the complement of accuracy, 
-    not of balanced accuracy. If the classes are balanced and you use `scoring`=:a (accuracy), 
-    the average error loss within each fold is equal to 1 minus the average accuracy, 
-    which is also computed by this function. However, this is not true if the classes are unbalanced
-    and you use `scoring`=:b (default). In this case the returned error loss and accuracy
-    may appear incoherent.
 
 `hypTest` can be `nothing` or a symbol specifying the kind of statistical test to be carried out.
 At the moment, only `:Bayle` is a possible symbol and this test is performed by default.
@@ -174,10 +170,17 @@ Bayle's procedure tests whether the average observed binary error loss is inferi
 expected by the hypothesis of random chance, which is set to ``1-\\frac{1}{z}``, where
 ``z`` is the number of classes (see [`testCV`](@ref)).
 
-For the meaning of the `shuffle` argument (false by default),
-see function [`cvSetup`](@ref), to which this argument is passed internally.
+!!! tip "Error loss and Bayle's test"
+    Note that this function computes the error loss for each fold (see [`CVres`](@ref)).
+    The average error loss is the complement of accuracy, 
+    not of balanced accuracy. If the classes are balanced and you use `scoring`=:a (accuracy), 
+    the average error loss within each fold is equal to 1 minus the average accuracy, 
+    which is also computed by this function. However, this is not true if the classes are unbalanced
+    and you use `scoring`=:b (default). In this case the returned error loss and accuracy
+    may appear incoherent. For the same reason, Bayle's test, which is based on the error loss,
+    is a test on accuracy, not on balanced accuracy, regardless the value of `scoring`.
 
-For the meaning of the `seed` argument (1234 by default),
+For the meaning of the `seed` argument (0 by default),
 see function [`cvSetup`](@ref), to which this argument is passed internally.
 
 If `verbose` is true (default), information is printed in the REPL.
@@ -231,7 +234,7 @@ for balancing weights.
 
 **Examples**
 ```julia
-using PosDefManifoldML, PosDefManifold
+using PosDefManifoldML, PosDefManifold, LinearAlgebra
 
 # Generate some data
 P, _dummyP, y, _dummyy = gen2ClassData(10, 60, 80, 30, 40, 0.2)
@@ -260,7 +263,7 @@ cv = crval(ENLR(Fisher), P, y)
 cv = crval(SVM(Fisher), P, y)
 
 # ...with a Polynomial kernel of order 3 (default)
-cv = crval(SVM(Fisher), P, y; kernel=kernel.Polynomial)
+cv = crval(SVM(Fisher), P, y; kernel=Polynomial)
 
 # Perform 8-fold cross-validation instead
 cv = crval(SVM(Fisher), P, y; nFolds=8)
@@ -279,9 +282,8 @@ function crval(model    :: MLmodel,
             # Conditioners (Data transformation)
             pipeline        :: Union{Pipeline, Nothing} = nothing,
             # Cross-validation parameters
-            nFolds          :: Int      = min(10, length(y) ÷ 3),           
-            shuffle         :: Bool     = false,
-            seed            :: Int      = 1234,
+            nFolds          :: Int      = 8,           
+            seed            :: Int      = 0,
             # Default performance metric and statistical test
             scoring         :: Symbol   = :b,
             hypTest         :: Union{Symbol, Nothing} = :Bayle,
@@ -321,7 +323,7 @@ function crval(model    :: MLmodel,
     ℳ = Vector{MLmodel}(undef, nFolds)             # ML models
 
     # get indeces for all CVs (separated for each class)
-    indTr, indTe = cvSetup(y, nFolds; shuffle, seed)
+    indTr, indTe = cvSetup(y, nFolds; seed)
 
     fitArgs✔ = ()
     # make sure the user doesn't pass arguments that skrew up the cv
@@ -435,35 +437,24 @@ end
 
 """
 ```julia
-function cvSetup(y            :: Vector{Int64},  
-                 nCV          :: Int64;           
-                 shuffle      :: Bool = false,
-                 seed         :: Int = 1234)
+function cvSetup(y          :: Vector{Int64},  
+                 nFolds     :: Int64;           
+                 seed       :: Int = 0)
 ```
 
-Given a vector of labels `y` and a parameter `nCV`, this function generates
-indices for nCV-fold cross-validation sets, organized by class.
+Given a vector of labels `y` and the number of folds `nFolds`, this function generates
+indices for the cross-validation sets, organized by class.
 
 The function performs a stratified cross-validation by maintaining the same class
-distribution across all folds. This ensures that each fold contains approximately
-the same proportion of samples from each class as in the complete dataset.
+proportion across all folds as in `y`. 
 
-Each element is used exactly once as a test sample across all folds,
-ensuring that the entire dataset is covered.
+Each element is used exactly once as a test sample across all folds.
 
-The `shuffle` parameter controls whether the indices within each class are randomized.
-When `shuffle` is false (default), the original sequence of indices is preserved, ensuring 
-consistent results across multiple executions.
-
-When `shuffle`, is true the indices within each class are randomly permuted before creating 
-the cross-validation folds. 
-Randomization is controlled by the `seed` parameter (default: 1234). 
-Using the same `seed` value generates identical cross-validation sets.
-Using different `seed` values produce different random partitions.
-
-This combination of `shuffle` and `seed` parameters allows you to generate reproducible random 
-splits for consistent experimentation, create different random partitions to assess the robustness 
-of your results and maintain exact reproducibility of your cross-validation experiments.
+If `seed`=0 (default), the original sequence of indices before creating 
+the cross-validation folds is preserved. If it is a positive number,
+the seed for shuffling the indices will be initialized to that number.
+Passing identical `y` and `seed` ensures the reproducibility of the generated folds
+across calls of this function.
 
 This function is used in [`crval`](@ref). It constitutes the fundamental
 basis to implement customized cross-validation procedures.
@@ -482,82 +473,55 @@ across the cross-validation sets.
 ```julia
 using PosDefManifoldML, PosDefManifold
 
-y = [1,1,1,1,2,2,2,2,2,2]
 
-cvSetup(y, 2)
-# returns:
-# Training Arrays:
-#   Class 1: Array{Int64}[[3, 4], [1, 2]]
-#   Class 2: Array{Int64}[[4, 5, 6], [1, 2, 3]]
-# Testing Arrays:
-#   Class 1: Array{Int64}[[1, 2], [3, 4]]
-#   Class 2: Array{Int64}[[1, 2, 3], [4, 5, 6]]
-
-cvSetup(y, 2; shuffle=true, seed=1)
-# returns:
-# Training Arrays:
-#   Class 1: Array{Int64}[[1, 4], [2, 3]]
-#   Class 2: Array{Int64}[[1, 3, 4], [2, 5, 6]]
-# Testing Arrays:
-#   Class 1: Array{Int64}[[2, 3], [1, 4]]
-#   Class 2: Array{Int64}[[2, 5, 6], [1, 3, 4]]
-
-cvSetup(y, 3)
-# returns:
-# Training Arrays:
-#   Class 1: Array{Int64}[[2, 3], [1, 3, 4], [1, 2, 4]]
-#   Class 2: Array{Int64}[[3, 4, 5, 6], [1, 2, 5, 6], [1, 2, 3, 4]]
-# Testing Arrays:
-#   Class 1: Array{Int64}[[1, 4], [2], [3]]
-#   Class 2: Array{Int64}[[1, 2], [3, 4], [5, 6]]
 ```
 """
-function cvSetup(y          :: Vector{Int64},
-                 nCV        :: Int64; 
-                 shuffle    :: Bool = false, 
-                 seed       :: Int = 1234)
+function cvSetup(y          :: Vector{Int64},  
+                 nFolds     :: Int64;           
+                 seed       :: Int = 0)
 
-    if nCV == 1 @error 📌*", cvSetup function: The number of cross-validation must be bigger than one" end
+    nFolds<2 && @error 📌*", cvSetup function: `nFolds` (the number of cross-validation) must be bigger than one" 
+    seed<0 && @error 📌*", cvSetup function: The `seed` cannot be negative"
 
     classes = sort(unique(y))
     n_classes = length(classes)    
     class_indices = [findall(x -> x == c, y) for c in classes]
-    shuffle && (Random.seed!(seed); foreach(shuffle!, class_indices))
+    seed≠0 && (Random.seed!(seed); foreach(shuffle!, class_indices))
 
-    base_sizes = [length(a)÷nCV for a in class_indices]
-    remainings = [length(a)%nCV for a in class_indices]
+    base_sizes = [length(a)÷nFolds for a in class_indices]
+    remainings = [length(a)%nFolds for a in class_indices]
 
     # Initialize global indices
-    allindTrain = [Int64[] for _ in 1:nCV]
-    allindTest  = [Int64[] for _ in 1:nCV]
+    allindTrain = [Int64[] for _ in 1:nFolds]
+    allindTest  = [Int64[] for _ in 1:nFolds]
 
     # Distribute base indices
-    for (c, a) in enumerate(class_indices), i in 1:nCV
+    for (c, a) in enumerate(class_indices), i in 1:nFolds
         start_idx = (i-1) * base_sizes[c] + 1
         end_idx = i * base_sizes[c]
         
         if end_idx <= length(a)
             fold_indices = a[start_idx:end_idx]
             append!(allindTest[i], fold_indices)
-            foreach(j -> j != i && append!(allindTrain[j], fold_indices), 1:nCV)
+            foreach(j -> j != i && append!(allindTrain[j], fold_indices), 1:nFolds)
         end
     end
     # Distribute remaining indices
-    all_remaining_indices = vcat([a[nCV*base_sizes[c]+1:end] for (c,a) in enumerate(class_indices) if remainings[c] > 0]...)
+    all_remaining_indices = vcat([a[nFolds*base_sizes[c]+1:end] for (c,a) in enumerate(class_indices) if remainings[c] > 0]...)
     for (i, idx) in enumerate(all_remaining_indices)
-        fold_idx = (i-1) % nCV + 1
+        fold_idx = (i-1) % nFolds + 1
         push!(allindTest[fold_idx], idx)
-        foreach(j -> j != fold_idx && push!(allindTrain[j], idx), 1:nCV)
+        foreach(j -> j != fold_idx && push!(allindTrain[j], idx), 1:nFolds)
     end
     
     # Initialize per-class indices for all folds 
     # We cannot generate those indices at the beginning of the function or 
     # Else remaining indices won't be distributed equally among folds
-    indTr = [[Int64[] for f=1:nCV] for i=1:n_classes]
-    indTe = [[Int64[] for f=1:nCV] for i=1:n_classes]
+    indTr = [[Int64[] for f=1:nFolds] for i=1:n_classes]
+    indTe = [[Int64[] for f=1:nFolds] for i=1:n_classes]
     
     # Convert global indices to per-class indices
-    @inbounds for f=1:nCV, i=1:n_classes; 
+    @inbounds for f=1:nFolds, i=1:n_classes; 
         class_indices = findall(x -> x == classes[i], y); 
         indTr[i][f] = findall(idx -> idx in allindTrain[f], class_indices); 
         indTe[i][f] = findall(idx -> idx in allindTest[f], class_indices) 

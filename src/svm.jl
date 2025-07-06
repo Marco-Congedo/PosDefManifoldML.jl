@@ -5,7 +5,7 @@
 #   Anton Andreev, Marco Congedo, CNRS, Grenoble, France:
 
 # ? CONTENTS :
-#   This unit implements a wrapper to libSVM. It projects data to tangent space
+#   This unit implements a wrapper to LIBSVM. It projects data to tangent space
 #   and it applies SVM classification using Julia's SVM wrapper.
 
 """
@@ -22,7 +22,7 @@ abstract type SVMmodel<:TSmodel end
 mutable struct SVM <: SVMmodel
 	metric		:: Metric
 	svmType		:: Type
-	kernel		:: Kernel.KERNEL
+	kernel		:: LIBSVM.Kernel.KERNEL
 	pipeline 	:: Pipeline
 	normalize	:: Union{Function, Tuple, Nothing}
 	meanISR		:: Union{HermitianVector, Nothing, UniformScaling}
@@ -56,7 +56,7 @@ Available types are:
 The default is `SVC`, unless labels are not provided while fitting
 the model, in which case it defaults to `OneClassSVM`.
 
-`kernel`, a kernel type.
+`kernel`, a LIBSVM.Kernel type.
 Available kernels are declared as constants in the main module. They are:
 - `Linear` 		(default)
 - `RadialBasis` 
@@ -120,7 +120,7 @@ m2 = fit(m, PTr, yTr; kernel=Linear)
 mutable struct SVM <: SVMmodel
     	metric        :: Metric
 		svmType       :: Type
-		kernel        :: Kernel.KERNEL
+		kernel        :: LIBSVM.Kernel.KERNEL
 		pipeline
 		normalize
 		meanISR
@@ -162,7 +162,7 @@ function fit(model     :: SVMmodel,
 
 	# SVM parameters
 	svmType 	:: Type = SVC,
-	kernel 		:: Kernel.KERNEL = Linear,
+	kernel 		:: LIBSVM.Kernel.KERNEL = Linear,
 	epsilon 	:: Float64 = 0.1,
 	cost		:: Float64 = 1.0,
 	gamma 		:: Float64	= 1/_getDim(𝐏Tr, vecRange),
@@ -294,19 +294,19 @@ m = fit(SVM(), PTr, yTr; w=:b)
 # ... using the log-Eucidean metric for tangent space projection
 m = fit(SVM(logEuclidean), PTr, yTr)
 
-# ... using the linear kernel
-m = fit(SVM(logEuclidean), PTr, yTr, kernel=Linear)
+# ... using the polynomial kernel of degree 3 (default)
+m = fit(SVM(logEuclidean), PTr, yTr, kernel=Polynomial)
 
 # or
 
-m = fit(SVM(logEuclidean; kernel=Linear), PTr, yTr)
+m = fit(SVM(logEuclidean; kernel=Polynomial), PTr, yTr)
 
 # ... using the Nu-Support Vector Classification
-m = fit(SVM(logEuclidean), PTr, yTr, kernel=Linear, svmtype=NuSVC)
+m = fit(SVM(logEuclidean), PTr, yTr, kernel=Polynomial, svmtype=NuSVC)
 
 # or
 
-m = fit(SVM(logEuclidean; kernel=Linear, svmtype=NuSVC), PTr, yTr)
+m = fit(SVM(logEuclidean; kernel=Polynomial, svmtype=NuSVC), PTr, yTr)
 
 # N.B. all other keyword arguments must be passed to the fit function
 # and not to the SVM constructor.
@@ -341,19 +341,19 @@ function fit(model     :: SVMmodel,
 			normalize	:: Union{Function, Tuple, Nothing} = normalize!,
 
 			# paramters for LIBSVM svmtrain function
-			svmType     :: Type 			= SVC,
-			kernel      :: Kernel.KERNEL	= Linear,
-			epsilon     :: Float64 	  		= 0.1,
-			cost        :: Float64 	  		= 1.0,
-			gamma       :: Float64 	  		= 1/_getDim(𝐏Tr, vecRange),
-			degree      :: Int64   	  		= 3,
-			coef0		:: Float64	  		= 0.,
-			nu			:: Float64	  		= 0.5,
-			shrinking   :: Bool		  		= true,
-			probability :: Bool		  		= false,
+			svmType     :: Type 			    = SVC,
+			kernel      :: LIBSVM.Kernel.KERNEL	= Linear,
+			epsilon     :: Float64 	  		    = 0.1,
+			cost        :: Float64 	  		    = 1.0,
+			gamma       :: Float64 	  		    = 1/_getDim(𝐏Tr, vecRange),
+			degree      :: Int64   	  		    = 3,
+			coef0		:: Float64	  		    = 0.,
+			nu			:: Float64	  		    = 0.5,
+			shrinking   :: Bool		  		    = true,
+			probability :: Bool		  		    = false,
 			weights     :: Union{Dict{Int, Float64}, Nothing} = nothing,
-			cachesize   :: Float64     		= 200.0,
-			checkArgs	:: Bool 			= true,
+			cachesize   :: Float64     		    = 200.0,
+			checkArgs	:: Bool 			    = true,
 
 			# Generic and common parameters
 			tol         :: Real 		  	= 1e-5,

@@ -85,7 +85,7 @@ model=fit(ENLR(), PTr, yTr; alpha=0.5)
 cv = crval(ENLR(), PTr, yTr; alpha=0.5)
 
 # (1)
-# create and fit (train) an SVM with Radial Basis kernel
+# create and fit (train) an SVM with linear (default) kernel
 
 # finding the best model by cross-validation:
 model=fit(SVM(), PTr, yTr)
