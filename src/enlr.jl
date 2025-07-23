@@ -155,9 +155,6 @@ m2 = fit(ENLR(logEuclidean; alpha=0), PTr, yTr)
 # which is equivalent to
 m2 = fit(ENLR(logEuclidean), PTr, yTr; alpha=0)
 
-# Note that, albeit model `m` has been created as a ridge model,
-# you have passed `m` and overwritten the `alpha` hyperparameter.
-# The metric, instead, cannot be overwritten.
 ```
 """
 mutable struct ENLR <: ENLRmodel
@@ -305,7 +302,7 @@ as argument `meanISR` and in this case this matrix will be used as the ISR of th
 Passed or computed, it will be written in the `.meanISR` field of the 
 model structure created by this function. Notice that passing `I`, the matrices
 will be projected onto the tangent space at the identity without recentering them.
-This is possible if the matrices have been recentered bt a pre-conditioning pipeline
+This is possible if the matrices have been recentered by a pre-conditioning pipeline
 (see [`Pipeline`](@ref)).
 
 If `meanISR` is not provided and the `.metric` field of the `model`

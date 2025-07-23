@@ -16,8 +16,7 @@ it does not matter if they act directly on the manifold of positive definite mat
 It also features 
 
 - **Pre-conditining pipelines**, which can drastically reduce the execution time
-- **Adaptation** techniques, which, besides being very useful in cross-session and cross-subject settings, 
- are instrumental for implementing on-line modes of operation.
+- **Adaptation** techniques, which, besides being very useful in cross-session and cross-subject settings, are instrumental for implementing on-line modes of operation.
 
 Note that models acting on the tangent space can take as input Euclidean feature vectors instead of positive definite matrices, thus they can be used in many more situations.
 
@@ -138,12 +137,13 @@ See [`CVres`](@ref) for details on the fields of cross-validation objects.
 
 Let's see how to adapt a pre-conditioning pipeline. Suppose you have data from two 
 sessions or two subjects, `s1` and `s2`.
-We want to use `s1` to train a machine learning model on the tanget space and `s2` to test it.
-A pipeline is fitted sor `s1` and we want this pipeline to adapt to `s2` for testing.
+We want to use `s1` to train a machine learning model on the tangent space and `s2` to test it.
+A pipeline is fitted on `s1` and we want this pipeline to adapt to `s2` for testing.
 If the pipeline includes a recentering pre-conditioner, we need to make sure that
-the dimensionality reduction determined on `s2` is that same as in `s1.
+the dimensionality reduction determined on `s2` is the same as in `s1`.
 
 **Get data**
+
 Let us get some simulated data.
 We generate random data and labels for session (or subject) 1 and 2.
 
@@ -184,7 +184,7 @@ predict(m, Ps2, :l; pipeline=p)
 
 ## Examples using the ENLR model
 
-The **elastic net logistic regression (ENLR)** classifier is an example of classifier acting on the tangent space. Besides the **metric** (see above) used to compute a base-point for projecting the data onto the tangent space, it has a parameter **alpha** and an hyperparameter **lambda**. The **alpha** parameter allows to trade off between a pure **ridge** LR model (``α=0``) and a pure **lasso** LR model (``α=1``), which is the default. Given an alpha value, the model is fitted with a number of values for the ``λ`` (regularization) hyperparameter. Thus, differently from the previous example, tuning the ``λ`` hyperparameter is necessary.
+The **elastic net logistic regression (ENLR)** classifier is an example of classifier acting on the tangent space. Besides the **metric** used to compute a base-point for projecting the data onto the tangent space, it has a parameter **alpha** and an hyperparameter **lambda**. The **alpha** parameter allows to trade off between a pure **ridge** LR model (``α=0``) and a pure **lasso** LR model (``α=1``), which is the default. Given an alpha value, the model is fitted with a number of values for the ``λ`` (regularization) hyperparameter. Thus, differently from the previous example, tuning the ``λ`` hyperparameter is necessary.
 
 Also, keep in mind
 that the [`fit`](@ref) and [`predict`](@ref) methods for ENLR models accept optional keyword arguments that are specific to this model.
@@ -339,11 +339,12 @@ This last command can be invoked repeatedly.
 
 First, let's see how to adapt the base point for projecting the data onto
 the tangent space. Suppose you have data from two sessions or two subjects, `s1` and `s2`.
-We want to use `s1` to train a machine learning model on the tanget space and `s2` to test it,
+We want to use `s1` to train a machine learning model on the tangent space and `s2` to test it,
 however, the barycenter `s1` cannot be assumed equal to the barycenter of `s2`.
 The barycenter determines the base point, therefore, we adapt it.
 
 **Get data**
+
 Let us get some simulated data.
 We generate random data and labels for session (or subject) 1 and 2.
 
@@ -373,7 +374,7 @@ with dimensionality reduction. While adapting the pipeline to `s2`,
 we need to make sure that the matrices in `s2` are reduced to the same 
 dimension as the matrices in `s1`, otherwise the 
 machine learning model we fit on `s1` cannot operate 
-on `s2`. For this, we need to set the `eVar` argmument of the [`Recenter`]
+on `s2`. For this, we need to set the `eVar` argmument of the [`Recenter`](@ref)
 pre-conditioner to a integer matching the reduced dimension of `s1`.
 Note that the adaptation may not work well if the class proportions
 is different in `s1` and `s2`.
@@ -435,7 +436,7 @@ By default, a C-Support Vector Classification model is fitted:
 m1 = fit(SVM(), PTr, yTr; w=:b)
 ```
 
-Notice that as for the example above with for ENLR model, we have requested to compute a balanced mean for projecting the matrices in `PTr` onto the tangent space.
+Notice that, as for the example above with for ENLR model, we have requested to compute a balanced mean for projecting the matrices in `PTr` onto the tangent space.
 
 In order to fit a Nu-Support Vector Classification model:
 

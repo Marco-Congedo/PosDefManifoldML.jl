@@ -39,14 +39,14 @@ A call to [`crval`](@ref) results in an instance of this structure.
 
 `.scoring` is the type of accuracy that is computed, given as a string.
 This is controlled when calling [`crval`](@ref).
-Currently *accuracy* and *balanced accuracy* are supported.
+Currently, *accuracy* and *balanced accuracy* are supported.
 
 `.modelType` is the type of the machine learning model used for performing the
 cross-validation, given as a string.
 
-`.nTrials` is the total number of trials entering the cross-validation
+`.nTrials` is the total number of trials entering the cross-validation.
 
-`.matSize` is the size of the input matrices (trials)
+`.matSize` is the size of the input matrices (trials).
 
 `.predLabels` is an `f`-vector of `z` integer vectors holding the vectors of 
 predicted labels. There is one vector for each fold (`f`) and each containes
@@ -84,7 +84,7 @@ If function [`crval`](@ref) has not been compiled yet, the time includes the com
 In any case the provided estimate is subjected to high variability. To get a better estimate use the median or minimum 
 across several runs or call the function using the [BenchmarkTools.jl](https://github.com/JuliaCI/BenchmarkTools.jl) package.
 
-See [`crval`](@ref) for more informations
+See [`crval`](@ref) for more informations.
 """
 struct CVres <: CVresult 
     cvType      :: String
@@ -162,7 +162,7 @@ Any other value will make the function returning the regular **accuracy**.
 Balanced accuracy is to be preferred for unbalanced classes.
 For balanced classes the balanced accuracy reduces to the
 regular accuracy, therefore there is no point in using regular accuracy,
-if not to avoid a few unnecessary computations when the class are balanced.
+if not to avoid a few unnecessary computations when the classes are balanced.
 
 `hypTest` can be `nothing` or a symbol specifying the kind of statistical test to be carried out.
 At the moment, only `:Bayle` is a possible symbol and this test is performed by default.
@@ -189,7 +189,7 @@ If `outModels` is true, return a 2-tuple holding a [`CVres`](@ref) structure
 and a `nFolds`-vector of the model fitted for each fold,
 otherwise (default), return only a [`CVres`](@ref) structure.
 
-If `⏩` the computations are multi-threaded across folds.
+If `⏩`, the computations are multi-threaded across folds.
 It is true by default. Set it to false if there are problems in running
 this function and for debugging.
 
@@ -198,7 +198,8 @@ this function and for debugging.
     the [`fit!`](@ref) and [`predict`](@ref) function that will be called within each fold will
     we run in single-threaded mode. Vice versa, if you pass `⏩=false`, these two functions
     will be run in multi-threaded mode. This is done to avoid
-    overshooting the number of threads to be activated.
+    overshooting the number of threads to be activated. Because of this behavior, 
+    do not call this function in a multi-threaded loop.
 
 `fitArgs` are optional keyword arguments that are passed to the
 [`fit`](@ref) function called for each fold of the cross-validation.
@@ -218,7 +219,7 @@ Note that if they are passed, they will be disabled:
 |          | `folds`   |
 
 If you pass the `meanISR` argument, this must be nothing (default) 
-or I (the identity matrix). If you pass `meanISR=I` for a tangent space model,
+or *I* (the identity matrix). If you pass `meanISR=I` for a tangent space model,
 parallel transport of the points to the identity before projecting
 the points onto the tangent space will not be carried out.
 This can be used if a recentering conditioner is passed in the `pipeline`
@@ -459,12 +460,12 @@ across calls of this function.
 This function is used in [`crval`](@ref). It constitutes the fundamental
 basis to implement customized cross-validation procedures.
 
-Return the 2-tuple (indTr, indTe) where:
+Return the 2-tuple (`indTr`, `indTe`) where:
 
-- indTr is an array of arrays where indTr[i][f] contains the training indices
+- `indTr` is an array of arrays where `indTr[i][f]` contains the training indices
   for class i in fold f
-- indTe is an array of arrays where indTe[i][f] contains the test indices
-  for class i in fold f
+- `indTe` is an array of arrays where `indTe[i][f]` contains the test indices
+  for class i in fold f.
 
 Each array is organized by class and then by fold, ensuring stratified sampling
 across the cross-validation sets.

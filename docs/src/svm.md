@@ -3,7 +3,7 @@
 This unit implements several **Suport-Vector Machine (SVM)**
 machine learning models on the tangent space for symmetric positive definite
 (SDP) matrices, *i.e.*, real PD matrices.
-Several models can be obtained with different combinations of the `svmType` and the `kernel` arguments when the model is fit.
+Several models can be obtained with different combinations of the `svmType` and the `kernel` arguments when the model is fitted.
 Optimal hyperparameters for the given training data
 are found using cross-validation.
 
