@@ -68,7 +68,7 @@ The field `imeans` is an ℍVector holding the inverse of the
 matrices in `means`. This also is not to be specified by the user,
 is computed when the model is fitted and is accessible only thereafter.
 It is used to optimize the computation of distances if the
-model is fitted useing the Fisher metric (default).
+model is fitted using the Fisher metric (default).
 
 **Examples**:
 ```julia
@@ -499,7 +499,7 @@ different dimensions. It has no effect here, but is used as it is good practice.
 If `⏩` is true, the distances are computed using multi-threading,
 unless the number of threads Julia is instructed to use is <2 or <3k.
 
-The result is a *z*x*k* matrix of squared distances.
+The result is a *z×k* matrix of squared distances.
 
 """
 function distances(metric :: Metric,

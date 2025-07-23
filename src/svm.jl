@@ -43,7 +43,7 @@ are not positive definite matrices, but Euclidean feature vectors,
 the `.metric` field has no use.  In order to use metrics you need to install the
 *PosDefManifold* package.
 
-`svmType`, a generic Type of SVM models used in LIBSVM.
+`.svmType`, a generic Type of SVM models used in LIBSVM.
 Available types are:
 - `SVC`: *C-Support Vector Classification*. The fit time complexity is more
    than quadratic with the number of observations. The multiclass support is handled
@@ -56,7 +56,7 @@ Available types are:
 The default is `SVC`, unless labels are not provided while fitting
 the model, in which case it defaults to `OneClassSVM`.
 
-`kernel`, a LIBSVM.Kernel type.
+`.kernel`, a LIBSVM.Kernel type.
 Available kernels are declared as constants in the main module. They are:
 - `Linear` 		(default)
 - `RadialBasis` 
@@ -69,13 +69,13 @@ upon creation of the model by the default creator.
 Instead, they are filled later when a model is created by the
 [`fit`](@ref) function:
 
-For the content of fields `vecRange` and `normalize`, please see the documentation
+For the content of fields `.vecRange` and `.normalize`, please see the documentation
 of the [`fit`](@ref) function for the ENLR model.
 
-For the content of the `.meanISR`, `.featDim` and `pipeline` fields please
+For the content of the `.meanISR`, `.featDim` and `.pipeline` fields please
 see the documentation of the [`ENLR`](@ref) structure.
 
-`svmModel` holds the model structure created by LIBSVM when the model is fitted
+`.svmModel` holds the model structure created by LIBSVM when the model is fitted
 (declared [here](https://github.com/mpastell/LIBSVM.jl/blob/master/src/LibSVMtypes.jl)).
 
 **Examples**:
