@@ -59,13 +59,16 @@ tikhonov(C::Hermitian, tikh=0) = tikhonov!(copy(C), tikh)
 # Return 3-tuple (𝐏, W, V), where 𝐏 is overwritten, W*mean*W' is a diagonal (pca) or the 
 # identity matrix (whitening) and V is the left-inverse of W.
 # Example:
-# P=randP(100, 10)
-# reducedim!(Euclidean, P);
-# 𝐏, Z, iZ = reducedim!(Euclidean, P);
-# Z * W * Z' # must be the identity
-# force no dimensionality reduction, equivalent to use recenter! here below
-# # 𝐏, Z, iZ = reducedim!(Euclidean, P, eVar=size(P[1], 1)); 
-# Z * W * Z' # must be the identity
+# P = randP(100, 10)
+# M = mean(Euclidean, P)
+# recenter!(Euclidean, P);
+# 𝐏, Z, iZ = recenter!(Euclidean, P);
+# Z * M * Z' # must be the identity
+# force no dimensionality reduction
+# P = randP(100, 10)
+# M = mean(Euclidean, P)
+# # 𝐏, Z, iZ = recenter!(Euclidean, P, eVar=size(P[1], 1)); 
+# Z * M * Z' # must be the identity
 function recenter!(metric::PosDefManifold.Metric, 𝐏::ℍVector;
                     transform :: Bool = true,
                     labels :: Union{IntVector, Nothing} = nothing,
@@ -78,8 +81,8 @@ function recenter!(metric::PosDefManifold.Metric, 𝐏::ℍVector;
                     forcediag::Bool=true,
                     threaded::Bool=true)
 
-    w_  = labels === nothing ? w : tsWeights(labels)
-    ✓w_ = labels === nothing
+    w_  = isnothing(labels) ? w : tsWeights(labels)
+    ✓w_ = isnothing(labels) 
     meth, barycen = Diagonalizations.whitening, PosDefManifold.mean
     W = meth(barycen(metric, 𝐏; 
                     w=w_, ✓w=✓w_, init, tol, verbose, ⏩=threaded); 
@@ -89,7 +92,7 @@ function recenter!(metric::PosDefManifold.Metric, 𝐏::ℍVector;
     # sqrt of the mean, otherwise use the reduced inverse sqrt of the eigenvalues
     # times the transpose of the reduced eigenvectors to obtain the reduction
     p = size(W.D, 1) # W.D are eigenvalues of the mean, see Diagonalizations.jl
-    sqrtD=sqrt(W.D)
+    sqrtD = sqrt(W.D)
     Z = p==size(𝐏[1], 1) ? W.F*(sqrtD*W.F') : W.F # sqrtD*W.F' are the eigenvectors of the mean
     iZ = p==size(𝐏[1], 1) ? (W.iF'*inv(sqrtD))*W.iF : W.iF # inverse of Z
 
@@ -112,7 +115,7 @@ end
 
 
 # TESTING: act on ℍVector `𝐏` with provided parameter `Zt` obtained in a training
-# Zt is Z' which is given as output of the function `reducedim!` above.
+# Zt is given as output of the function above.
 function recenter!(𝐏::ℍVector, Zt::Union{Matrix, Hermitian}; threaded::Bool=true) 
     if threaded
         @threads for i ∈ eachindex(𝐏)

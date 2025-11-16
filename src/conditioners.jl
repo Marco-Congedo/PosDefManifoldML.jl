@@ -130,9 +130,9 @@ Depending on the `eVar` value used to define the [`Recenter`](@ref) conditioner,
 matrices ``Z`` may determine a dimensionality reduction of the input points as well.
 In this case ``Z`` is not square, but a wide matrix of dimension ``p·n``, with ``p<n``.
 
-This conditoner may behave in a **supervised** way; providing the class labels 
+This conditioner may behave in a **supervised** way; providing the class labels 
 when it is fitted (see [`fit!`](@ref)), the classes are equally weighted to compute
-the barycenter ``G``, like [`tsWeights`](@ref)``
+the barycenter ``G``, like [`tsWeights`](@ref)
 does for computing the barycenter used for tangent space mapping.
 If the classes are balanced, the weighting has no effect.
 
@@ -182,10 +182,6 @@ R = Recenter(PosDefManifold.Fisher; eVar=10)
 # Determine the dimension so as to explain at least 90% of the variance
 R = Recenter(PosDefManifold.Fisher; eVar=0.9)
 
-# Use class labels to balance the weights across classes
-# (let `y` be a vector of int holding the class labels)
-R = Recenter(PosDefManifold.Fisher; labels=y)
-
 ```
 **See also**: [`fit!`](@ref), [`transform!`](@ref), [`crval`](@ref)
 """
@@ -215,7 +211,7 @@ mutable struct Recenter <: Conditioner
                 iZ = nothing) where T<:Real
         # constructor
         errhead = "Recenter conditioner constructor: "
-        eVar<0 && throw(ArgumentError(errhead*"eVar must be non-negative"))
+        !isnothing(eVar) && eVar<0 && throw(ArgumentError(errhead*"eVar must be non-negative"))
         tol<0 && throw(ArgumentError(errhead*"tol must be non-negative"))
         new(metric, eVar, w, ✓w, init, tol, verbose, forcediag, threaded, Z, iZ)
     end
@@ -662,19 +658,22 @@ P=randP(3, 5)
 Q=copy(P)
 
 pipeline = fit!(P, 
-        @→ Tikhonov(0.0001) → Recenter → Compress → Shrink(Fisher; radius=0.01))
+        @→ Tikhonov(0.01) → Recenter → Compress → Shrink(Fisher; radius=0.01))
 
 # or 
-pipeline = fit!(Q, @→ Recenter Compress Shrink(Fisher; radius=0.01))
+pipeline = fit!(Q, @→ Tikhonov(0.01) Recenter Compress Shrink(Fisher; radius=0.01))
 
-# The whitening matrices of the the recentering conditioner,
-pipeline[1].Z
+# Retrive the amount of Tikhonov regularization that has been applied,
+pipeline[1].α
 
-# The scaling factors of the compressing conditioner,
-pipeline[2].β
+# the whitening matrices of the recentering conditioner,
+pipeline[2].Z
 
-# and the step-size of the shrinking conditioner
-pipeline[3]
+# the scaling factors of the compressing conditioner,
+pipeline[3].β
+
+# and the step-size of the shrinking conditioner.
+pipeline[4].γ
 
 ## Example 3 (pipeline with a single conditioner):
 P=randP(3, 5)  

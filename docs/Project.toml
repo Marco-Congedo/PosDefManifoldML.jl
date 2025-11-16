@@ -1,5 +1,5 @@
 authors = ["Marco Congedo, Fahim Doumi"]
-version = "0.5.14"
+version = "0.5.15"
 
 [deps]
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
