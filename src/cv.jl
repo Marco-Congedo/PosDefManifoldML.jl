@@ -13,10 +13,12 @@
 
 """
 ```julia
-struct CVres <: CVresult
+struct CVres <: CVresult 
     cvType      :: String
     scoring     :: Union{String, Nothing}
     modelType   :: Union{String, Nothing}
+    nTrials     :: Union{Int, Nothing}
+    matSizes    :: Union{Vector{Int}, Nothing}
     predLabels  :: Union{Vector{Vector{Vector{I}}}, Nothing} where I<:Int
     losses      :: Union{Vector{BitVector}, Nothing}
     cnfs        :: Union{Vector{Matrix{I}}, Nothing} where I<:Int
@@ -46,7 +48,9 @@ cross-validation, given as a string.
 
 `.nTrials` is the total number of trials entering the cross-validation.
 
-`.matSize` is the size of the input matrices (trials).
+`.matSizes` is a vector holding the size of the matrices encoding the trials for each fold. The size may be different 
+from the size of the input data and also from one fold to another if a dimensionality reduction pipeline
+is used.
 
 `.predLabels` is an `f`-vector of `z` integer vectors holding the vectors of 
 predicted labels. There is one vector for each fold (`f`) and each containes
@@ -91,7 +95,7 @@ struct CVres <: CVresult
     scoring     :: Union{String, Nothing}
     modelType   :: Union{String, Nothing}
     nTrials     :: Union{Int, Nothing}
-    matSize     :: Union{Int, Nothing}
+    matSizes    :: Union{Vector{Int}, Nothing}
     predLabels  :: Union{Vector{Vector{Vector{I}}}, Nothing} where I<:Int
     losses      :: Union{Vector{BitVector}, Nothing}
     cnfs        :: Union{Vector{Matrix{I}}, Nothing} where I<:Int
@@ -426,8 +430,8 @@ function crval(model    :: MLmodel,
     end
 
     # create cv struct
-    cv = CVres("$nFolds-fold", sStr, _model2Str(model), length(𝐏), size(𝐏, 1), predLab, errls, 
-                CM, mCM, as, avg, std, zstat, pvalue, Dates.value(exetime))
+    cv = CVres("$nFolds-fold", sStr, _model2Str(model), length(𝐏), [size(𝐐Tr[f][1], 1) for f=1:nFolds], 
+                predLab, errls, CM, mCM, as, avg, std, zstat, pvalue, Dates.value(exetime))
     
     # restore the number of threads for BLAS as the user had before invoking this function
     ⏩ && (BLAS.set_num_threads(blasThreads))
@@ -567,7 +571,13 @@ function Base.show(io::IO, ::MIME{Symbol("text/plain")}, cv::CVres)
     cv.scoring      ≠ nothing && println(io, separatorFont, ".scoring  :", defaultFont," $(cv.scoring)")
     cv.modelType    ≠ nothing && println(io, separatorFont, ".modelType:", defaultFont," $(cv.modelType)")
     cv.nTrials      ≠ nothing && println(io, separatorFont, ".nTrials  :", defaultFont," $(cv.nTrials)")
-    cv.matSize      ≠ nothing && println(io, separatorFont, ".matSize  :", defaultFont," $(cv.matSize)")
+    if cv.matSizes ≠ nothing
+        if length(unique(cv.matSizes)) == 1
+            println(io, separatorFont, ".matSizes :", defaultFont," $(cv.matSizes[1]) for all folds")
+        else
+            println(io, separatorFont, ".matSizes :", defaultFont," $(cv.matSizes)")
+        end
+    end
     cv.predLabels   ≠ nothing && println(io, separatorFont, ".predLabels ", defaultFont,"a vector of #classes vectors of predicted labels per fold")
     cv.losses       ≠ nothing && println(io, separatorFont, ".losses     ", defaultFont,"a vector of binary loss per fold")
     cv.cnfs         ≠ nothing && println(io, separatorFont, ".cnfs       ", defaultFont,"a confusion matrix per fold (frequencies)")
