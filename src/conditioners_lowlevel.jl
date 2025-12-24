@@ -282,16 +282,15 @@ end
 
 # TRAINING:
 # Return 2-tuple (𝐏, γ), where 𝐏 is the set of input matrices 𝐏 shrinked in an open ball with given `radius` r 
-# according to the given `metric`, and γ ∈ (0, 1] is the the shrinking parameter. 
+# according to the given `metric`, and γ ∈ (0, 1] is the shrinking parameter. 
 # The radius r englobes the most distant point of set 𝐏 if `refpoint`=:max, the mean eccentricity
 # of the points in 𝐏 if `refpoint`=:mean. This letter option means that the points are shrinked so that r 
 # is equal to sqrt(1/n * mean(norm(P) for P in 𝐏).
-# The shrinking is done moving, for each matric P_k in the set, along the gedesic relying I to P_k,
-# acording to the given metric. The distance according to the given metric is evaluated for all matrices
+# The shrinking is done moving, for each matrix P_k in the set, along the gedesic relying I to P_k,
+# according to the given metric. The distance according to the given metric is evaluated for all matrices
 # in 𝐏 and γ is computed so as to set the maximum or mean eccentricity equal to r + ϵ,
 # where ϵ is the `epsilon` kwarg.
-# If the maximum or mean eccentricity is already in the ball of radius r, no shrinking is carried out 
-# and return 2-tuple (𝐏, 1).
+# The ball containing 𝐏 may also be increased (the opposite of shrinking).
 # For all metrics γ = (r*√n) / (δ(P, I) + ϵ). The defaults are r = 0.02 and ϵ = 0
 
 # Proof (for three metrics, see PosDefManifold.jl for available metrics supporting a geodesic equation):
@@ -363,10 +362,10 @@ function shrink!(metric::PosDefManifold.Metric, 𝐏::PosDefManifold.ℍVector, 
             d = threaded ? Folds.sum(funcLC, 𝐋)/length(𝐋) : sum(funcLC, 𝐋)/length(𝐋)
         end
 
-        if d ≥ radius # d is the maximal or mean logCholesky distance squared to I
+        # if d ≥ radius # d is the maximal or mean logCholesky distance squared to I
             γ = (radius * sqrt(n)) / (sqrt(d) + epsilon)
             0 ≤ γ || throw(ArgumentError("Shrink conditioner with $(metric) metric; shrinkage parameter γ≤0"))
-            γ < 1 || @warn "Shrink conditioner with $(metric) metric; shrinkage parameter γ≥1" γ radius
+            # γ < 1 || @warn "Shrink conditioner with $(metric) metric; shrinkage parameter γ≥1" γ radius
 
             # move on the logCholesky geodesic relying I to 𝐏[i] with step-size γ
             if transform
@@ -380,28 +379,28 @@ function shrink!(metric::PosDefManifold.Metric, 𝐏::PosDefManifold.ℍVector, 
                     end
                 end
             end # if transform
-        else
-            verbose && @warn "Shrink conditioner with method $(metric): no shrinking is necessary" d radius
-        end
+        # else
+            # verbose && @warn "Shrink conditioner with method $(metric): no shrinking is necessary" d radius
+        # end
 
     elseif metric == PosDefManifold.Fisher
         #eltype(𝐏[1]) <: Complex && throw(ArgumentError("The metric Fisher for function shrink! and shrink is defined only for real matrices"))
         𝛌, 𝐔 = evds(𝐏; threaded)
 
-        # here the eigenvalues could be normalized to costant variance
+        # here the eigenvalues could be normalized to constant variance
 
         funcF(λ) = sqrt(sum(x -> real(log(x))^2, λ)) # norm
         if refpoint==:max
             d = threaded ? Folds.maximum(funcF, 𝛌) : maximum(funcF, 𝛌)
         else
-            d = threaded ? Folds.sum(funcF, 𝛌)/length(𝛌) : sum(funcF, 𝛌)/length(𝛌) # average eccentricity
+            d = threaded ? Folds.sum(funcF, 𝛌)/length(𝛌) : sum(funcF, 𝛌)/length(𝛌) # average norm
         end
 
-        if d ≥ radius # γ is the Fisher distance to I
-            γ = (radius * sqrt(n)) / (d + epsilon)
+        # if d ≥ radius 
+            γ = (radius * sqrt(n)) / (d + epsilon) # γ is the Fisher distance to I
             #            println("γ, d ", γ, " ", d)
             0 ≤ γ || throw(ArgumentError("Shrink conditioner with $(metric) metric; computed shrinkage parameter γ≤0"))
-            γ < 1 || @warn "Shrink conditioner with $(metric) metric; shrinkage parameter γ≥1" γ radius
+            # γ < 1 || @warn "Shrink conditioner with $(metric) metric; shrinkage parameter γ≥1" γ radius
 
             # move on the Fisher geodesic relying I to 𝐏[i] with step-size γ
             # and re-recenter the eigenvalues if recenter=true         
@@ -442,9 +441,9 @@ function shrink!(metric::PosDefManifold.Metric, 𝐏::PosDefManifold.ℍVector, 
                     end
                 end
             end # if transform
-        else
-            verbose && @warn "Shrink conditioner with method $(metric): no shrinking was necessary" d radius
-        end
+        # else
+            # verbose && @warn "Shrink conditioner with method $(metric): no shrinking was necessary" d radius
+        # end
 
     else # all other supported metrics
         func(P) = distance(metric, P) # distance
@@ -454,10 +453,10 @@ function shrink!(metric::PosDefManifold.Metric, 𝐏::PosDefManifold.ℍVector, 
             d = threaded ? Folds.sum(func, 𝐏)/length(𝐏) : sum(func, 𝐏)/length(𝐏)
         end
         
-        if d ≥ radius # γ is the metric distance to I
+        # if d ≥ radius # γ is the metric distance to I
             γ = (radius * sqrt(n)) / (d + epsilon)
             0 ≤ γ || throw(ArgumentError("Shrink conditioner with $(metric) metric; computed shrinkage parameter γ≤0"))
-            γ < 1 || @warn "Shrink conditioner with $(metric) metric; shrinkage parameter γ≥1" γ radius
+            #γ < 1 || @warn "Shrink conditioner with $(metric) metric; shrinkage parameter γ≥1" γ radius
 
             if transform
                 #0 < γ ≤ 1 || throw(ArgumentError("shrink! or shrink function with $(metric) metric; shrinkage parameter γ ∉(0, 1]"))
@@ -473,9 +472,9 @@ function shrink!(metric::PosDefManifold.Metric, 𝐏::PosDefManifold.ℍVector, 
                     end
                 end
             end # if transform
-        else
-            verbose && @warn "Shrink conditioner with metric $(metric): no shrinking was necessary" d radius
-        end
+        # else
+            # verbose && @warn "Shrink conditioner with metric $(metric): no shrinking was necessary" d radius
+        # end
     end
     
     return (𝐏, γ, m, sd)

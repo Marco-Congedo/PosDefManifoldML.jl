@@ -7,7 +7,7 @@
 
 # ? CONTENTS :
 #   This unit implements (pre) conditioners for fast Riemannian 
-#   machine learning classifier using package PosDefManifold.
+#   machine learning classifier using package PosDefManifoldML
 
 include("conditioners_lowlevel.jl")
 
@@ -30,14 +30,14 @@ This is because the learnt parameters will be needed for the transformation of t
     abstract type Equalizing  <: Conditioner end # Equalizing  (individual scaling)
     abstract type Shrinking   <: Conditioner end # Geodesic Shrinking
 ```
-Abstract types for **Conditioners**. Those are the elemntary pipes
+Abstract types for **Conditioners**. Those are the elementary pipes
 to build a [Pipeline](@ref). The available conditioners are
 
 - Tikhonov regularization (diagonal loading)
 - Recentering by whitening with or w/o dimensionality reduction
 - Compressing by global scaling
 - Equalizing by individual scaling
-- Shrinking by moving along geodesics towards the identity matrix
+- Shrinking by moving along geodesics with the identity matrix
 """
 =#
 
@@ -59,9 +59,9 @@ transform the set such as
 
  ``P_j+αI, \\ j=1,...,k``,
 
-where ``I`` is the identity matrix and ``α`` is a non-negative number.
+where ``I`` is the identity matrix and ``α`` is a non-negative scalar.
 
-This conditoner structure has two fields: 
+This conditioner structure has two fields: 
 
 - `.α`, which is written in the structure when it is fitted to some data.
 
@@ -136,7 +136,7 @@ the barycenter ``G``, like [`tsWeights`](@ref)
 does for computing the barycenter used for tangent space mapping.
 If the classes are balanced, the weighting has no effect.
 
-This conditoner structure has the following fields:
+This conditioner structure has the following fields:
 
 - `.metric`, of type  [Metric](https://marco-congedo.github.io/PosDefManifold.jl/dev/MainModule/#Metric::Enumerated-type-1), is to be specified by the user. It is the metric that will be adopted to compute the class means and the distances to the mean. default: `PosDefManifold.Euclidean`.
 
@@ -354,7 +354,7 @@ mutable struct Shrink <: Conditioner
 Mutable structure of the **geodesic shrinking** conditioner. 
 
 Given a set of points ``𝐏`` in the manifold of positive-definite matrices,
-this conditioner moves all points towards the identity matrix ``I`` along geodesics
+this conditioner moves all points towards or away from the identity matrix ``I`` along geodesics
 on the manifold defined in accordance to the specified `metric`. This effectively defines a ball
 centered at ``I``.
 
@@ -460,6 +460,7 @@ A pipeline holds a sequence of conditioners learned
 and (optionally) applied using [`fit!`](@ref). It can be 
 subsequently applied on other data as it has been learnt 
 using the [`transform!`](@ref) function.
+
 All `fit!` methods return a pipeline.
 
 Pipelines comprising a single conditioner are allowed.
@@ -491,7 +492,7 @@ macro pipeline(args...)
 
 Create a [`Pipeline`](@ref) chaining the provided expressions.
 
-As an example, the sintax is:
+As an example, the syntax is:
 
 ```julia
 p = @pipeline Recenter() → Compress → Shrink(Fisher; threaded=false)
@@ -956,7 +957,7 @@ includes(pipeline, Shrink) # true
 
 includes(pipeline, Shrink()) # true
 
-# same type, althoug a different instance
+# same type, although a different instance
 includes(pipeline, Shrink(Fisher; radius=0.1)) # true
 
 includes(pipeline, Compress) # false
@@ -975,6 +976,7 @@ function dim(pipeline::Pipeline)
 ```
 Return the dimension determined by a fitted [`Recenter`](@ref) pre-conditioner 
 if the `pipeline` comprises such a pre-conditioner, `nothing` otherwise. 
+    
 This is used to adapt pipelines - see the documentation of the [`fit!`](@ref)
 function for ENLR machine learning models for an example.
 
@@ -983,7 +985,7 @@ function for ENLR machine learning models for an example.
 using PosDefManifoldML, PosDefManifold
 
 pipeline = @→ Recenter(; eVar=0.9) → Shrink()
-dim(pipeline) # return false, as it is not fitted
+dim(pipeline) # return `nothing`, as it is not fitted
 
 P = randP(10, 5)
 p = fit!(P, pipeline)
