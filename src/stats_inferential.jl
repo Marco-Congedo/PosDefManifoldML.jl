@@ -30,7 +30,7 @@ The format of the confusion matrices (`Vector{Vector{Int}}`) is the same
 used to store the confusion matrices in a [`CVres`](@ref) stucture.
 
 The test is always directional. Denoting ``μ`` the average loss and ``E`` the
-expected average, the test if performed according to null hypethesis ``H_0: μ1 = E``
+expected average, the test if performed according to null hypethesis ``H_0: μ = E``
 against alternative ``μ < E``; if the test is significant, the error loss
 is statistically inferior to the specified expected level, which means that the 
 observed accuracy is statistically **superior** to the expected accuracy.
@@ -114,7 +114,7 @@ processing or pre-conditoning pipelines on the same data.
     When you compare two models and/or pipelines with cross-validation, 
 	do not use keyword argument `shuffle=true` in [`crval`](@ref), as in this case 
 	the actual data composing the folds would not be identical. Also,
-	is you use the `seed` keyword argument, make sure the same seed is employed
+	if you use the `seed` keyword argument, make sure the same seed is employed
 	for the two cross-validations.
 
 (2) The function also accepts as argument the error losses directly, 

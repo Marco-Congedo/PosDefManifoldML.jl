@@ -574,3 +574,85 @@ function load(filename::String)
         deserialize(io)
     end
 end
+
+
+"""
+```julia
+    function hermVec2tensor(𝐗::ℍVector, type::Type=eltype(𝐗[1]); 
+                            majorOrder = :column) 
+```
+Convert an [`ℍVector`](https://marco-congedo.github.io/PosDefManifold.jl/stable/MainModule/#%E2%84%8DVector-type) `𝐗`
+to a tensor.
+
+If `𝐗` holds ``k`` ``n x n`` matrices, the tensor has shape
+- ``n x n x k`` if `majorOrder = :column` (default)
+- ``k x n x n`` if `majorOrder = :row`.
+
+The first shape is used in column-major order languages such as Julia, the second in row-major order languages such as Python.
+
+The tensors is converted to the given `type`. By default, this is the type of the elements of the matrices in `𝐗`.
+
+**Examples**:
+```julia
+using PosDefManifold, PosDefManifoldML
+
+P=randP(3, 20) # 20 matrices of size 3 x 3
+
+X = hermVec2tensor(P) # 3 x 3 x 20 tensor
+Y = hermVec2tensor(P; majorOrder = :row) # 20 x 3 x 3 tensor
+
+Q = tensor2hermVec(X) # the same as P
+R = tensor2hermVec(Y; majorOrder = :row) # the same as P
+```
+
+**See** [`tensor2hermVec`](@ref)
+"""
+function hermVec2tensor(𝐗::ℍVector, type::Type=eltype(𝐗[1]); 
+                        majorOrder = :column) 
+    n = size(𝐗[1], 1)
+    k = length(𝐗)
+    
+    if majorOrder == :column
+        𝑋 = Array{type, 3}(undef, n, n, k) 
+        @simd for i in 1:k
+            @inbounds 𝑋[:, :, i] = type.(Matrix(𝐗[i]))
+        end
+        return 𝑋
+    elseif majorOrder == :row
+        𝑋 = Array{type, 3}(undef, k, n, n) 
+        @simd for i in 1:k
+            @inbounds 𝑋[i, :, :] = type.(Matrix(𝐗[i]))
+        end
+        return 𝑋
+    else 
+        throw(ArgumentError("Package PosDefManifold, function hermVec2tensor: argument `majorOrder` can be `:column` or `:row`"))
+    end
+end
+
+
+"""
+```julia
+    function tensor2hermVec(𝑋::Array{T,3}, type::Type=Float64;
+                            majorOrder = :column) where {T<:Real}
+```
+Convert a tensor 𝑋 to an [`ℍVector`](https://marco-congedo.github.io/PosDefManifold.jl/stable/MainModule/#%E2%84%8DVector-type) `𝐗`
+holding ``k`` ``n x n`` matrices of the given `type` (Float64 by default).
+
+`𝑋` can have shape 
+- ``n x n x k`` if `majorOrder = :column` (default)
+- ``k x n x n`` if `majorOrder = :row`.
+
+**See** [`hermVec2tensor`](@ref)
+"""
+function tensor2hermVec(𝑋::Array{T,3}, type::Type=Float64;
+                        majorOrder = :column) where {T<:Real}
+    if majorOrder == :column
+        k = size(𝑋, 3)
+        return ℍVector([Hermitian(type.(𝑋[:, :, i])) for i in 1:k])
+    elseif majorOrder == :row 
+        k = size(𝑋, 1)
+        return ℍVector([Hermitian(type.(𝑋[i, :, :])) for i in 1:k])
+    else 
+        throw(ArgumentError("Package PosDefManifold, function tensor2hermVec: argument `majorOrder` can be `:column` or `:row`"))
+    end
+end

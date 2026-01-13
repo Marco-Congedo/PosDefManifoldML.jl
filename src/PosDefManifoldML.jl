@@ -14,6 +14,8 @@
 
 module PosDefManifoldML
 
+using PrecompileSignatures: @precompile_signatures
+
 using LinearAlgebra, Base.Threads, Random, StatsBase, Statistics, PosDefManifold
 
 using Dates: Dates, now
@@ -131,11 +133,12 @@ export
     standardize!,
     saveas,
     load,
+    hermVec2tensor,
+    tensor2hermVec,
 
     # from conditioners.jl
     Pipeline,
-    @pipeline,
-    @→,
+    @pipeline, @→,
     Tikhonov,
     Recenter,
     Compress,
@@ -165,5 +168,8 @@ println(" runs on kernel ",Sys.KERNEL," with word size ",Sys.WORD_SIZE,".")
 println(" CPU  Threads: ", separatorFont, Sys.CPU_THREADS, defaultFont)
 println(" Base.Threads: ", separatorFont, "$(Threads.nthreads())", defaultFont)
 println(" BLAS Threads: ", separatorFont, "$(BLAS.get_num_threads())", "\n", defaultFont)
+
+# Generate and run `precompile` directives.
+@precompile_signatures(PosDefManifoldML)
 
 end # module
