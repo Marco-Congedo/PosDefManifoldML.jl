@@ -17,6 +17,9 @@ you won't need these functions.
 | [`standardize!`](@ref)| standardize the rows or columns of a real matrix |
 | [`saveas`](@ref)| save a whatever object to a file |
 | [`load`](@ref)| load a whatever object from a file |
+| [`hermVec2tensor`](@ref)| convert an `ℍVector` to a tensor |
+| [`tensor2hermVec`](@ref)| convert a tensor to an `ℍVector` |
+
 
 ```@docs
 tsMap
@@ -28,4 +31,6 @@ normalize!
 standardize!
 saveas
 load
+hermVec2tensor
+tensor2hermVec
 ```

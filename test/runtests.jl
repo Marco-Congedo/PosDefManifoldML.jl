@@ -1,8 +1,8 @@
 using PosDefManifold, PosDefManifoldML, Statistics, Test
 
 # Give two symmetric positive definite matrices A and B,
-# 80 marices will be created randomly as points on the the geodesic
-# relying A to B and 80 marices as points on the the geodesic relying B to A,
+# 80 matrices will be created randomly as points on the the geodesic
+# relying A to B and 80 matrices as points on the the geodesic relying B to A,
 # for 80 arc-lengths given by function rand(Float64)*exp(-i/(160))),
 # for 1=1:80. This makes 80 two class problems with 160 observations each
 # that must be progressively better separable as i increases.
@@ -29,14 +29,16 @@ PTr=ℍVector₂([vcat(gVec(n, i, A, B), gVec(n, i, B, A)) for i=1:n])
 PTe=ℍVector₂([vcat(gVec(n, i, A, B), gVec(n, i, B, A)) for i=1:n])
 y=vcat(fill(1, n), fill(2, n))
 
-println("\nTesting MDM model...")
-cv=[crval(MDM(), PTr[i], y; verbose=false, scoring=:b).avgAcc for i=1:n]
-@test cor(cv, [i for i=1:n]) > 0.6
+@testset "All Models" begin
+    println("\nTesting MDM model...")
+    cv=[crval(MDM(), PTr[i], y; verbose=false, scoring=:b).avgAcc for i=1:n]
+    @test cor(cv, [i for i=1:n]) > 0.6
 
-println("\nTesting ENLR model...")
-cv=[crval(ENLR(), PTr[i], y; verbose=false).avgAcc for i=1:n]
-@test cor(cv, [i for i=1:n]) > 0.6
+    println("\nTesting ENLR model...")
+    cv=[crval(ENLR(), PTr[i], y; verbose=false).avgAcc for i=1:n]
+    @test cor(cv, [i for i=1:n]) > 0.6
 
-println("\nTesting SVM model...")
-cv=[crval(SVM(), PTr[i], y; verbose=false).avgAcc for i=1:n]
-@test cor(cv, [i for i=1:n]) > 0.6
+    println("\nTesting SVM model...")
+    cv=[crval(SVM(), PTr[i], y; verbose=false).avgAcc for i=1:n]
+    @test cor(cv, [i for i=1:n]) > 0.6
+end;
