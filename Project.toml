@@ -1,7 +1,7 @@
 name = "PosDefManifoldML"
 uuid = "a07f4532-e2c9-11e9-2ea2-6d98fe4a1f21"
 authors = ["Marco-Congedo <marco.congedo@gmail.com>"]
-version = "0.5.18"
+version = "0.5.19"
 
 [deps]
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
@@ -31,7 +31,6 @@ LIBSVM = "0.8"
 PermutationTests = "0.2"
 PosDefManifold = "0.5"
 PrecompileSignatures = "3.0"
-Serialization = "1.11"
 StatsAPI = "1.7"
 StatsBase = "0.32, 0.33, 0.34"
 julia = "1"
